@@ -1,0 +1,136 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Card, Badge } from '@swal/ui';
+
+export function getStaticPaths() {
+  return [
+    { params: { locale: 'es' } },
+    { params: { locale: 'en' } },
+    { params: { locale: 'pt' } }
+  ];
+}
+
+const { locale } = Astro.params;
+
+const unitModules = import.meta.glob('../../data/sample-unit.*.json', { eager: true });
+const faqModules = import.meta.glob('../../data/faq.*.json', { eager: true });
+
+const unitData = unitModules[`../../data/sample-unit.${locale}.json`]
+  ? (unitModules[`../../data/sample-unit.${locale}.json`] as any).default
+  : null;
+const faqData = faqModules[`../../data/faq.${locale}.json`]
+  ? (faqModules[`../../data/faq.${locale}.json`] as any).default
+  : [];
+
+const t = {
+  es: {
+    explore: "Explorar Unidad PISA",
+    stimulus: "Estímulo",
+    study: "Contenido de Estudio",
+    items: "Ítems",
+    faq: "Preguntas Frecuentes",
+    no_unit: "Unidad no disponible en este idioma.",
+    minutes: "minutos",
+    sources: "Fuentes: OECD PISA 2022 Results: COL 383/409/411 puesto 64/81, OCDE 472/476/485, SGP 575/543/561. Contenido ORIGINAL tipo PISA no oficial, sin afiliación OECD."
+  },
+  en: {
+    explore: "Explore PISA Unit",
+    stimulus: "Stimulus",
+    study: "Study Content",
+    items: "Items",
+    faq: "FAQ",
+    no_unit: "Unit not available in this language.",
+    minutes: "minutes",
+    sources: "Sources: OECD PISA 2022 Results: COL 383/409/411 rank 64/81, OECD 472/476/485, SGP 575/543/561. ORIGINAL unofficial PISA-style content, no OECD affiliation."
+  },
+  pt: {
+    explore: "Explorar Unidade PISA",
+    stimulus: "Estímulo",
+    study: "Conteúdo de Estudo",
+    items: "Itens",
+    faq: "Perguntas Frequentes",
+    no_unit: "Unidade não disponível neste idioma.",
+    minutes: "minutos",
+    sources: "Fontes: Resultados OCDE PISA 2022: COL 383/409/411 posição 64/81, OCDE 472/476/485, SGP 575/543/561. Conteúdo ORIGINAL tipo PISA não oficial, sem afiliação à OCDE."
+  }
+}[locale as 'es' | 'en' | 'pt'];
+---
+
+<Layout title={t.explore}>
+  <div class="wrap">
+    <h1 class="title">{t.explore}</h1>
+
+    {(unitData) ? (
+      <div class="grid">
+        <Card variant="surface" padding="lg">
+          <h2>{t.stimulus}</h2>
+          <h3>{unitData.stimulus.title}</h3>
+          <p class="whitespace-pre-wrap">{unitData.stimulus.content}</p>
+        </Card>
+
+        <Card variant="surface" padding="lg">
+          <h2>{t.study}</h2>
+          <p><strong>Tiempo:</strong> {unitData.study_content.length_minutes} {t.minutes}</p>
+          <p>{unitData.study_content.theory}</p>
+        </Card>
+
+        <Card variant="surface" padding="lg">
+          <h2>{t.items}</h2>
+          <div class="items-list">
+            {unitData.items.map((item: any) => (
+              <div class="item">
+                <Badge variant="info">{item.process}</Badge>
+                <Badge variant="neutral">{item.level}</Badge>
+                <p><strong>{item.question}</strong></p>
+                {(item.options) ? (
+                  <ul>
+                    {item.options.map((opt: any) => (
+                      <li>{opt.id}: {opt.text}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    ) : (
+      <p>{t.no_unit}</p>
+    )}
+
+    <div class="faq-section">
+      <h2>{t.faq}</h2>
+      <div class="faq-grid">
+        {faqData.map((faq: any) => (
+          <Card variant="surface" padding="md">
+            <h4>{faq.q}</h4>
+            <p>{faq.a}</p>
+          </Card>
+        ))}
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p class="disclaimer">{t.sources}</p>
+    </footer>
+  </div>
+</Layout>
+
+<style>
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem; display: grid; gap: 2rem; }
+  .title { font-size: 1.8rem; font-weight: 800; color: var(--swal-text); }
+  .grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
+  @media (min-width: 768px) { .grid { grid-template-columns: 1fr 1fr; } .grid > :last-child { grid-column: span 2; } }
+  .whitespace-pre-wrap { white-space: pre-wrap; line-height: 1.6; }
+  .items-list { display: flex; flex-direction: column; gap: 1.5rem; }
+  .item { padding-bottom: 1rem; border-bottom: 1px solid var(--swal-border); }
+  .item:last-child { border-bottom: none; }
+  .faq-section { margin-top: 2rem; }
+  .faq-grid { display: grid; gap: 1rem; margin-top: 1rem; }
+  h2 { font-size: 1.4rem; font-weight: 700; color: var(--swal-text); margin-bottom: 1rem; }
+  h3 { font-size: 1.1rem; font-weight: 600; color: var(--swal-text); margin-bottom: 0.5rem; }
+  h4 { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--swal-border); text-align: center; }
+  .disclaimer { font-size: 0.85rem; color: var(--swal-text-muted); }
+  ul { padding-left: 1.5rem; line-height: 1.6; }
+</style>
