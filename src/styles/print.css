@@ -1,0 +1,16 @@
+@page {
+  size: A4;
+}
+
+figure {
+  break-inside: avoid;
+}
+
+* {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+nav {
+  display: none !important;
+}
