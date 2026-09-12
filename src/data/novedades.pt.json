@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "titulo": "Desempenho da Colômbia no PISA",
+    "fecha": "2023-12-05",
+    "contenido": "Resultados recentes mostram que a Colômbia obteve 383, 409 e 411 pontos, ocupando a posição 64 entre 81 países participantes. Esses números destacam a necessidade de reformas estruturais no sistema educacional.",
+    "fuente": "OECD PISA Database"
+  },
+  {
+    "id": 2,
+    "titulo": "Média da OCDE",
+    "fecha": "2023-12-06",
+    "contenido": "A média dos países da OCDE foi de 472, 476 e 485 pontos. Esta média serve como uma referência global para avaliar o desenvolvimento de habilidades fundamentais nos alunos.",
+    "fuente": "OECD PISA Database"
+  },
+  {
+    "id": 3,
+    "titulo": "A liderança de Singapura",
+    "fecha": "2023-12-07",
+    "contenido": "Singapura lidera as medições globais com pontuações notáveis de 575, 543 e 561. Sua abordagem pedagógica continua a ser um modelo de excelência e inovação.",
+    "fuente": "OECD PISA Database"
+  },
+  {
+    "id": 4,
+    "titulo": "Desafios na região latino-americana",
+    "fecha": "2023-12-08",
+    "contenido": "A região enfrenta desafios significativos para reduzir as disparidades de aprendizado. O investimento na formação de professores é crucial para melhorar os indicadores a longo prazo.",
+    "fuente": "Education Insights"
+  },
+  {
+    "id": 5,
+    "titulo": "Perspectivas e políticas futuras",
+    "fecha": "2023-12-09",
+    "contenido": "Para avançar, é essencial integrar a tecnologia na sala de aula e promover o pensamento crítico, adaptando o currículo às demandas do século XXI.",
+    "fuente": "Global Education Forum"
+  }
+]
