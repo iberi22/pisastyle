@@ -1,0 +1,42 @@
+[
+  {
+    "question": "What is the main objective of the PISA assessment?",
+    "answer": "The Programme for International Student Assessment (PISA) aims to evaluate educational systems worldwide by testing the skills and knowledge of 15-year-old students."
+  },
+  {
+    "question": "Which subjects are evaluated in the PISA tests?",
+    "answer": "PISA primarily assesses three core domains: Mathematics, Reading, and Science. In recent editions, innovative domains like Learning in a Digital World (LDW) have been introduced."
+  },
+  {
+    "question": "How did Colombia perform in the PISA 2022 Mathematics assessment?",
+    "answer": "In the PISA 2022 Mathematics assessment, Colombia scored 383 points, placing it 64th out of 81 participating countries. For comparison, the OECD average was 472 points. (Source: OECD PISA 2022 Results)"
+  },
+  {
+    "question": "What were Colombia's results in Reading according to PISA 2022?",
+    "answer": "Colombia achieved a score of 409 points in the PISA 2022 Reading assessment. This is below the OECD average, which stood at 476 points. (Source: OECD PISA 2022 Results)"
+  },
+  {
+    "question": "How did Colombia rank in the Science domain in PISA 2022?",
+    "answer": "In the Science domain, Colombia scored 411 points, while the OECD average was 485 points. Overall, Colombia ranked 64th out of 81 countries. (Source: OECD PISA 2022 Results)"
+  },
+  {
+    "question": "Which country achieved the highest scores in PISA 2022?",
+    "answer": "Singapore (SGP) was the top-performing country in PISA 2022, achieving remarkable scores of 575 in Mathematics, 543 in Reading, and 561 in Science. (Source: OECD PISA 2022 Results)"
+  },
+  {
+    "question": "How are the cognitive demands of PISA questions classified?",
+    "answer": "The cognitive demand of questions is typically categorized into low, medium, or high levels, integrating Bloom's taxonomy and Webb's Depth of Knowledge to ensure a comprehensive evaluation."
+  },
+  {
+    "question": "What characterizes a Level 1b or 1c question in the PISA framework?",
+    "answer": "Low-level questions (1b/1c) generally involve everyday contexts, require a single step to solve, use short sentences without complex subordinate clauses, and avoid technical vocabulary."
+  },
+  {
+    "question": "Does PISA measure the memorization of facts?",
+    "answer": "No, PISA focuses on assessing students' ability to apply their knowledge and skills to real-world problems and situations, rather than merely measuring rote memorization."
+  },
+  {
+    "question": "Are translated PISA items considered to have the exact same difficulty?",
+    "answer": "Translating a reading item can change its difficulty. Therefore, strict calibration is required for translated items, and free translations are never permitted to ensure fair comparisons."
+  }
+]
