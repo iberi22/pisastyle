@@ -1,0 +1,78 @@
+{
+  "unit_id": "unit_sci_pt_001",
+  "domain": "science",
+  "protocol_version": "v1.1",
+  "stimulus": {
+    "title": "O Efeito Estufa e a Nossa Comunidade",
+    "content": "A tabela abaixo mostra a média das emissões diárias de dióxido de carbono ($CO_2$) em uma pequena cidade durante três anos consecutivos. Em 2020, a cidade introduziu uma frota de ônibus elétricos, reduzindo a circulação de veículos a combustão.\n\n| Ano | Emissões ($CO_2$ em toneladas/dia) |\n|---|---|\n| 2019 | 150 |\n| 2020 | 120 |\n| 2021 | 95 |\n\nAlguns gases atmosféricos, como o dióxido de carbono ($CO_2$) e o metano ($CH_4$), retêm o calor do Sol e contribuem para o Efeito Estufa. Sem eles, a Terra seria demasiado fria para sustentar a vida como a conhecemos. Contudo, as atividades humanas aumentaram significativamente as concentrações desses gases."
+  },
+  "items": [
+    {
+      "id": "sci_pt_001_q1",
+      "question": "Com base na tabela, o que se pode concluir sobre o impacto da introdução dos autocarros elétricos em 2020?",
+      "process": "interpret",
+      "content": "physical",
+      "context": "local",
+      "format": "mc",
+      "demand": "low",
+      "level": "2",
+      "rubric": "1",
+      "anchor": "Greenhouse",
+      "options": [
+        { "id": "A", "text": "As emissões de CO2 aumentaram de 2019 para 2020." },
+        { "id": "B", "text": "Houve uma redução imediata nas emissões de CO2." },
+        { "id": "C", "text": "O metano tornou-se o gás predominante." },
+        { "id": "D", "text": "Não houve impacto nas emissões diárias." }
+      ]
+    },
+    {
+      "id": "sci_pt_001_q2",
+      "question": "Por que o Efeito Estufa é, naturalmente, importante para o nosso planeta?",
+      "process": "explain",
+      "content": "earth-space",
+      "context": "global",
+      "format": "mc",
+      "demand": "med",
+      "level": "3",
+      "rubric": "1",
+      "anchor": "Greenhouse",
+      "options": [
+        { "id": "A", "text": "Porque arrefece o planeta durante o dia." },
+        { "id": "B", "text": "Porque sem ele a Terra seria demasiado fria para a vida." },
+        { "id": "C", "text": "Porque aumenta a camada de ozônio." },
+        { "id": "D", "text": "Porque é a principal fonte de energia elétrica." }
+      ]
+    },
+    {
+      "id": "sci_pt_001_q3",
+      "question": "Um estudante afirma: 'Devemos eliminar todos os gases de efeito estufa da atmosfera para parar as alterações climáticas.' Utilize a informação do texto para explicar porque é que esta afirmação está cientificamente incorreta.",
+      "process": "evaluate",
+      "content": "earth-space",
+      "context": "global",
+      "format": "open",
+      "demand": "high",
+      "level": "5",
+      "rubric": "open_rubric",
+      "anchor": "Greenhouse"
+    }
+  ],
+  "study_content": {
+    "length_minutes": 90,
+    "theory": "O Efeito Estufa é um processo natural que aquece a superfície da Terra. Quando a energia do Sol atinge a atmosfera terrestre, parte dela é refletida de volta para o espaço e a restante é absorvida e re-irradiada por gases de efeito estufa. Isto inclui vapor de água, dióxido de carbono, metano, óxido nitroso e ozônio.",
+    "worked_examples": [
+      {
+        "problem": "Calcular a redução percentual de emissões de 2019 para 2021 na cidade.",
+        "solution": "((150 - 95) / 150) * 100 = 36.6% de redução."
+      }
+    ],
+    "typical_errors": [
+      "Confundir o Efeito Estufa com a destruição da Camada de Ozônio.",
+      "Acreditar que o Efeito Estufa é exclusivamente prejudicial e causado apenas pelo homem."
+    ]
+  },
+  "sources": [
+    "OECD PISA 2025 Science Framework (2nd draft). Promédio OCDE em Ciências (2022): 485 pontos.",
+    "OECD PISA 2022 Results. Desempenho da Colômbia em Ciências: 411 pontos (puesto 64/81).",
+    "Dados de Singapura (SGP): 561 pontos em Ciências no PISA 2022."
+  ]
+}
