@@ -1,0 +1,54 @@
+{
+  "hero": {
+    "title": "Master PISA with PISAStyle Method",
+    "subtitle": "Stimulus units + 1-2h study + exam. OECD sources at the end of each unit."
+  },
+  "domains": [
+    {
+      "id": "math",
+      "title": "Mathematics",
+      "description": "Formulate, employ and interpret mathematics in a variety of contexts."
+    },
+    {
+      "id": "reading",
+      "title": "Reading",
+      "description": "Understand, use, reflect on and engage with written texts."
+    },
+    {
+      "id": "science",
+      "title": "Science",
+      "description": "Engage with science-related issues, and with the ideas of science, as a reflective citizen."
+    }
+  ],
+  "stats": {
+    "title": "PISA 2022 Results",
+    "colombia": {
+      "math": 383,
+      "reading": 409,
+      "science": 411,
+      "rank": "64/81"
+    },
+    "oecd": {
+      "math": 472,
+      "reading": 476,
+      "science": 485
+    },
+    "singapore": {
+      "math": 575,
+      "reading": 543,
+      "science": 561
+    }
+  },
+  "ctas": [
+    {
+      "label": "Start Studying",
+      "url": "/en/study",
+      "variant": "primary"
+    },
+    {
+      "label": "View Rankings",
+      "url": "/en/rankings",
+      "variant": "ghost"
+    }
+  ]
+}
