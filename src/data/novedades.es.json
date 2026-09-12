@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "titulo": "Desempeño de Colombia en PISA",
+    "fecha": "2023-12-05",
+    "contenido": "Los recientes resultados muestran que Colombia obtuvo 383, 409 y 411 puntos, situándose en el puesto 64 de 81 países participantes. Estos datos subrayan la necesidad de reformas estructurales en el sistema educativo.",
+    "fuente": "OECD PISA Database"
+  },
+  {
+    "id": 2,
+    "titulo": "Promedio de la OCDE",
+    "fecha": "2023-12-06",
+    "contenido": "El promedio de los países de la OCDE se situó en 472, 476 y 485 puntos. Esta media sirve como referencia global para evaluar el desarrollo de las competencias fundamentales en los estudiantes.",
+    "fuente": "OECD PISA Database"
+  },
+  {
+    "id": 3,
+    "titulo": "El liderazgo de Singapur",
+    "fecha": "2023-12-07",
+    "contenido": "Singapur lidera las mediciones globales con puntuaciones sobresalientes de 575, 543 y 561. Su enfoque pedagógico sigue siendo un modelo de excelencia e innovación.",
+    "fuente": "OECD PISA Database"
+  },
+  {
+    "id": 4,
+    "titulo": "Retos en la región latinoamericana",
+    "fecha": "2023-12-08",
+    "contenido": "La región enfrenta desafíos importantes para reducir las brechas de aprendizaje. La inversión en formación docente es crucial para mejorar los indicadores a largo plazo.",
+    "fuente": "Education Insights"
+  },
+  {
+    "id": 5,
+    "titulo": "Perspectivas y políticas futuras",
+    "fecha": "2023-12-09",
+    "contenido": "Para avanzar, es imprescindible integrar la tecnología en el aula y fomentar el pensamiento crítico, adaptando el currículo a las demandas del siglo XXI.",
+    "fuente": "Global Education Forum"
+  }
+]
