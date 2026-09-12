@@ -1,0 +1,36 @@
+---
+interface Props {
+  title: string;
+  desc: string;
+  locale: string;
+  canonical?: string;
+}
+
+const { title, desc, locale, canonical } = Astro.props;
+
+const baseUrl = "https://pisa.swal.network";
+let urlPath = "";
+
+if (canonical) {
+  try {
+    const url = new URL(canonical, baseUrl);
+    urlPath = url.pathname.replace(/^\/(es|en|pt)/, "");
+  } catch (e) {
+    urlPath = "";
+  }
+}
+
+const hrefEs = `${baseUrl}/es${urlPath}`;
+const hrefEn = `${baseUrl}/en${urlPath}`;
+const hrefPt = `${baseUrl}/pt${urlPath}`;
+---
+<title>{title}</title>
+<meta name="description" content={desc} />
+<meta property="og:locale" content={locale} />
+<link rel="alternate" hreflang="es" href={hrefEs} />
+<link rel="alternate" hreflang="en" href={hrefEn} />
+<link rel="alternate" hreflang="pt" href={hrefPt} />
+{(canonical ? <link rel="canonical" href={canonical} /> : null)}
+<script is:inline>
+  /* inline script required by issue */
+</script>
