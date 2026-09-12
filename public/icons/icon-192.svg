@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <desc>
+    Contenido ORIGINAL tipo PISA. Cifras: COL 383/409/411 puesto 64/81, OCDE 472/476/485, SGP 575/543/561.
+    Fuente: OECD PISA 2022 Results Vol I. PISAStyle v1.1. Contenido no oficial, sin afiliacion OECD. Disclaimer N/A.
+  </desc>
+  <rect width="192" height="192" fill="#020617"/>
+  <circle cx="96" cy="96" r="64" fill="#06b6d4"/>
+  <text x="96" y="104" font-family="sans-serif" font-size="24" fill="#ffffff" text-anchor="middle">PISA</text>
+</svg>
