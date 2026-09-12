@@ -1,0 +1,45 @@
+name = "pisastyle"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# --- Cloudflare Vault 100% cifrado + Pay-per-use 5% + mesh-only gratis ---
+# Modelo: 1 camion = 100 camiones mismo precio (no fee por vehiculo, solo consumo R2/D1/AI).
+# Si no usas backend (mesh-only), costo 0 y datos viven replicados en otros nodos gara-g via Yjs P2P.
+# Si usas backend: precio pay-per-use (ver docs privados). Overages se cobran, no bloquean.
+# Ver cores/swal-vault + src/lib/cloudflareVaultAdapter.ts + src/lib/billing.ts (SWAL_HANDLING 0.05)
+# Provisionar:
+# wrangler r2 bucket create swal-app-template-vault
+# wrangler d1 create swal-billing
+# wrangler d1 create swal-app-template-domain
+# wrangler kv namespace create SWAL_KV
+# wrangler d1 execute swal-billing --file=./migrations/001_billing.sql
+
+[[r2_buckets]]
+binding = "SWAL_R2"
+bucket_name = "swal-pisastyle-vault"
+
+[[d1_databases]]
+binding = "SWAL_D1"
+database_name = "swal-billing"
+database_id = "REPLACE-ME-billing"
+
+[[d1_databases]]
+binding = "SWAL_DOMAIN_D1"
+database_name = "swal-pisastyle-domain"
+database_id = "REPLACE-ME-domain"
+
+[[kv_namespaces]]
+binding = "SESSION"
+id = "REPLACE-ME-session-kv"
+
+[[kv_namespaces]]
+binding = "SWAL_KV"
+id = "REPLACE-ME-swal-kv"
+
+[ai]
+binding = "AI"
+
+[vars]
+NODE_VERSION = "20"
+# Para fork: cambia bucket_name a swal-{appId}-vault y database_name a swal-{appId}-domain
+# via scripts/create-app.mjs (reescribe wrangler.toml automaticamente)

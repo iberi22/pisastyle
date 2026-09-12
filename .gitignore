@@ -1,0 +1,24 @@
+# PISAStyle — repo PUBLICO (open core, uso exclusivo laboratorio SWAL)
+# Lo publico: esqueleto Astro+Svelte, componentes infografia, i18n ES/EN/PT, player generico.
+# Lo PRIVADO (nunca commitear, vive en backend central edge-hive + repo privado de contenido):
+pisa_units/
+study_content/
+docs/plans/
+docs/internal/
+content_packs/
+telemetry_raw/
+backend_adapters/
+.secrets/
+*.pem
+*.key
+.env
+.env.*
+wrangler.secrets.toml
+
+# Derivados
+node_modules/
+dist/
+.astro/
+.wrangler/
+test-results/
+coverage/
