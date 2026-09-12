@@ -1,0 +1,42 @@
+[
+  {
+    "q": "¿Qué es la prueba PISA?",
+    "a": "El Programa para la Evaluación Internacional de Alumnos (PISA, por sus siglas en inglés) es un estudio mundial de la Organización para la Cooperación y el Desarrollo Económicos (OCDE) que evalúa los sistemas educativos midiendo el rendimiento escolar de los alumnos de 15 años en matemáticas, ciencias y lectura."
+  },
+  {
+    "q": "¿Cada cuánto tiempo se realiza la prueba PISA?",
+    "a": "Las pruebas PISA se realizan cada tres años desde el año 2000. Sin embargo, debido a la pandemia de COVID-19, la edición prevista para 2021 se pospuso a 2022. La próxima evaluación está programada para 2025."
+  },
+  {
+    "q": "¿Cuáles fueron los resultados de Colombia en PISA 2022?",
+    "a": "En 2022, Colombia obtuvo promedios de 383 en matemáticas, 409 en lectura y 411 en ciencias. Estos puntajes ubican al país por debajo de los promedios de la OCDE (472, 476 y 485 respectivamente), posicionando a Colombia en el lugar 64 entre los 81 sistemas educativos participantes."
+  },
+  {
+    "q": "¿Cómo se estructuran los niveles de desempeño en PISA?",
+    "a": "PISA utiliza niveles de competencia que van, por lo general, desde debajo del nivel 1c hasta el nivel 6. El nivel 2 se considera el nivel básico o mínimo de competencia requerido para participar plenamente en la sociedad, y los niveles 5 y 6 agrupan a los estudiantes de alto rendimiento."
+  },
+  {
+    "q": "¿Cuáles son los dominios principales evaluados en PISA?",
+    "a": "Históricamente PISA evalúa tres dominios principales: matemáticas, lectura y ciencias. En cada ciclo (cada tres años) se elige un dominio innovador principal, como resolución colaborativa de problemas (2015), competencia global (2018), pensamiento creativo (2022) o aprendizaje en el mundo digital (2025)."
+  },
+  {
+    "q": "¿Cómo es la demanda cognitiva y dificultad de los ítems en PISA?",
+    "a": "La dificultad empírica no es lo mismo que la demanda cognitiva. La demanda cognitiva se clasifica en baja, media y alta, considerando el tipo de procesos requeridos. Las preguntas de nivel bajo (1b/1c) suelen involucrar contextos cotidianos, un solo paso de resolución, oraciones cortas sin jerga técnica y menor carga lectora."
+  },
+  {
+    "q": "¿Qué se evaluará especialmente en Ciencias para PISA 2025?",
+    "a": "Según el segundo borrador del marco de Ciencias 2025, se dará énfasis a competencias como explicar fenómenos (36-44%), diseñar e interpretar indagaciones (24-36%) e investigar y usar evidencia (24-36%), abordando conocimiento de contenido, procedimental y epistémico sobre sistemas físicos, vivos, y de la Tierra y el espacio."
+  },
+  {
+    "q": "¿Qué es la evaluación de Aprendizaje en el Mundo Digital (LDW) de PISA 2025?",
+    "a": "La evaluación LDW (Learning in the Digital World) es el dominio innovador para 2025. Evaluará prácticas computacionales y autorregulación (fases Show, Learn, Apply, Reflect) utilizando entornos interactivos, simulaciones, lenguajes de bloques y mapas conceptuales digitales."
+  },
+  {
+    "q": "¿Qué tipos de formato de respuesta existen en la prueba PISA?",
+    "a": "Existen formatos de opción múltiple simple, opción múltiple compleja (multipartes), preguntas de respuesta construida cerrada (como dar un número exacto) y respuesta construida abierta (que se corrigen con rúbricas de crédito completo 2, parcial 1 y sin crédito 0)."
+  },
+  {
+    "q": "¿Este material (PISAStyle) está afiliado a la OCDE?",
+    "a": "No, el contenido de PISAStyle es educativo y no oficial, desarrollado como parte de un laboratorio y un protocolo abierto, y no tiene afiliación oficial alguna con la OCDE."
+  }
+]
