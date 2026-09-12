@@ -1,0 +1,82 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Button, Card } from '@swal/ui';
+
+const texts = {
+  es: {
+    title: '500 - Error Interno',
+    desc: 'Ocurrió un error inesperado en el servidor. Por favor, intenta de nuevo más tarde. (Contexto: PISA-like, COL 383/409/411 puesto 64/81, OCDE 472/476/485, SGP 575/543/561)',
+    home: 'Volver al inicio',
+    disclaimer: 'Fuente de datos: OECD PISA 2022 Results Vol I + MEN. Contenido no oficial PISAStyle.',
+  },
+  en: {
+    title: '500 - Internal Error',
+    desc: 'An unexpected server error occurred. Please try again later. (Context: PISA-like, COL 383/409/411 rank 64/81, OECD 472/476/485, SGP 575/543/561)',
+    home: 'Back to home',
+    disclaimer: 'Data source: OECD PISA 2022 Results Vol I + MEN. Unofficial PISAStyle content.',
+  },
+  pt: {
+    title: '500 - Erro Interno',
+    desc: 'Ocorreu um erro inesperado no servidor. Por favor, tente novamente mais tarde. (Contexto: PISA-like, COL 383/409/411 posição 64/81, OCDE 472/476/485, SGP 575/543/561)',
+    home: 'Voltar ao início',
+    disclaimer: 'Fonte de dados: OECD PISA 2022 Results Vol I + MEN. Conteúdo não oficial PISAStyle.',
+  }
+};
+---
+
+<Layout title="500 Internal Error - PISAStyle">
+  <div class="wrap">
+    <Card variant="elevated" padding="lg">
+      <div class="lang-selector">
+        <a href="/es">ES</a> | <a href="/en">EN</a> | <a href="/pt">PT</a>
+      </div>
+
+      <div id="content-es" class="content-block active">
+        <h1 class="title">{texts.es.title}</h1>
+        <p class="sub">{texts.es.desc}</p>
+        <a href="/" class="btn-link"><Button variant="primary">{texts.es.home}</Button></a>
+        <p class="hint disclaimer">{texts.es.disclaimer}</p>
+      </div>
+
+      <div id="content-en" class="content-block" style="display: none;">
+        <h1 class="title">{texts.en.title}</h1>
+        <p class="sub">{texts.en.desc}</p>
+        <a href="/" class="btn-link"><Button variant="primary">{texts.en.home}</Button></a>
+        <p class="hint disclaimer">{texts.en.disclaimer}</p>
+      </div>
+
+      <div id="content-pt" class="content-block" style="display: none;">
+        <h1 class="title">{texts.pt.title}</h1>
+        <p class="sub">{texts.pt.desc}</p>
+        <a href="/" class="btn-link"><Button variant="primary">{texts.pt.home}</Button></a>
+        <p class="hint disclaimer">{texts.pt.disclaimer}</p>
+      </div>
+    </Card>
+  </div>
+</Layout>
+
+<script is:inline>
+  function setupLang(lang) {
+    document.querySelectorAll('.content-block').forEach((el) => {
+      el.style.display = 'none';
+    });
+    const content = document.getElementById('content-' + lang);
+    (content ? content : document.getElementById('content-es')).style.display = 'block';
+  }
+
+  const path = window.location.pathname;
+  const lang = path.startsWith('/en') ? 'en' : (path.startsWith('/pt') ? 'pt' : 'es');
+  setupLang(lang);
+</script>
+
+<style>
+  .wrap { max-width: 800px; margin: 4rem auto; padding: 2rem 1rem; text-align: center; }
+  .lang-selector { margin-bottom: 2rem; }
+  .lang-selector a { color: var(--swal-accent); text-decoration: none; font-weight: bold; margin: 0 0.5rem; }
+  .lang-selector a:hover { text-decoration: underline; }
+  .title { font-size: 2rem; font-weight: 800; color: var(--swal-text); margin-bottom: 1rem; }
+  .sub { color: var(--swal-text-secondary); line-height: 1.6; margin-bottom: 2rem; }
+  .btn-link { text-decoration: none; }
+  .disclaimer { margin-top: 3rem; font-size: 0.8rem; border-top: 1px solid var(--swal-border); padding-top: 1rem; }
+  .hint { color: var(--swal-text-muted); }
+</style>
