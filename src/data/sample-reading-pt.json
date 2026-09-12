@@ -1,0 +1,77 @@
+{
+  "unit_id": "unit_read_pt_001",
+  "domain": "reading",
+  "protocol_version": "v1.1",
+  "stimulus": {
+    "title": "A Jornada dos Oceanos",
+    "content": "Os oceanos cobrem mais de 70% da superfície da Terra e são fundamentais para regular o clima global. Eles absorvem grande parte do dióxido de carbono ($CO_2$) emitido pelas atividades humanas. No entanto, o aumento contínuo dessas emissões está causando a acidificação das águas oceânicas, o que ameaça a vida marinha, especialmente os corais e os moluscos, cujas conchas se dissolvem em águas mais ácidas."
+  },
+  "items": [
+    {
+      "id": "read_pt_001_q1",
+      "question": "De acordo com o texto, qual é uma das principais funções dos oceanos no que diz respeito ao clima?",
+      "process": "access_retrieve",
+      "content": "reading",
+      "context": "global",
+      "format": "mc",
+      "demand": "low",
+      "level": "2",
+      "rubric": "1",
+      "anchor": "Oceans",
+      "options": [
+        { "id": "A", "text": "Regular o clima global e absorver dióxido de carbono." },
+        { "id": "B", "text": "Aumentar as emissões de carbono." },
+        { "id": "C", "text": "Reduzir o tamanho dos corais." },
+        { "id": "D", "text": "Dissolver as conchas dos moluscos." }
+      ]
+    },
+    {
+      "id": "read_pt_001_q2",
+      "question": "Qual é a principal consequência da acidificação dos oceanos mencionada no texto?",
+      "process": "integrate_interpret",
+      "content": "reading",
+      "context": "global",
+      "format": "mc",
+      "demand": "med",
+      "level": "3",
+      "rubric": "1",
+      "anchor": "Oceans",
+      "options": [
+        { "id": "A", "text": "O aumento da quantidade de dióxido de carbono no ar." },
+        { "id": "B", "text": "A redução da temperatura global." },
+        { "id": "C", "text": "A ameaça à vida marinha, como corais e moluscos." },
+        { "id": "D", "text": "O aumento do nível do mar." }
+      ]
+    },
+    {
+      "id": "read_pt_001_q3",
+      "question": "Com base no texto, explique como as atividades humanas afetam indiretamente os moluscos.",
+      "process": "reflect_evaluate",
+      "content": "reading",
+      "context": "global",
+      "format": "open",
+      "demand": "high",
+      "level": "5",
+      "rubric": "open_rubric",
+      "anchor": "Oceans"
+    }
+  ],
+  "study_content": {
+    "length_minutes": 60,
+    "theory": "A leitura e a compreensão de textos sobre temas globais são essenciais. Os oceanos desempenham um papel vital no equilíbrio ambiental do planeta.",
+    "worked_examples": [
+      {
+        "problem": "Identificar no texto a causa da acidificação oceânica.",
+        "solution": "A causa é o aumento das emissões de dióxido de carbono ($CO_2$) pelas atividades humanas."
+      }
+    ],
+    "typical_errors": [
+      "Confundir a absorção natural de CO2 com a poluição humana excessiva."
+    ]
+  },
+  "sources": [
+    "OECD PISA 2025 Reading Framework. Promédio OCDE em Leitura (2022): 476 pontos.",
+    "OECD PISA 2022 Results. Desempenho da Colômbia em Leitura: 409 pontos (puesto 64/81).",
+    "Dados de Singapura (SGP): 543 pontos em Leitura no PISA 2022."
+  ]
+}
