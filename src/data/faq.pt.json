@@ -1,0 +1,42 @@
+[
+  {
+    "q": "O que é o PISA?",
+    "a": "O Programa Internacional de Avaliação de Estudantes (PISA) é uma prova trienal aplicada a estudantes de 15 anos para avaliar suas habilidades em matemática, leitura e ciências. É importante notar que este material é não oficial e não tem afiliação com a OECD."
+  },
+  {
+    "q": "O PISA mede apenas o conhecimento escolar memorizado?",
+    "a": "Não, o foco principal é a capacidade dos estudantes de aplicar seus conhecimentos em situações do mundo real, avaliando o raciocínio lógico, a interpretação e a resolução de problemas complexos. (Conteúdo educacional independente, sem afiliação com a OECD)."
+  },
+  {
+    "q": "Quais foram os resultados da Colômbia no PISA 2022?",
+    "a": "A Colômbia obteve 383 pontos em Matemática, 409 em Leitura e 411 em Ciências. Com esses resultados, o país ocupou a 64ª posição entre os 81 participantes. (Fonte: Resultados PISA 2022 da OCDE)."
+  },
+  {
+    "q": "Qual é a pontuação média dos países da OCDE?",
+    "a": "No PISA 2022, a média da OCDE foi de 472 pontos em Matemática, 476 em Leitura e 485 em Ciências. (Fonte: Resultados PISA 2022 da OCDE)."
+  },
+  {
+    "q": "Como os resultados de Singapura se comparam aos da Colômbia e à média da OCDE?",
+    "a": "Singapura apresentou resultados muito superiores, com 575 pontos em Matemática, 543 em Leitura e 561 em Ciências, liderando o ranking mundial no PISA 2022. (Fonte: Resultados PISA 2022 da OCDE)."
+  },
+  {
+    "q": "O que significa o nível de proficiência em matemática e leitura?",
+    "a": "O PISA divide o desempenho em níveis. Por exemplo, o Nível 2 (420 em Matemática, 407 em Leitura) é considerado a linha de base para a participação plena na sociedade, onde o estudante pode realizar tarefas básicas sem assistência direta."
+  },
+  {
+    "q": "Como as traduções dos itens do PISA são tratadas?",
+    "a": "Traduzir um item de leitura altera a sua dificuldade inerente. Por isso, toda tradução passa por um processo rigoroso de recalibração estatística para garantir que a dificuldade seja comparável à original, nunca sendo uma tradução puramente literal."
+  },
+  {
+    "q": "O que é o domínio 'LDW' que será incluído em 2025?",
+    "a": "LDW significa 'Learning in the Digital World' (Aprendizagem no Mundo Digital). É um domínio inovador que avaliará práticas computacionais e autorregulação em ambientes digitais por meio de blocos, mapas e simulações."
+  },
+  {
+    "q": "Como as perguntas (itens) do PISA são estruturadas?",
+    "a": "Os itens são organizados em 'unidades', que consistem em um estímulo comum (como um texto, tabela ou gráfico) seguido por 3 a 6 perguntas encadeadas de dificuldade crescente, indo da recordação simples à argumentação complexa."
+  },
+  {
+    "q": "Como os itens de raciocínio e argumentação são pontuados?",
+    "a": "Em questões construídas abertas que envolvem raciocínio, o crédito parcial é obrigatório. As respostas são avaliadas com uma rubrica rigorosa (por exemplo, 2, 1 ou 0 pontos), permitindo diferenciar níveis parciais de compreensão e não apenas o acerto ou erro."
+  }
+]
