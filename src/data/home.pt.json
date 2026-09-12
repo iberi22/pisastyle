@@ -1,0 +1,54 @@
+{
+  "hero": {
+    "title": "Domine o PISA com o Método PISAStyle",
+    "subtitle": "Unidades com estímulo + estudo de 1-2h + exame. Fontes OECD ao final de cada unidade."
+  },
+  "domains": [
+    {
+      "id": "math",
+      "title": "Matemática",
+      "description": "Formular, empregar e interpretar a matemática em uma variedade de contextos."
+    },
+    {
+      "id": "reading",
+      "title": "Leitura",
+      "description": "Compreender, usar, refletir e interagir com textos escritos."
+    },
+    {
+      "id": "science",
+      "title": "Ciências",
+      "description": "Envolver-se com questões relacionadas à ciência e com ideias da ciência, como cidadão reflexivo."
+    }
+  ],
+  "stats": {
+    "title": "Resultados PISA 2022",
+    "colombia": {
+      "math": 383,
+      "reading": 409,
+      "science": 411,
+      "rank": "64/81"
+    },
+    "oecd": {
+      "math": 472,
+      "reading": 476,
+      "science": 485
+    },
+    "singapore": {
+      "math": 575,
+      "reading": 543,
+      "science": 561
+    }
+  },
+  "ctas": [
+    {
+      "label": "Começar a Estudar",
+      "url": "/pt/study",
+      "variant": "primary"
+    },
+    {
+      "label": "Ver Rankings",
+      "url": "/pt/rankings",
+      "variant": "ghost"
+    }
+  ]
+}
