@@ -1,0 +1,92 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Card, Badge } from '@swal/ui';
+
+export const prerender = true;
+
+export function getStaticPaths() {
+  return [
+    { params: { locale: 'es' } },
+    { params: { locale: 'en' } },
+    { params: { locale: 'pt' } }
+  ];
+}
+
+const { locale } = Astro.params;
+
+const textDict: Record<string, any> = {
+  es: {
+    title: 'Método PISAStyle',
+    description: 'Conoce el método PISAStyle v1.1. Unidades con estímulo, estudio y examen para dominar PISA.',
+    cycleTitle: 'Ciclo PISA',
+    cycleDesc: 'En PISAStyle nos basamos en el ciclo de formular, emplear e interpretar problemas del mundo real.',
+    dataTitle: 'Datos de Referencia PISA 2022',
+    colData: 'Colombia (COL): Matemáticas 383, Lectura 409, Ciencias 411. Puesto 64/81.',
+    ocdeData: 'Promedio OCDE: 472/476/485.',
+    sgpData: 'Singapur (SGP): 575/543/561.',
+    disclaimer: 'Contenido educativo NO OFICIAL, sin afiliación con la OECD. Fuente de datos: OECD PISA 2022 Results Vol I.'
+  },
+  en: {
+    title: 'PISAStyle Method',
+    description: 'Learn about the PISAStyle v1.1 method. Units with stimulus, study, and exam to master PISA.',
+    cycleTitle: 'PISA Cycle',
+    cycleDesc: 'PISAStyle is based on the cycle of formulating, employing, and interpreting real-world problems.',
+    dataTitle: 'PISA 2022 Reference Data',
+    colData: 'Colombia (COL): Mathematics 383, Reading 409, Science 411. Rank 64/81.',
+    ocdeData: 'OECD Average: 472/476/485.',
+    sgpData: 'Singapore (SGP): 575/543/561.',
+    disclaimer: 'UNOFFICIAL educational content, no OECD affiliation. Data source: OECD PISA 2022 Results Vol I.'
+  },
+  pt: {
+    title: 'Método PISAStyle',
+    description: 'Conheça o método PISAStyle v1.1. Unidades com estímulo, estudo e exame para dominar o PISA.',
+    cycleTitle: 'Ciclo PISA',
+    cycleDesc: 'No PISAStyle baseamo-nos no ciclo de formular, empregar e interpretar problemas do mundo real.',
+    dataTitle: 'Dados de Referência PISA 2022',
+    colData: 'Colômbia (COL): Matemática 383, Leitura 409, Ciências 411. Posição 64/81.',
+    ocdeData: 'Média OCDE: 472/476/485.',
+    sgpData: 'Singapura (SGP): 575/543/561.',
+    disclaimer: 'Conteúdo educacional NÃO OFICIAL, sem afiliação com a OECD. Fonte de dados: OECD PISA 2022 Results Vol I.'
+  }
+};
+
+const texts = textDict[locale as string] || textDict['en'];
+---
+
+<Layout title={texts.title}>
+  <div class="wrap">
+    <h1 class="title">{texts.title} <Badge variant="info">v1.1</Badge></h1>
+    <p class="sub">{texts.description}</p>
+
+    <div class="grid">
+      <Card variant="surface" padding="md">
+        <h2>{texts.cycleTitle}</h2>
+        <p>{texts.cycleDesc}</p>
+      </Card>
+
+      <Card variant="surface" padding="md">
+        <h2>{texts.dataTitle}</h2>
+        <ul>
+          <li>{texts.colData}</li>
+          <li>{texts.ocdeData}</li>
+          <li>{texts.sgpData}</li>
+        </ul>
+      </Card>
+    </div>
+
+    <footer class="footer">
+      <p class="disclaimer">{texts.disclaimer}</p>
+    </footer>
+  </div>
+</Layout>
+
+<style>
+  .wrap { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+  .title { font-size: 2rem; font-weight: 800; color: var(--swal-text); display: flex; align-items: center; gap: 0.5rem; }
+  .sub { color: var(--swal-text-secondary); line-height: 1.6; margin-bottom: 2rem; }
+  .grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-bottom: 2rem; }
+  h2 { font-size: 1.25rem; font-weight: 700; color: var(--swal-text); margin-bottom: 0.75rem; }
+  ul { padding-left: 1.5rem; color: var(--swal-text-secondary); line-height: 1.6; }
+  .footer { border-top: 1px solid var(--swal-border); padding-top: 1.5rem; text-align: center; }
+  .disclaimer { font-size: 0.85rem; color: var(--swal-text-muted); }
+</style>
