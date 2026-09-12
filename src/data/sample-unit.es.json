@@ -1,0 +1,60 @@
+{
+  "unit_id": "math_col_2022_mock",
+  "domain": "math",
+  "study": "Tiempo estimado de estudio: 60-120 minutos. El rendimiento en matemáticas es fundamental. En PISA 2022, Colombia obtuvo un puntaje promedio de 383 puntos (puesto 64 de 81). El promedio de la OCDE fue 472. En comparación, Singapur obtuvo 575. Esto demuestra una brecha significativa en habilidades matemáticas. Este módulo repasa conceptos básicos de estadística y probabilidad, así como geometría espacial. Los estudiantes aprenderán a formular problemas matemáticos a partir de situaciones del mundo real, como el crecimiento poblacional o la planificación de presupuestos familiares. El objetivo es reducir esta brecha mediante la práctica estructurada y el pensamiento crítico.",
+  "sources": [
+    "OECD (2023). PISA 2022 Results (Volume I): The State of Learning and Equity in Education.",
+    "Ministerio de Educación Nacional de Colombia (2023). Informe Nacional de Resultados PISA 2022.",
+    "Instituto Nacional para la Evaluación de la Educación (2024). Análisis de Resultados Internacionales."
+  ],
+  "disclaimer": "Nota: Este contenido es un ejercicio simulado y no es oficial ni está afiliado a la OCDE.",
+  "protocol_version": "v1.1",
+  "items": [
+    {
+      "id": "item_1",
+      "question": "¿Cuál fue el puntaje promedio de Colombia en PISA 2022 en el área de matemáticas?",
+      "process": "interpretar",
+      "content": "quantity",
+      "context": "societal",
+      "format": "MC simple",
+      "demand": "low",
+      "level": "1c",
+      "ancla": "Triangular Pattern",
+      "rubric": {
+        "full_credit": "383",
+        "no_credit": "Cualquier otra respuesta."
+      }
+    },
+    {
+      "id": "item_2",
+      "question": "Calcula la diferencia exacta en puntos entre el promedio de la OCDE y el puntaje obtenido por Colombia en matemáticas.",
+      "process": "emplear",
+      "content": "quantity",
+      "context": "societal",
+      "format": "construida cerrada",
+      "demand": "med",
+      "level": "2",
+      "ancla": "Solar System",
+      "rubric": {
+        "full_credit": "89",
+        "no_credit": "Cualquier otra respuesta numérica."
+      }
+    },
+    {
+      "id": "item_3",
+      "question": "Considerando la brecha entre Colombia (383) y Singapur (575) en matemáticas, argumenta si una mejora de 20 puntos anuales en Colombia sería suficiente para alcanzar a Singapur en menos de 10 años. Justifica tu respuesta con cálculos matemáticos.",
+      "process": "razonamiento",
+      "content": "change",
+      "context": "societal",
+      "format": "construida abierta",
+      "demand": "high",
+      "level": "4",
+      "ancla": "Forested Areas",
+      "rubric": {
+        "full_credit": "No, porque 575 - 383 = 192. Si mejora 20 puntos por año durante 10 años (200 puntos), entonces 383 + 200 = 583. Sí lo alcanzaría. El estudiante debe mostrar el cálculo correcto y la conclusión correcta de que SÍ lo alcanzaría, argumentando en base a la tasa.",
+        "partial_credit": "El estudiante calcula correctamente la diferencia de 192 puntos o el incremento de 200 puntos, pero no llega a la conclusión final correcta.",
+        "no_credit": "Respuestas sin cálculos o irrelevantes."
+      }
+    }
+  ]
+}
