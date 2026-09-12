@@ -1,0 +1,60 @@
+{
+  "unit_id": "unit_math_en_001",
+  "domain": "math",
+  "protocol_version": "v1.1",
+  "stimulus": {
+    "title": "Smartphone Battery Usage",
+    "content": "A new smartphone battery has a capacity of 4000 mAh. When the phone is used for video streaming, the battery discharges at a constant rate of 400 mAh per hour. In standby mode, it discharges at a rate of 50 mAh per hour. A user starts with a fully charged battery (100%). They stream video for a certain number of hours and then leave the phone in standby mode."
+  },
+  "items": [
+    {
+      "process": "formulate",
+      "content": "change and relationships",
+      "context": "personal",
+      "format": "cr",
+      "demand": "low",
+      "level": "2",
+      "rubric": "1",
+      "anchor": "Battery"
+    },
+    {
+      "process": "employ",
+      "content": "change and relationships",
+      "context": "personal",
+      "format": "open",
+      "demand": "med",
+      "level": "3",
+      "rubric": "open_rubric",
+      "anchor": "Battery"
+    },
+    {
+      "process": "interpret",
+      "content": "change and relationships",
+      "context": "scientific",
+      "format": "cr",
+      "demand": "high",
+      "level": "5",
+      "rubric": "1",
+      "anchor": "Battery"
+    }
+  ],
+  "study_content": {
+    "length_minutes": 90,
+    "theory": "Linear relationships involve a constant rate of change. In this context, the battery capacity decreases by a fixed amount for every hour of activity. The formula for remaining capacity is Initial Capacity - (Rate x Time).",
+    "worked_examples": [
+      {
+        "problem": "How long will the phone last if left in standby mode from a full charge?",
+        "solution": "4000 mAh / 50 mAh/hour = 80 hours."
+      }
+    ],
+    "typical_errors": [
+      "Adding the rates of discharge instead of multiplying by the respective times.",
+      "Confusing the capacity (mAh) with the percentage (%)."
+    ]
+  },
+  "sources": [
+    "OECD PISA 2022 Results. Mathematics performance of Colombia (COL): 383 points (#64/81).",
+    "OECD PISA 2022 Results. OECD Average in Mathematics (OCDE): 472 points.",
+    "OECD PISA 2022 Results. Mathematics performance of Singapore (SGP): 575 points."
+  ]
+}
