@@ -1,0 +1,71 @@
+{
+  "unit_id": "unit_math_pt_001",
+  "domain": "math",
+  "protocol_version": "v1.1",
+  "stimulus": {
+    "title": "A Compra de um Smartphone",
+    "content": "O João quer comprar um smartphone que custa 800 euros. Ele encontrou duas lojas com promoções diferentes.\n\n- **Loja A:** O smartphone tem um desconto direto de 20% sobre o preço original.\n- **Loja B:** O smartphone tem um desconto de 10% sobre o preço original e, no momento do pagamento, é aplicado um desconto adicional de 10% sobre o novo preço.\n\nAmbas as lojas não cobram custos adicionais."
+  },
+  "items": [
+    {
+      "id": "math_pt_001_q1",
+      "question": "Qual é o preço final do smartphone na Loja A?",
+      "process": "employ",
+      "content": "quantity",
+      "context": "personal",
+      "format": "cr",
+      "demand": "low",
+      "level": "2",
+      "rubric": "1",
+      "anchor": "Discount"
+    },
+    {
+      "id": "math_pt_001_q2",
+      "question": "Qual das lojas oferece o melhor preço final para o smartphone?",
+      "process": "formulate",
+      "content": "quantity",
+      "context": "personal",
+      "format": "mc",
+      "demand": "med",
+      "level": "3",
+      "rubric": "1",
+      "anchor": "Discount",
+      "options": [
+        { "id": "A", "text": "A Loja A oferece o melhor preço." },
+        { "id": "B", "text": "A Loja B oferece o melhor preço." },
+        { "id": "C", "text": "As duas lojas oferecem o mesmo preço final." },
+        { "id": "D", "text": "Não é possível determinar com as informações dadas." }
+      ]
+    },
+    {
+      "id": "math_pt_001_q3",
+      "question": "Mostre matematicamente por que razão os preços finais são diferentes, calculando o valor pago na Loja B e explicando o raciocínio.",
+      "process": "evaluate",
+      "content": "quantity",
+      "context": "personal",
+      "format": "open",
+      "demand": "high",
+      "level": "5",
+      "rubric": "open_rubric",
+      "anchor": "Discount"
+    }
+  ],
+  "study_content": {
+    "length_minutes": 45,
+    "theory": "Os descontos sucessivos não são aditivos. Quando se aplica um desconto de 10% seguido de outro de 10%, o segundo desconto incide sobre o valor já reduzido, resultando num desconto total de 19%, e não de 20%.",
+    "worked_examples": [
+      {
+        "problem": "Calcular o preço após dois descontos sucessivos de 10% num valor de 100 euros.",
+        "solution": "100 - 10% = 90 euros. 90 - 10% = 81 euros. Desconto total: 19 euros (19%)."
+      }
+    ],
+    "typical_errors": [
+      "Somar as percentagens de descontos sucessivos, assumindo que 10% + 10% equivale a um único desconto de 20%."
+    ]
+  },
+  "sources": [
+    "OECD PISA 2022 Mathematics Framework. Promédio OCDE em Matemática (2022): 472 pontos (476/485).",
+    "OECD PISA 2022 Results. Desempenho da Colômbia (COL) em Matemática: 383 pontos (409/411, puesto 64/81).",
+    "Dados de Singapura (SGP): 575 pontos (543/561) em Matemática no PISA 2022."
+  ]
+}
