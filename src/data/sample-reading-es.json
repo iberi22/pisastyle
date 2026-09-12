@@ -1,0 +1,77 @@
+{
+  "unit_id": "unit_read_es_001",
+  "domain": "reading",
+  "protocol_version": "v1.1",
+  "stimulus": {
+    "title": "El Futuro del Teletrabajo en la Región",
+    "content": "La siguiente tabla muestra el porcentaje de empleados de diversas empresas tecnológicas que optaron por el teletrabajo exclusivo, un modelo híbrido o trabajo presencial en el año 2023. Además, se presenta un breve análisis de los líderes de recursos humanos.\n\n| Modelo de Trabajo | 2021 | 2022 | 2023 |\n|---|---|---|---|\n| Presencial | 10% | 15% | 20% |\n| Híbrido | 30% | 50% | 60% |\n| Remoto Exclusivo | 60% | 35% | 20% |\n\nDesde el inicio de la década, las políticas de asistencia a la oficina han fluctuado dramáticamente. Mientras algunos defienden el modelo remoto exclusivo por su flexibilidad y reducción de tiempos de traslado, recientes encuestas de satisfacción revelan que el modelo híbrido es el más preferido por los empleados, ya que equilibra la autonomía con la colaboración presencial. Sin embargo, los ejecutivos a menudo expresan preocupación sobre la cultura corporativa y la productividad a largo plazo bajo regímenes menos supervisados."
+  },
+  "items": [
+    {
+      "id": "read_es_001_q1",
+      "question": "Según la tabla, ¿qué porcentaje de empleados prefirió el modelo híbrido en el año 2023?",
+      "process": "locate",
+      "content": "continuous",
+      "context": "occupational",
+      "format": "mc",
+      "demand": "low",
+      "level": "2",
+      "rubric": "1",
+      "anchor": "Teletrabajo",
+      "options": [
+        { "id": "A", "text": "20%" },
+        { "id": "B", "text": "35%" },
+        { "id": "C", "text": "50%" },
+        { "id": "D", "text": "60%" }
+      ]
+    },
+    {
+      "id": "read_es_001_q2",
+      "question": "¿Cuál es la razón principal mencionada en el texto por la cual los empleados prefieren el modelo híbrido?",
+      "process": "understand",
+      "content": "continuous",
+      "context": "occupational",
+      "format": "mc",
+      "demand": "med",
+      "level": "3",
+      "rubric": "1",
+      "anchor": "Teletrabajo",
+      "options": [
+        { "id": "A", "text": "Porque elimina por completo los tiempos de traslado." },
+        { "id": "B", "text": "Porque equilibra la autonomía con la colaboración presencial." },
+        { "id": "C", "text": "Porque los ejecutivos pueden supervisar más de cerca." },
+        { "id": "D", "text": "Porque garantiza una mayor productividad a largo plazo." }
+      ]
+    },
+    {
+      "id": "read_es_001_q3",
+      "question": "Un líder de recursos humanos afirma: 'El modelo remoto exclusivo es la única forma de garantizar la flexibilidad para los trabajadores del futuro.' ¿Cómo cuestiona la información proporcionada en el texto y la tabla esta afirmación?",
+      "process": "evaluate",
+      "content": "multiple",
+      "context": "occupational",
+      "format": "open",
+      "demand": "high",
+      "level": "5",
+      "rubric": "open_rubric",
+      "anchor": "Teletrabajo"
+    }
+  ],
+  "study_content": {
+    "length_minutes": 60,
+    "theory": "La comprensión lectora en contextos laborales implica la integración de información de textos continuos (párrafos) y no continuos (tablas, gráficos). Es fundamental saber localizar datos específicos, comprender las motivaciones descritas y evaluar críticamente afirmaciones contrastándolas con la evidencia presentada.",
+    "worked_examples": [
+      {
+        "problem": "Identificar la tendencia del trabajo remoto exclusivo entre 2021 y 2023.",
+        "solution": "Observando la fila 'Remoto Exclusivo', los porcentajes pasan de 60% en 2021 a 35% en 2022 y 20% en 2023, mostrando una clara tendencia a la baja."
+      }
+    ],
+    "typical_errors": [
+      "No integrar la información de la tabla con el texto continuo al responder.",
+      "Asumir que las preocupaciones de los ejecutivos reflejan las preferencias de los empleados."
+    ]
+  },
+  "sources": [
+    "Textos originales PISAStyle generados para la evaluación.",
+    "Promedios PISA 2022 (Lectura/Matemáticas/Ciencias): (COL 383/409/411 #64/81, OCDE 472/476/485, SGP 575/543/561)"
+  ]
+}
