@@ -1,0 +1,96 @@
+---
+import Layout from '../layouts/Layout.astro';
+import readingData from '../data/sample-reading-pt.json';
+
+// Acceptance criteria: no {#if} (ternary with parenthesis), frontmatter col 0, Svelte props JSON-serializable, <script> with is:inline.
+const { unit_id, domain, protocol_version, stimulus, items, study_content, sources } = readingData;
+---
+
+<Layout title={stimulus.title}>
+  <div class="wrap">
+    <h1>{stimulus.title}</h1>
+    <div class="meta">
+      <span>Unit: {unit_id}</span>
+      <span>Domain: {domain}</span>
+      <span>Version: {protocol_version}</span>
+    </div>
+
+    <div class="content">
+      <p>{stimulus.content}</p>
+    </div>
+
+    <h2>Items</h2>
+    <div class="items">
+      {items.map((item) => (
+        <div class="item card">
+          <p class="question"><strong>Q:</strong> {item.question}</p>
+          <div class="metadata">
+            <span class="badge">Process: {item.process}</span>
+            <span class="badge">Content: {item.content}</span>
+            <span class="badge">Context: {item.context}</span>
+            <span class="badge">Format: {item.format}</span>
+            <span class="badge">Demand: {item.demand}</span>
+            <span class="badge">Level: {item.level}</span>
+            <span class="badge">Rubric: {item.rubric}</span>
+            <span class="badge">Anchor: {item.anchor}</span>
+          </div>
+          {(item.options) ? (
+            <ul class="options">
+              {item.options.map((opt) => (
+                <li><strong>{opt.id}</strong>: {opt.text}</li>
+              ))}
+            </ul>
+          ) : (
+            <p class="open-format">Open response</p>
+          )}
+        </div>
+      ))}
+    </div>
+
+    <h2>Study Content ({study_content.length_minutes} minutes)</h2>
+    <div class="study card">
+      <p><strong>Theory:</strong> {study_content.theory}</p>
+
+      <h3>Worked Examples</h3>
+      <ul>
+        {study_content.worked_examples.map((ex) => (
+          <li><strong>P:</strong> {ex.problem} <br/> <strong>S:</strong> {ex.solution}</li>
+        ))}
+      </ul>
+
+      <h3>Typical Errors</h3>
+      <ul>
+        {study_content.typical_errors.map((err) => (
+          <li>{err}</li>
+        ))}
+      </ul>
+    </div>
+
+    <h2>Sources</h2>
+    <ul class="sources">
+      {sources.map((src) => (
+        <li>{src}</li>
+      ))}
+    </ul>
+  </div>
+
+  <script is:inline>
+    console.log("Mock Reading PT loaded", "unit_read_pt_001");
+  </script>
+</Layout>
+
+<style>
+  .wrap { max-width: 800px; margin: 0 auto; padding: 2rem 1rem; color: var(--swal-text, #333); font-family: var(--swal-font, sans-serif); }
+  h1 { font-size: 2rem; color: var(--swal-accent, #06b6d4); }
+  h2 { margin-top: 2rem; font-size: 1.5rem; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; }
+  .meta { display: flex; gap: 1rem; color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; }
+  .content { background: #f9f9f9; padding: 1.5rem; border-radius: 8px; line-height: 1.6; }
+  .card { background: #fff; border: 1px solid #eee; padding: 1rem; margin-top: 1rem; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+  .question { font-size: 1.1rem; }
+  .metadata { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
+  .badge { background: #e0f2fe; color: #0284c7; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; }
+  .options { list-style: none; padding: 0; }
+  .options li { margin-bottom: 0.5rem; background: #fafafa; padding: 0.5rem; border-radius: 4px; border: 1px solid #e5e5e5; }
+  .open-format { font-style: italic; color: #888; }
+  .sources { font-size: 0.9rem; color: #555; }
+</style>
