@@ -1,0 +1,78 @@
+{
+  "unit_id": "unit_sci_en_001",
+  "domain": "science",
+  "protocol_version": "v1.1",
+  "stimulus": {
+    "title": "The Greenhouse Effect and Our Community",
+    "content": "The table below shows the average daily carbon dioxide ($CO_2$) emissions in a small city over three consecutive years. In 2020, the city introduced a fleet of electric buses, reducing the circulation of combustion vehicles.\n\n| Year | Emissions ($CO_2$ in tons/day) |\n|---|---|\n| 2019 | 150 |\n| 2020 | 120 |\n| 2021 | 95 |\n\nSome atmospheric gases, such as carbon dioxide ($CO_2$) and methane ($CH_4$), trap heat from the Sun and contribute to the Greenhouse Effect. Without them, the Earth would be too cold to sustain life as we know it. However, human activities have significantly increased the concentrations of these gases."
+  },
+  "items": [
+    {
+      "id": "sci_en_001_q1",
+      "question": "Based on the table, what can be concluded about the impact of introducing electric buses in 2020?",
+      "process": "interpret",
+      "content": "physical",
+      "context": "local",
+      "format": "mc",
+      "demand": "low",
+      "level": "2",
+      "rubric": "1",
+      "anchor": "Greenhouse",
+      "options": [
+        { "id": "A", "text": "CO2 emissions increased from 2019 to 2020." },
+        { "id": "B", "text": "There was an immediate reduction in CO2 emissions." },
+        { "id": "C", "text": "Methane became the predominant gas." },
+        { "id": "D", "text": "There was no impact on daily emissions." }
+      ]
+    },
+    {
+      "id": "sci_en_001_q2",
+      "question": "Why is the Greenhouse Effect naturally important for our planet?",
+      "process": "explain",
+      "content": "earth-space",
+      "context": "global",
+      "format": "mc",
+      "demand": "med",
+      "level": "3",
+      "rubric": "1",
+      "anchor": "Greenhouse",
+      "options": [
+        { "id": "A", "text": "Because it cools the planet during the day." },
+        { "id": "B", "text": "Because without it the Earth would be too cold for life." },
+        { "id": "C", "text": "Because it increases the ozone layer." },
+        { "id": "D", "text": "Because it is the main source of electrical energy." }
+      ]
+    },
+    {
+      "id": "sci_en_001_q3",
+      "question": "A student states: 'We must eliminate all greenhouse gases from the atmosphere to stop climate change.' Use information from the text to explain why this statement is scientifically incorrect.",
+      "process": "evaluate",
+      "content": "earth-space",
+      "context": "global",
+      "format": "open",
+      "demand": "high",
+      "level": "5",
+      "rubric": "open_rubric",
+      "anchor": "Greenhouse"
+    }
+  ],
+  "study_content": {
+    "length_minutes": 90,
+    "theory": "The Greenhouse Effect is a natural process that warms the Earth's surface. When the Sun's energy reaches the Earth's atmosphere, some of it is reflected back to space and the rest is absorbed and re-radiated by greenhouse gases. These include water vapor, carbon dioxide, methane, nitrous oxide, and ozone.",
+    "worked_examples": [
+      {
+        "problem": "Calculate the percentage reduction in emissions from 2019 to 2021 in the city.",
+        "solution": "((150 - 95) / 150) * 100 = 36.6% reduction."
+      }
+    ],
+    "typical_errors": [
+      "Confusing the Greenhouse Effect with the destruction of the Ozone Layer.",
+      "Believing that the Greenhouse Effect is exclusively harmful and caused solely by humans."
+    ]
+  },
+  "sources": [
+    "OECD PISA 2025 Science Framework (2nd draft). OECD Average in Science (2022): 485 points.",
+    "OECD PISA 2022 Results. Colombia's performance in Science: 411 points (ranked 64/81).",
+    "Singapore (SGP) data: 561 points in Science in PISA 2022."
+  ]
+}
