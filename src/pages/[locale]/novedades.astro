@@ -1,0 +1,53 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Card, Badge } from '@swal/ui';
+import { t, normalizePisaLocale } from '../../lib/pisa-i18n';
+import novedadesEs from '../../data/novedades.es.json';
+import novedadesEn from '../../data/novedades.en.json';
+import novedadesPt from '../../data/novedades.pt.json';
+
+const { locale } = Astro.params;
+const currentLocale = normalizePisaLocale(locale);
+
+let data = novedadesEn;
+(currentLocale === 'es') ? (data = novedadesEs) : null;
+(currentLocale === 'pt') ? (data = novedadesPt) : null;
+
+// Since it's dynamic, we shouldn't use static paths unless prerender is enabled, but the requirements don't mention prerendering.
+// However, if we need getStaticPaths:
+export function getStaticPaths() {
+  return [
+    { params: { locale: 'es' } },
+    { params: { locale: 'en' } },
+    { params: { locale: 'pt' } }
+  ];
+}
+
+---
+<Layout title={t('site.title', currentLocale)}>
+  <div class="wrap">
+    <h1 class="title">Novedades</h1>
+    <p class="sub">Últimas noticias</p>
+    <div class="list">
+      {data.map((item) => (
+        <Card variant="surface" padding="md">
+          <h2>{item.titulo}</h2>
+          <div class="meta">
+            <Badge variant="neutral">{item.fecha}</Badge>
+            <Badge variant="info">{item.fuente}</Badge>
+          </div>
+          <p>{item.contenido}</p>
+        </Card>
+      ))}
+    </div>
+  </div>
+</Layout>
+<style>
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem; display: grid; gap: 1.25rem; }
+  .title { font-size: 1.6rem; font-weight: 800; color: var(--swal-text); letter-spacing: -0.02em; }
+  .sub { color: var(--swal-text-secondary); line-height: 1.6; }
+  .list { display: grid; gap: 1rem; }
+  h2 { font-size: 1.2rem; font-weight: 700; color: var(--swal-text); margin-top: 0; margin-bottom: 0.5rem; }
+  .meta { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+  p { color: var(--swal-text-secondary); line-height: 1.6; margin: 0; }
+</style>
