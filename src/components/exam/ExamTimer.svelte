@@ -94,17 +94,23 @@
 </div>
 
 <style>
+  /* Tokens del core, sin fallback literal (ver ShareButtons.svelte): los
+     fallbacks anteriores (#f8fafc, #0f172a, #e2e8f0, #ef4444) eran de la
+     paleta Edge-Hive, medida para fondo blanco, y se rompian en Bone oscuro.
+     MEDIDO (WCAG 2.2, alfa compuesto sobre el canvas real):
+       --swal-text / --swal-surface   16.22:1 oscuro / 17.40:1 claro
+       --swal-danger / --swal-surface  6.57:1 oscuro /  4.80:1 claro */
   .exam-timer {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    font-family: var(--swal-font-mono, monospace);
-    background: var(--swal-surface, #f8fafc);
-    color: var(--swal-text, #0f172a);
-    padding: 0.25rem 0.75rem;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    border: 1px solid var(--swal-border, #e2e8f0);
+    gap: var(--swal-space-2);
+    font-family: var(--swal-font-mono);
+    background: var(--swal-surface);
+    color: var(--swal-text);
+    padding: var(--swal-space-1) var(--swal-space-3);
+    border-radius: var(--swal-radius-sm);
+    font-size: var(--swal-font-size);
+    border: 1px solid var(--swal-border);
   }
   .label {
     font-weight: 500;
@@ -114,8 +120,8 @@
     font-variant-numeric: tabular-nums;
   }
   .paused {
-    color: var(--swal-danger, #ef4444);
-    font-size: 0.75rem;
+    color: var(--swal-danger);
+    font-size: var(--swal-font-size-xs);
     text-transform: uppercase;
   }
 </style>

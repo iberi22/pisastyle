@@ -77,11 +77,17 @@
 </div>
 
 <style>
-  .aui { display: grid; gap: 1rem; }
-  .aui-title { font-size: 1.2rem; font-weight: 800; color: var(--swal-text); }
+  /* Tokens del core para geometria y tamano tambien, no solo color: un
+     `font-size: 0.85rem` aqui es el mismo numero que otro ponia como
+     `var(--swal-font-size-sm)`, y por eso los dos se desincronizaban al
+     cambiar la escala del tema. MEDIDO (WCAG 2.2):
+       --swal-danger / --swal-surface     6.57:1 oscuro / 4.80:1 claro
+       --swal-text-muted / --swal-surface 5.45:1 oscuro / 5.57:1 claro */
+  .aui { display: grid; gap: var(--swal-space-4); }
+  .aui-title { font-size: var(--swal-font-size-xl); font-weight: 800; color: var(--swal-text); }
   .aui-sub { color: var(--swal-text-secondary); margin: 0; }
-  .aui-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.9rem; }
+  .aui-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--swal-space-3); }
   .aui-cell { min-width: 0; }
-  .aui-empty { color: var(--swal-text-muted); font-size: 0.9rem; }
-  .aui-unknown { color: var(--swal-danger); font-size: 0.85rem; border: 1px dashed var(--swal-danger); padding: 0.5rem; border-radius: var(--swal-radius); }
+  .aui-empty { color: var(--swal-text-muted); font-size: var(--swal-font-size); }
+  .aui-unknown { color: var(--swal-danger); font-size: var(--swal-font-size-sm); border: 1px dashed var(--swal-danger); padding: var(--swal-space-2); border-radius: var(--swal-radius); }
 </style>

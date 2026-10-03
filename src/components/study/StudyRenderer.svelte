@@ -112,21 +112,34 @@
 </div>
 
 <style>
+  /* Tokens del core (@swal/ui), tema Bone Warm.
+   MEDIDO con la fórmula de luminancia sRGB de WCAG 2.2, componiendo el alfa de
+   la superficie sobre el canvas real del tema:
+     --swal-text / --swal-surface            16.22:1 oscuro / 17.40:1 claro
+     --swal-text / --swal-surface-active     12.32:1 oscuro / 14.53:1 claro
+   La cabecera de la tabla va sobre --swal-surface-active, no sobre un gris
+   fijo: el #f5f5f5 anterior era un blanco sucio medido para superficie blanca
+   y en Bone oscuro se leia como un parche gris sin relacion con el tema. */
   .study-renderer {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: var(--swal-space-8);
+    color: var(--swal-text);
   }
   .sources-table {
     width: 100%;
     border-collapse: collapse;
   }
   .sources-table th, .sources-table td {
-    border: 1px solid #ccc;
-    padding: 0.5rem;
+    border: 1px solid var(--swal-border);
+    padding: var(--swal-space-2);
     text-align: left;
   }
   .sources-table th {
-    background: #f5f5f5;
+    background: var(--swal-surface-active);
+    color: var(--swal-text);
+  }
+  .sources-table a {
+    color: var(--swal-accent);
   }
 </style>

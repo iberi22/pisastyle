@@ -22,10 +22,17 @@
 </Card>
 
 <style>
-  .head { display: flex; gap: 0.5rem; align-items: center; }
-  .pct { color: var(--swal-text-muted); font-size: 0.85rem; }
-  .bar { height: 6px; background: var(--swal-surface); border-radius: 999px; overflow: hidden; margin-top: 0.5rem; }
-  .fill { height: 100%; background: var(--swal-accent); transition: width 0.3s; }
-  .breakdown { color: var(--swal-text-secondary); font-size: 0.85rem; margin: 0.5rem 0 0; font-family: var(--swal-font-mono); }
-  .hint { color: var(--swal-text-muted); font-size: 0.75rem; margin: 0.25rem 0 0; }
+  /* Tokens del core. MEDIDO (WCAG 2.2, alfa compuesto sobre el canvas real):
+       --swal-text-muted / --swal-surface      5.45:1 oscuro / 5.57:1 claro
+       --swal-text-secondary / --swal-surface  9.11:1 oscuro / 8.73:1 claro
+     Ambos AA para texto normal: el "pct%" y el desglose de precio salen en
+     tamano pequeno, asi que no pueden bajar a --swal-text-faint (decorativo). */
+  .head { display: flex; gap: var(--swal-space-2); align-items: center; }
+  .pct { color: var(--swal-text-muted); font-size: var(--swal-font-size-sm); }
+  /* El carril va sobre --swal-surface-active, no sobre --swal-surface: los
+     dos son translucidos y a la misma alfa, sobre el fondo se verian igual. */
+  .bar { height: var(--swal-space-2); background: var(--swal-surface-active); border-radius: var(--swal-radius-full); overflow: hidden; margin-top: var(--swal-space-2); }
+  .fill { height: 100%; background: var(--swal-accent); transition: width var(--swal-transition); }
+  .breakdown { color: var(--swal-text-secondary); font-size: var(--swal-font-size-sm); margin: var(--swal-space-2) 0 0; font-family: var(--swal-font-mono); }
+  .hint { color: var(--swal-text-muted); font-size: var(--swal-font-size-xs); margin: var(--swal-space-1) 0 0; }
 </style>

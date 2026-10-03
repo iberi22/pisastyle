@@ -44,21 +44,29 @@
 </button>
 
 <style>
+  /* Tokens del core, sin fallback literal: @swal/ui esta cargado en
+     Layout.astro ANTES que el componente, asi que un fallback aqui solo
+     enmascararia un token ausente — y ademas reintroducia la paleta anterior
+     (--swal-surface: #fff, --swal-text: #333) que es solo de tema claro.
+     MEDIDO (WCAG 2.2, alfa compuesto sobre el canvas real):
+       --swal-text / --swal-surface         16.22:1 oscuro / 17.40:1 claro
+       --swal-text / --swal-surface-hover   14.33:1 oscuro / 15.94:1 claro */
   .share-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--swal-border, #ccc);
-    border-radius: 4px;
-    background-color: var(--swal-surface, #fff);
-    color: var(--swal-text, #333);
+    gap: var(--swal-space-2);
+    padding: var(--swal-space-2) var(--swal-space-4);
+    border: 1px solid var(--swal-border);
+    border-radius: var(--swal-radius-sm);
+    background-color: var(--swal-surface);
+    color: var(--swal-text);
     cursor: pointer;
     font-family: inherit;
-    font-size: 1rem;
-    transition: background-color 0.2s;
+    font-size: var(--swal-font-size-lg);
+    transition: background-color var(--swal-transition-fast);
   }
   .share-btn:hover {
-    background-color: var(--swal-surface-hover, #f5f5f5);
+    background-color: var(--swal-surface-hover);
   }
 </style>
