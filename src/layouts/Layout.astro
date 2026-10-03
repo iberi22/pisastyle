@@ -10,13 +10,16 @@ const { title = 'SWAL App — Template' } = Astro.props;
     <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content="SWAL App Template — Astro + Svelte + @swal/ui + vite-pwa + Cloudflare + Xavier + mesh + LLM" />
-    <link rel="manifest" href="/manifest.json" /><meta name="theme-color" content="#06b6d4" />
+    <link rel="manifest" href="/manifest.json" /><meta name="theme-color" content="#121211" />
   </head>
   <body>
     <slot />
     <Toaster client:load />
     <style is:global>
       @import '@swal/ui/tokens';
+      /* Capa semantica PISAStyle (series Okabe-Ito accesibles) — DESPUES del
+         core para que pueda mapear sobre `--swal-*`. Ver src/styles/pisa-tokens.css */
+      @import '../styles/pisa-tokens.css';
       html { background: var(--swal-bg); color: var(--swal-text); }
       body { margin: 0; font-family: var(--swal-font); -webkit-font-smoothing: antialiased; }
     </style>

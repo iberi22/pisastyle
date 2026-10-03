@@ -24,4 +24,88 @@
   3. teal (#005A4C) vs cream (#F5F1E8): 7.26:1
   4. okabe-black (#000000) vs cream (#F5F1E8): 18.63:1
   5. navy (#0B3D66) vs white (#FFFFFF): 11.21:1
+
+  ==========================================================================
+  CONEXION AL DESIGN SYSTEM (@swal/ui) — 2026-10-03
+  ==========================================================================
+  Este archivo estaba DESCONECTADO: `grep -rn 'pisa-tokens'` no encontraba
+  ninguna importacion, asi que la paleta Okabe-Ito (la parte accesible para
+  daltonismo, que es el argumento de las tablas de contraste de arriba) no
+  existia para la UI real. Era un segundo sistema de color sin relacion con
+  `--swal-*`, que es la forma canonica de drift de design system.
+
+  Ahora se importa en Layout.astro DESPUES de `@swal/ui/tokens` y expone una
+  capa SEMANTICA derivada: los componentes usan `--pisa-*`, nunca `--okabe-*`
+  crudo ni `--navy`. Asi el tema Bone Warm del core puede cambiar sin que las
+  graficas se desincronicen.
+  ==========================================================================
 */
+
+/* Capa semantica PISAStyle — series de graficas y estados de feedback.
+   Mapea sobre la paleta Okabe-Ito, que es la fuente de verdad de contraste.
+   Los graficos de PISA son series categoricas: el orden importa, asi que la
+   asignacion es fija y no "el color que toque". */
+:root {
+  /* Series 1-8: Okabe-Ito en su orden canonico (perceptualmente uniforme).
+     Usar por indice de serie, nunca por nombre. */
+  --pisa-series-1: var(--okabe-blue); /* #0072B2 */
+  --pisa-series-2: var(--okabe-vermilion); /* #D55E00 */
+  --pisa-series-3: var(--okabe-bluish-green); /* #009E73 */
+  --pisa-series-4: var(--okabe-orange); /* #E69F00 */
+  --pisa-series-5: var(--okabe-sky-blue); /* #56B4E9 */
+  --pisa-series-6: var(--okabe-reddish-purple); /* #CC79A7 */
+  --pisa-series-7: var(--okabe-yellow); /* #F0E442 */
+  --pisa-series-8: var(--okabe-black); /* #000000 */
+
+  /* Estados de respuesta de un item de examen. `correct` y `incorrect` son
+     los unicos dos que DEBEN distinguirse sin depender del color: todo el
+     feedback del jugador se valida con un icono + texto tambien (WCAG 1.4.1
+     — no usar color como unico medio de transmision). */
+  --pisa-correct: var(--okabe-bluish-green);
+  --pisa-incorrect: var(--okabe-vermilion);
+  --pisa-partial: var(--okabe-orange);
+  --pisa-focus: var(--okabe-sky-blue);
+
+  /* Superficies de stimulus (tablas del enunciado). Se apoyan en el fondo
+     del core y no inventan un blanco propio: el tema Bone es oscuro por
+     defecto y un `--cream` fijo aqui contrastaria al reves. */
+  --pisa-stimulus-bg: var(--swal-surface);
+  --pisa-stimulus-border: var(--swal-border, rgba(245, 245, 244, 0.12));
+  --pisa-stimulus-text: var(--swal-text);
+
+  /* Jerarquia tipografica del enunciado: mantiene el alto contraste del
+     core en vez de degradar a un gris generico. */
+  --pisa-text-primary: var(--swal-text);
+  --pisa-text-secondary: var(--swal-text-secondary, var(--swal-text));
+}
+
+/* Regla de accesibilidad del juego de color (no negociable): en modo de
+   alto contraste / daltonismo, las series caen a una rampa monocroma. */
+@media (prefers-contrast: more) {
+  :root {
+    --pisa-series-1: var(--swal-text);
+    --pisa-series-2: var(--swal-text-secondary);
+    --pisa-series-3: var(--swal-text-muted);
+    --pisa-series-4: var(--swal-text-secondary);
+    --pisa-series-5: var(--swal-text);
+    --pisa-series-6: var(--swal-text-secondary);
+    --pisa-series-7: var(--swal-text-muted);
+    --pisa-series-8: var(--swal-text-secondary);
+  }
+}
+
+/* Impresion: las graficas de un examen impreso (el estimulo se imprime en
+   papel, ver src/styles/print.css) pierden el fondo. Forzar texto oscuro y
+   bordes solidos para que la rampa siga siendo legible en B/N. */
+@media print {
+  :root {
+    --pisa-series-1: #000000;
+    --pisa-series-2: #333333;
+    --pisa-series-3: #666666;
+    --pisa-series-4: #000000;
+    --pisa-series-5: #333333;
+    --pisa-series-6: #666666;
+    --pisa-series-7: #000000;
+    --pisa-series-8: #333333;
+  }
+}
