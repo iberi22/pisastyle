@@ -85,9 +85,20 @@ export default {
       text = aiRes?.response ?? aiRes?.result ?? '';
       tokensUsed = Math.ceil(text.length / 4) || estimated;
     } catch (e: any) {
-      // Fallback en dev sin binding AI (local)
-      text = `[AI fallback dev] ${prompt.slice(0, 200)}`;
-      tokensUsed = estimated;
+      // Fallback en dev sin binding AI (local).
+      //
+      // SEGURIDAD: NO devolver el prompt al cliente. Este fallback se activo
+      // cuando el binding AI falla, y `prompt` puede contener el enunciado
+      // literal de un item de examen o material de estudio — que
+      // docs/PISASTYLE_TELEMETRY.md prohibe explicitamente ("nunca
+      // enunciados/respuestas literales"). Ademas un fallback que devuelve
+      // el input es un eco: el cliente creeria que la IA respondio.
+      // En produccion esto debe ser un 503 explicito, no texto inventado.
+      console.error('[ai] Workers AI binding unavailable', { appId, error: String(e) });
+      return Response.json(
+        { error: 'ai_unavailable', detail: 'El servicio de inferencia no esta disponible. Intenta de nuevo.' },
+        { status: 503 },
+      );
     }
 
     // 3. Actualizar ledger D1 + KV

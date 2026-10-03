@@ -6,7 +6,7 @@ import { xavierSearch } from './xavier';
 import { domainConfig } from './domain.config';
 import { canAffordInference, creditStatus } from './billing';
 
-export type LLMRequest = { prompt: string; system?: string; model?: string; useMemory?: boolean; tierId?: 'free'|'socio'|'managed'; estimatedTokens?: number };
+export type LLMRequest = { prompt: string; system?: string; model?: string; useMemory?: boolean; tierId?: 'free'|'mesh-only'|'payg'|'payg-managed'|'socio'|'socio-managed'; estimatedTokens?: number };
 export type LLMResponse = { text: string; model: string; fromCache?: boolean; via?: 'local'|'cf' };
 
 export async function llmComplete(req: LLMRequest): Promise<LLMResponse> {
@@ -46,6 +46,9 @@ export async function llmComplete(req: LLMRequest): Promise<LLMResponse> {
   }
   const system = req.system ? req.system + '\n' : '';
   const ctx = context ? `Context:\n${context}\n\n` : '';
-  console.log('[llm] complete', { model: req.model ?? 'auto', via: 'local', prompt: req.prompt.slice(0, 80) });
+  // PRIVACIDAD: no loguear el prompt. Puede contener el enunciado literal de
+  // un item de examen o material de estudio, que docs/PISASTYLE_TELEMETRY.md
+  // prohibe. Para depurar, meter un hash del prompt, nunca su contenido.
+  console.log('[llm] complete', { model: req.model ?? 'auto', via: 'local', promptChars: req.prompt.length });
   return { text: `${system}${ctx}LLM local stub (sin CF): implementa ProviderRouter en src/lib/llm.ts (ver swal-agent-runner llm-provider-manager.ts)`, model: req.model ?? 'stub', via: 'local' };
 }
