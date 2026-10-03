@@ -23,6 +23,14 @@
   ],
   "stats": {
     "title": "Resultados PISA 2022",
+    "labels": {
+      "math": "Matemática",
+      "reading": "Leitura",
+      "science": "Ciências",
+      "colombia": "Colômbia",
+      "oecd": "Média OCDE",
+      "singapore": "Singapura (top)"
+    },
     "colombia": {
       "math": 383,
       "reading": 409,

@@ -53,32 +53,30 @@ const homeData = dataMap[locale as keyof typeof dataMap];
     <div class="stats-section">
       <Card variant="elevated" padding="lg">
         <div class="stats-grid">
-          <div class="stat-col">
-            <h3>Colombia <Badge variant="info">Rank {homeData.stats.colombia.rank}</Badge></h3>
-            <div class="scores">
-              <div><span class="lab">Math:</span> <span class="val">{homeData.stats.colombia.math}</span></div>
-              <div><span class="lab">Reading:</span> <span class="val">{homeData.stats.colombia.reading}</span></div>
-              <div><span class="lab">Science:</span> <span class="val">{homeData.stats.colombia.science}</span></div>
-            </div>
-          </div>
-
-          <div class="stat-col">
-            <h3>OECD Average</h3>
-            <div class="scores">
-              <div><span class="lab">Math:</span> <span class="val">{homeData.stats.oecd.math}</span></div>
-              <div><span class="lab">Reading:</span> <span class="val">{homeData.stats.oecd.reading}</span></div>
-              <div><span class="lab">Science:</span> <span class="val">{homeData.stats.oecd.science}</span></div>
-            </div>
-          </div>
-
-          <div class="stat-col">
-            <h3>Singapore (Top)</h3>
-            <div class="scores">
-              <div><span class="lab">Math:</span> <span class="val">{homeData.stats.singapore.math}</span></div>
-              <div><span class="lab">Reading:</span> <span class="val">{homeData.stats.singapore.reading}</span></div>
-              <div><span class="lab">Science:</span> <span class="val">{homeData.stats.singapore.science}</span></div>
-            </div>
-          </div>
+          {/* Antes las 9 celdas (3 paises x 3 dominios) estaban escritas a
+              mano con las etiquetas "Math:", "Reading:", "Science:" en ingles
+              hardcodeadas, en las paginas es y pt. Ahora salen de
+              home.{locale}.json -> stats.labels y el bloque se recorre. */}
+          {(['colombia', 'oecd', 'singapore'] as const).map((region) => {
+            const r = homeData.stats[region];
+            const L = homeData.stats.labels;
+            // `rank` solo existe en la columna de Colombia. El `&&` del JSX no
+            // estrecha el tipo union, asi que se comprueba con `'rank' in r`.
+            const rank = 'rank' in r ? String((r as { rank: string }).rank) : null;
+            return (
+              <div class="stat-col">
+                <h3>
+                  {L[region]}
+                  {rank && <Badge variant="info">Rank {rank}</Badge>}
+                </h3>
+                <div class="scores">
+                  <div><span class="lab">{L.math}:</span> <span class="val">{r.math}</span></div>
+                  <div><span class="lab">{L.reading}:</span> <span class="val">{r.reading}</span></div>
+                  <div><span class="lab">{L.science}:</span> <span class="val">{r.science}</span></div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </Card>
     </div>
