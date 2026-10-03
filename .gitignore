@@ -3,17 +3,50 @@
 # Lo PRIVADO (nunca commitear, vive en backend central edge-hive + repo privado de contenido):
 pisa_units/
 study_content/
-docs/plans/
-docs/internal/
+answer_keys/
 content_packs/
 telemetry_raw/
 backend_adapters/
 .secrets/
+
+# Planes internos y material de sprint. OJO: antes vivia solo `docs/plans/`,
+# lo que NO cubria `docs/PISASTYLE_PLAN_2H.md` en la raiz de docs/ (quedo
+# tracked en un repo publico y filtro la orquestacion multi-cuenta Jules).
+# Por eso el patron ahora es `docs/*PLAN*` y no una ruta literal.
+docs/plans/
+docs/internal/
+docs/*PLAN*
+docs/*plan*
+**/*PLAN_*.md
+**/*_PLAN.md
+
+# Unidades de contenido con rubrica/answer key. Los mocks de `src/data/`
+# tambien son contenido privado por decision de LICENSE.md punto 2.
+src/data/sample-unit*.json
+src/data/sample-math*.json
+src/data/sample-reading*.json
+src/data/sample-science*.json
+src/data/sample-*.json
+
+# Credenciales y claves. `wrangler.secrets.toml` solo; las variantes por
+# entorno tambien (wrangler.dev.toml lleva IDs reales de una cuenta dev).
+wrangler.secrets.toml
+wrangler.*.toml
+!wrangler.toml
+.npmrc
+.credentials.json
+credentials.json
+
+# Claves y certificados: el set original solo cubria pem/key.
 *.pem
 *.key
-.env
-.env.*
-wrangler.secrets.toml
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.crt
+*.cer
+*.der
 
 # Derivados
 node_modules/
@@ -22,3 +55,16 @@ dist/
 .wrangler/
 test-results/
 coverage/
+playwright-report/
+blob-report/
+.playwright/
+*.tsbuildinfo
+*.local
+*.log
+*.db
+*.sqlite
+*.sqlite3
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
