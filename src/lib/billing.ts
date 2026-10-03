@@ -29,9 +29,16 @@ export const TIERS: Record<SocioTier['id'], SocioTier> = {
 };
 
 // Backward compat: mapping socio -> payg
+// OJO: la clave historica es 'socio-managed', NO 'managed'. Un cliente que
+// mande 'managed' caia en resolveTierId() sin mapear, devolvia un id
+// inexistente en TIERS y el pricing quedaba undefined. Alineado con
+// cores/swal-app-template (2026-08-31) y con swal-training/content-studio.
 export const LEGACY_TIER_MAP: Record<string, SocioTier['id']> = {
   socio: 'payg',
-  'managed': 'payg-managed',
+  'socio-managed': 'payg-managed',
+  // Se acepta tambien 'managed' por clientes previos a la renombra, pero
+  // apunta al mismo canonico.
+  managed: 'payg-managed',
 };
 
 export function resolveTierId(id: string): SocioTier['id'] {
