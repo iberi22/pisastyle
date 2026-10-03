@@ -3,7 +3,19 @@ import Layout from '../../layouts/Layout.astro';
 import { Card, Badge } from '@swal/ui';
 import { buildAlternates, routeLocale } from '../../lib/alternates';
 
-export const prerender = true;
+// SIN `export const prerender = true` a proposito.
+//
+// Se probo y rompio: /es/metodo, /en/metodo y /pt/metodo devolvian 500 en
+// `astro dev` mientras las otras dos paginas (que no lo tienen) respondian 200.
+// En `output: 'server'` con el adaptador de Cloudflare, Astro 7 NO ejecuta el
+// prerender handler en dev (vite-plugin-astro-server/plugin.js solo lo usa si
+// el entorno 'prerender' es runnable), asi que la ruta se cae.
+//
+// El build de produccion si prerenderiza y el HTML resultante es correcto
+// (7343 bytes, lang y hreflang bien), pero un 500 en dev hace imposible
+// trabajar en la pagina. Todo SSR es coherente con las otras dos rutas, asi
+// que la opcion segura es quitarlo. Si alguna vez hace falta prerenderizar
+// esta pagina, hay que hacerlo por build, no por dev."""
 
 export function getStaticPaths() {
   return [
