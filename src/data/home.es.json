@@ -3,6 +3,7 @@
     "title": "Domina PISA con el Método PISAStyle",
     "subtitle": "Unidades con estímulo + estudio de 1-2h + examen. Fuentes OECD al final de cada unidad."
   },
+  "domainsTitle": "Dominios",
   "domains": [
     {
       "id": "math",

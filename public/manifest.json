@@ -1,12 +1,14 @@
 {
   "name": "PISAStyle by SWAL",
   "short_name": "PISAStyle",
-  "description": "SWAL App PWA — template canonico Astro + Svelte + @swal/ui + edge-mesh + Xavier + LLM",
+  "description": "PISAStyle — preparacion PISA (matematicas, lectura, ciencias y mundo digital). Contenido educativo no oficial, sin afiliacion con la OECD.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#020617",
-  "theme_color": "#06b6d4",
+  "background_color": "#121211",
+  "theme_color": "#121211",
   "orientation": "any",
+  "lang": "es",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/icons/icon-192.svg",

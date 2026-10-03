@@ -3,6 +3,7 @@
     "title": "Master PISA with PISAStyle Method",
     "subtitle": "Stimulus units + 1-2h study + exam. OECD sources at the end of each unit."
   },
+  "domainsTitle": "Domains",
   "domains": [
     {
       "id": "math",
