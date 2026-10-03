@@ -5,6 +5,7 @@ import { t, normalizePisaLocale } from '../../lib/pisa-i18n';
 import novedadesEs from '../../data/novedades.es.json';
 import novedadesEn from '../../data/novedades.en.json';
 import novedadesPt from '../../data/novedades.pt.json';
+import { buildAlternates, routeLocale } from '../../lib/alternates';
 
 const { locale } = Astro.params;
 const currentLocale = normalizePisaLocale(locale);
@@ -24,7 +25,7 @@ export function getStaticPaths() {
 }
 
 ---
-<Layout title={t('site.title', currentLocale)}>
+<Layout title={t('site.title', currentLocale)} locale={routeLocale(locale)} alternates={buildAlternates({ path: 'novedades', locale, site: Astro.site })}>
   <div class="wrap">
     <h1 class="title">Novedades</h1>
     <p class="sub">Últimas noticias</p>

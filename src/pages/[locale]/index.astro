@@ -4,6 +4,7 @@ import { Button, Card, Badge } from '@swal/ui';
 import * as enData from '../../data/home.en.json';
 import * as esData from '../../data/home.es.json';
 import * as ptData from '../../data/home.pt.json';
+import { buildAlternates, routeLocale } from '../../lib/alternates';
 
 export function getStaticPaths() {
   return [
@@ -24,7 +25,7 @@ const dataMap = {
 const homeData = dataMap[locale as keyof typeof dataMap];
 ---
 
-<Layout title={homeData.hero.title}>
+<Layout title={homeData.hero.title} locale={routeLocale(locale)} alternates={buildAlternates({ path: '', locale, site: Astro.site })}>
   <div class="wrap">
     <div class="hero">
       <h1 class="title">{homeData.hero.title}</h1>
@@ -36,7 +37,7 @@ const homeData = dataMap[locale as keyof typeof dataMap];
       </div>
     </div>
 
-    <h2 class="section-title">Domains</h2>
+    <h2 class="section-title">{homeData.domainsTitle}</h2>
     <div class="domains">
       {homeData.domains.map((domain) => (
         <Card variant="surface" padding="md">

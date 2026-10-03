@@ -1,15 +1,36 @@
 ---
 import { Toaster } from '@swal/ui';
-interface Props { title?: string; }
-const { title = 'SWAL App — Template' } = Astro.props;
+import { PISASTYLE_DEFAULT_LOCALE, type PisaLocale } from '../lib/pisa-i18n';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Locale explicito de la ruta (/es|en|pt/...). Si no viene, se usa el que
+   *  resolvio el middleware (Accept-Language, cookie, ?lang=). */
+  locale?: PisaLocale;
+  /** URLs alternas para hreflang. Sin esto Google no indexa las 3 locales
+   *  como la misma pagina en distintos idiomas, sino 3 paginas duplicadas. */
+  alternates?: Record<string, string>;
+}
+const {
+  title = 'PISAStyle by SWAL — Preparación PISA',
+  description = 'Matemáticas, Lectura, Ciencias y Mundo Digital. Contenido educativo no oficial, sin afiliación con la OECD.',
+  locale = Astro.locals.pisaLocale ?? PISASTYLE_DEFAULT_LOCALE,
+  alternates,
+} = Astro.props;
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang={locale}>
   <head>
     <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
-    <meta name="description" content="SWAL App Template — Astro + Svelte + @swal/ui + vite-pwa + Cloudflare + Xavier + mesh + LLM" />
+    <meta name="description" content={description} />
+    {alternates && Object.entries(alternates).map(([lang, href]) => (
+      <link rel="alternate" hreflang={lang} href={href} />
+    ))}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
     <link rel="manifest" href="/manifest.json" /><meta name="theme-color" content="#121211" />
   </head>
   <body>

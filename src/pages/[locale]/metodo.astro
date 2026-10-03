@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { Card, Badge } from '@swal/ui';
+import { buildAlternates, routeLocale } from '../../lib/alternates';
 
 export const prerender = true;
 
@@ -53,7 +54,7 @@ const textDict: Record<string, any> = {
 const texts = textDict[locale as string] || textDict['en'];
 ---
 
-<Layout title={texts.title}>
+<Layout title={texts.title} locale={routeLocale(locale)} alternates={buildAlternates({ path: '', locale, site: Astro.site })}>
   <div class="wrap">
     <h1 class="title">{texts.title} <Badge variant="info">v1.1</Badge></h1>
     <p class="sub">{texts.description}</p>
