@@ -12,6 +12,7 @@
     "check": "astro check",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
+    "test:tokens": "python3 scripts/verify-swallow-tokens.py",
     "test:watch": "vitest"
   },
   "dependencies": {
