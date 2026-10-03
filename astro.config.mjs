@@ -34,8 +34,23 @@ export default defineConfig({
     // con: "The file does not exist at node_modules/.vite/deps_ssr/handler-*.js ... Try adding it to
     // optimizeDeps.exclude". Se excluye la integracion de Svelte del optimizador y el arranque queda
     // estable (necesario para `hermes verify` y para cualquier dev local de este template).
+    //
+    // `@swal/ui` va excluido como SEGUNDA barrera, no como causa raiz.
+    //
+    // Averiguado con control negativo (2026-10-03): quitando esta linea y
+    // arrancando en limpio, /es sigue dando 200 y deps_ssr/@swal_ui.js NO se
+    // crea. El `resolve.alias` de arriba ya evita que el optimizador toque
+    // @swal/ui, y ese alias es la causa raiz real. El 500 que se vio
+    // ('The file does not exist at .../@swal_ui.js') venia de una cache de
+    // Vite corrupta entre reinicios de `hermes verify`, no de la ausencia de
+    // esta linea; se arregla con `rm -rf node_modules/.vite .astro/dev.json`.
+    //
+    // Se mantiene como defensa en profundidad: si el alias deja de resolver (un
+    // cambio en el core, otro resolutor, otro symlink de pnpm), el exclude
+    // impide que el optimizador genere un archivo que luego no se encuentra.
+    // Cuesta una linea y evita un 500 en todas las rutas.
     optimizeDeps: {
-      exclude: ['@astrojs/svelte/server.js', '@astrojs/svelte'],
+      exclude: ['@astrojs/svelte/server.js', '@astrojs/svelte', '@swal/ui'],
     },
     plugins: [
       VitePWA({
