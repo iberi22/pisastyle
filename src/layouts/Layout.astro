@@ -1,6 +1,7 @@
 ---
 import { Toaster } from '@swal/ui';
 import { PISASTYLE_DEFAULT_LOCALE, type PisaLocale } from '../lib/pisa-i18n';
+import swalUiComponentsCss from '../styles/swal-ui-components.css?raw';
 
 interface Props {
   title?: string;
@@ -36,6 +37,22 @@ const {
   <body>
     <slot />
     <Toaster client:load />
+
+    {/* CSS de los componentes Svelte de @swal/ui — SOLO en dev.
+        En `astro dev` Vite externaliza @swal/ui en SSR: sus .svelte no pasan por
+        el pipeline de Svelte, asi que su CSS scoped nunca entra en el grafo y
+        no se inyecta. Las clases llegan correctas al DOM pero CERO reglas las
+        aplican, y <Button> se ve como un boton nativo del navegador (133x21,
+        Times, padding 1px 6px) en vez del del design system. En `astro build`
+        Vite ya emite estas mismas reglas, asi que incluirlas ahi solo duplicaria
+        CSS en el bundle (medido: Layout.css 16.7KB -> 24.1KB).
+
+        El fichero lo genera `scripts/generate-swal-ui-css.mjs` compilando los
+        .svelte del CORE con el mismo `filename` que usa Vite, de modo que el
+        hash `svelte-*` coincide con el del HTML ya emitido. No se transcriben
+        estilos: un retoque en el core se refleja al regenerar. */}
+    {import.meta.env.DEV && <style is:global set:html={swalUiComponentsCss} />}
+
     <style is:global>
       @import '@swal/ui/tokens';
       /* Capa semantica PISAStyle (series Okabe-Ito accesibles) — DESPUES del
