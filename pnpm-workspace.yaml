@@ -1,3 +1,15 @@
+# pnpm-workspace.yaml — PISAStyle
+#
+# Este repo es un paquete UNICO (no es un monorepo): `packages` se declara
+# vacio a proposito para que pnpm resuelva el store. Sin este campo,
+# `pnpm store path` falla con "ERROR packages field missing or empty" y TODOS
+# los jobs de deploy.yml mueren en el paso de setup (4 de 4 fallos, 2026-09).
+#
+# allowBuilds: pnpm >= 11 pide confirmacion explicita antes de ejecutar los
+# build scripts de dependencias nativas. Los valores deben ser BOOLEANOS.
+# Los valores literales "set this to true or false" quepnpm 11 escribio
+#Automaticamente son placeholders, no booleanos -> hay que fijarlos.
 allowBuilds:
-  esbuild: set this to true or false
-  workerd: set this to true or false
+  esbuild: true
+  workerd: true
+  sharp: true
