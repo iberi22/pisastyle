@@ -1,0 +1,103 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Button, Card, Badge } from '@swal/ui';
+import * as enData from '../../data/home.en.json';
+import * as esData from '../../data/home.es.json';
+import * as ptData from '../../data/home.pt.json';
+
+export function getStaticPaths() {
+  return [
+    { params: { locale: 'en' } },
+    { params: { locale: 'es' } },
+    { params: { locale: 'pt' } }
+  ];
+}
+
+const { locale } = Astro.params;
+
+const dataMap = {
+  en: enData,
+  es: esData,
+  pt: ptData
+};
+
+const homeData = dataMap[locale as keyof typeof dataMap];
+---
+
+<Layout title={homeData.hero.title}>
+  <div class="wrap">
+    <div class="hero">
+      <h1 class="title">{homeData.hero.title}</h1>
+      <p class="sub">{homeData.hero.subtitle}</p>
+      <div class="actions">
+        {homeData.ctas.map((cta) => (
+          <Button variant={cta.variant as any}>{cta.label}</Button>
+        ))}
+      </div>
+    </div>
+
+    <h2 class="section-title">Domains</h2>
+    <div class="domains">
+      {homeData.domains.map((domain) => (
+        <Card variant="surface" padding="md">
+          <div class="domain-card">
+            <h3>{domain.title}</h3>
+            <p>{domain.description}</p>
+          </div>
+        </Card>
+      ))}
+    </div>
+
+    <h2 class="section-title">{homeData.stats.title}</h2>
+    <div class="stats-section">
+      <Card variant="elevated" padding="lg">
+        <div class="stats-grid">
+          <div class="stat-col">
+            <h3>Colombia <Badge variant="info">Rank {homeData.stats.colombia.rank}</Badge></h3>
+            <div class="scores">
+              <div><span class="lab">Math:</span> <span class="val">{homeData.stats.colombia.math}</span></div>
+              <div><span class="lab">Reading:</span> <span class="val">{homeData.stats.colombia.reading}</span></div>
+              <div><span class="lab">Science:</span> <span class="val">{homeData.stats.colombia.science}</span></div>
+            </div>
+          </div>
+
+          <div class="stat-col">
+            <h3>OECD Average</h3>
+            <div class="scores">
+              <div><span class="lab">Math:</span> <span class="val">{homeData.stats.oecd.math}</span></div>
+              <div><span class="lab">Reading:</span> <span class="val">{homeData.stats.oecd.reading}</span></div>
+              <div><span class="lab">Science:</span> <span class="val">{homeData.stats.oecd.science}</span></div>
+            </div>
+          </div>
+
+          <div class="stat-col">
+            <h3>Singapore (Top)</h3>
+            <div class="scores">
+              <div><span class="lab">Math:</span> <span class="val">{homeData.stats.singapore.math}</span></div>
+              <div><span class="lab">Reading:</span> <span class="val">{homeData.stats.singapore.reading}</span></div>
+              <div><span class="lab">Science:</span> <span class="val">{homeData.stats.singapore.science}</span></div>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem; display: grid; gap: 2rem; }
+  .hero { text-align: center; padding: 3rem 0; }
+  .title { font-size: 2.5rem; font-weight: 800; color: var(--swal-text); letter-spacing: -0.02em; margin-bottom: 1rem; }
+  .sub { font-size: 1.25rem; color: var(--swal-text-secondary); line-height: 1.6; max-width: 800px; margin: 0 auto 2rem; }
+  .actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  .section-title { font-size: 1.5rem; font-weight: 700; color: var(--swal-text); margin-bottom: -1rem; border-bottom: 2px solid var(--swal-surface); padding-bottom: 0.5rem; }
+  .domains { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+  .domain-card h3 { margin: 0 0 0.5rem 0; color: var(--swal-text); }
+  .domain-card p { margin: 0; color: var(--swal-text-secondary); font-size: 0.95rem; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; }
+  .stat-col h3 { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 1rem 0; color: var(--swal-text); }
+  .scores { display: flex; flex-direction: column; gap: 0.5rem; }
+  .scores > div { display: flex; justify-content: space-between; border-bottom: 1px solid var(--swal-surface); padding-bottom: 0.25rem; }
+  .lab { color: var(--swal-text-secondary); }
+  .val { font-weight: 700; color: var(--swal-text); }
+</style>
