@@ -94,7 +94,7 @@ const t = {
             {unitData.items.map((item: any) => (
               <div class="item">
                 <Badge variant="info">{t.process[item.process as keyof typeof t.process] ?? item.process}</Badge>
-                <Badge variant="neutral">{t.level} {item.level}</Badge>
+                <Badge variant="neutral"><span class="level-tag">{t.level}&nbsp;{item.level}</span></Badge>
                 <p><strong>{item.question}</strong></p>
                 {(item.options) ? (
                   <ul>
@@ -136,9 +136,23 @@ const t = {
   .grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
   @media (min-width: 768px) { .grid { grid-template-columns: 1fr 1fr; } .grid > :last-child { grid-column: span 2; } }
   .whitespace-pre-wrap { white-space: pre-wrap; line-height: 1.6; }
-  .items-list { display: flex; flex-direction: column; gap: 1.5rem; }
-  .item { padding-bottom: 1rem; border-bottom: 1px solid var(--swal-border); }
-  .item:last-child { border-bottom: none; }
+  .items-list { display: flex; flex-direction: column; gap: 1rem; }
+  /* Cada item es una tarjeta, no solo un separador: con un unico border-bottom
+     los items se leian como una lista continua y no se distinguia donde acaba
+     uno. Borde completo + fondo + padding. */
+  .item {
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--swal-border);
+    border-radius: 10px;
+    background: var(--swal-surface);
+  }
+  /* El badge de nivel es el de menor contraste del core (neutral). A 11 px era
+     ilegible; se sube peso y tamano sin tocar el componente compartido. */
+  .item :global(.swal-badge.neutral) { font-weight: 700; font-size: 0.78rem; padding: 3px 9px; }
+  /* El texto del nivel va en su propio span: sin el, "Nivel" y el numero salian
+     pegados ("Nivel3") porque el espacio en linea normal entre dos hijos de un
+     inline-flex se descarta al final de la linea. */
+  .level-tag { white-space: nowrap; }
   .faq-section { margin-top: 2rem; }
   .faq-grid { display: grid; gap: 1rem; margin-top: 1rem; }
   h2 { font-size: 1.4rem; font-weight: 700; color: var(--swal-text); margin-bottom: 1rem; }
