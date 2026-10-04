@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "title": "Contribute to PISAStyle",
+    "description": "Propose a correction or a new PISA item. No sign-up, no cookies, no personal data: it opens a GitHub issue with your proposal."
+  },
+  "hero": {
+    "title": "Contribute",
+    "lead": "PISAStyle is open: any visitor can propose a correction or a new item. There is no sign-up, no cookies, and no data is collected. On submit, a GitHub issue opens with what you wrote, and you decide whether to publish it.",
+    "privacyBadge": "No login · No cookies · No tracking",
+    "privacyNote": "The draft is saved only in your browser so you do not lose what you wrote. It holds no identifiers and is sent to no server until you press submit."
+  },
+  "flow": {
+    "title": "How it works",
+    "steps": [
+      {
+        "title": "You write the proposal",
+        "body": "Stem, options, explanation, and the 8 fields of the PISAStyle v1.1 protocol."
+      },
+      {
+        "title": "An issue opens",
+        "body": "GitHub with the title and body already written. Review and edit anything before publishing."
+      },
+      {
+        "title": "Review and PR",
+        "body": "The team validates it against the protocol, opens a pull request, and merges it."
+      }
+    ],
+    "note": "If the link does not work on your network, download the .md and paste the content into an issue by hand. There is no dead end."
+  },
+  "form": {
+    "formHeading": "Send your proposal",
+    "typeLegend": "What do you want to propose?",
+    "typeCorrection": "A correction",
+    "typeCorrectionHelp": "Something already published that is wrong or can be improved.",
+    "typeNew": "A new item",
+    "typeNewHelp": "A complete item you want to enter into the bank.",
+    "unitLabel": "Affected unit or item",
+    "unitHint": "The identifier of the unit where the item lives, for example u-math-04.",
+    "unitPlaceholder": "u-math-04",
+    "stemLabel": "Stem",
+    "stemHint": "The exact text the student would see.",
+    "stemPlaceholder": "If 3 panels cover 12 m, how many metres do 8 panels cover?",
+    "optionsLegend": "Answer options",
+    "optionsHelp": "Fill in at least two if the format is multiple choice. Leave empty for a constructed item (open response).",
+    "explanationLabel": "Explanation of the correct answer",
+    "explanationHint": "Why that is the answer. It is what makes the proposal reviewable.",
+    "explanationPlaceholder": "It is a direct proportion: 12/3 = 4 m per panel, 8 × 4 = 32 m.",
+    "noteLabel": "Note (optional)",
+    "noteHint": "Source, extra justification, or a notice that the item is yours and not in an official framework.",
+    "notePlaceholder": "Source: adapted from a Khan Academy exercise.",
+    "protocolLegend": "PISAStyle v1.1 protocol tagging",
+    "protocolHelp": "The 8 mandatory fields. Without full tagging the item does not enter the bank.",
+    "fields": {
+      "domain": {
+        "label": "Domain",
+        "hint": "Mathematics, Reading, Science, or Learning in the Digital World (LDW).",
+        "placeholder": "Mathematics"
+      },
+      "process": {
+        "label": "Process",
+        "hint": "The competence or key competence being assessed.",
+        "placeholder": "interpret"
+      },
+      "content": {
+        "label": "Content",
+        "hint": "Content block of the PISA framework.",
+        "placeholder": "quantity"
+      },
+      "context": {
+        "label": "Context",
+        "hint": "Personal, occupational, societal, scientific, public, educational.",
+        "placeholder": "personal"
+      },
+      "format": {
+        "label": "Format",
+        "hint": "mc-single, mc-complex, constructed-closed or constructed-open.",
+        "placeholder": "mc-single"
+      },
+      "demand": {
+        "label": "Cognitive demand",
+        "hint": "low, med or high (Bloom × Webb). Not the same as difficulty.",
+        "placeholder": "med"
+      },
+      "level": {
+        "label": "Level",
+        "hint": "Estimated proficiency level: 1c, 1b, 2, 3, 4, 5 or 6.",
+        "placeholder": "3"
+      },
+      "anchor": {
+        "label": "Anchor",
+        "hint": "Released OECD item or calibration reference.",
+        "placeholder": "Triangular Pattern (OECD PISA 2022)"
+      }
+    },
+    "required": "Required",
+    "optional": "optional",
+    "submit": "Open the issue on GitHub",
+    "download": "Download .md",
+    "clear": "Clear the draft",
+    "restored": "Draft restored from this browser."
+  },
+  "messages": {
+    "required": "This field is required.",
+    "optionsMin": "Fill in at least two options.",
+    "optionsUnexpected": "This format takes no options. Remove them or change the format to a multiple choice one.",
+    "errorSummaryTitle": "Some fields are missing",
+    "errorSummaryBody": "Fix these fields and submit again:",
+    "draftRestored": "We recovered the draft saved in this browser.",
+    "tooLong": "The proposal is too long for a link, so the .md file is the main path. Open the issue and paste it.",
+    "urlTooLong": "The proposal is too long to open in a link. Download the .md and paste it into a new issue.",
+    "copied": "Copied.",
+    "copyFailed": "Could not copy. Select the text and copy it manually.",
+    "repoLabel": "The issue will open in"
+  }
+}

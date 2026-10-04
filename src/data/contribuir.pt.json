@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "title": "Contribuir para o PISAStyle",
+    "description": "Proponha uma correção ou um item novo de PISA. Sem cadastro, sem cookies, sem dados pessoais: abre-se uma issue do GitHub com a sua proposta."
+  },
+  "hero": {
+    "title": "Contribuir",
+    "lead": "O PISAStyle é aberto: qualquer visitante pode propor uma correção ou um item novo. Não há cadastro, não há cookies e não se coleta nenhum dado. Ao enviar, abre-se uma issue do GitHub com o que você escreveu e você decide se publica.",
+    "privacyBadge": "Sem login · Sem cookies · Sem rastreamento",
+    "privacyNote": "O rascunho fica salvo apenas no seu navegador para você não perder o que escreveu. Não contém identificadores e não vai a nenhum servidor até você pressionar enviar."
+  },
+  "flow": {
+    "title": "Como funciona",
+    "steps": [
+      {
+        "title": "Você escreve a proposta",
+        "body": "Enunciado, opções, explicação e os 8 campos do protocolo PISAStyle v1.1."
+      },
+      {
+        "title": "Abre-se uma issue",
+        "body": "GitHub com o título e o corpo já escritos. Revise e edite o que quiser antes de publicar."
+      },
+      {
+        "title": "Revisão e PR",
+        "body": "A equipe valida contra o protocolo, abre um pull request e integra."
+      }
+    ],
+    "note": "Se o link não funcionar na sua rede, baixe o .md e cole o conteúdo numa issue manualmente. Não há beco sem saída."
+  },
+  "form": {
+    "formHeading": "Envie sua proposta",
+    "typeLegend": "O que você quer propor?",
+    "typeCorrection": "Uma correção",
+    "typeCorrectionHelp": "Algo já publicado que está errado ou pode melhorar.",
+    "typeNew": "Um item novo",
+    "typeNewHelp": "Um item completo que você quer que entre no banco.",
+    "unitLabel": "Unidade ou item afetado",
+    "unitHint": "O identificador da unidade onde o item vive, por exemplo u-math-04.",
+    "unitPlaceholder": "u-math-04",
+    "stemLabel": "Enunciado",
+    "stemHint": "O texto exato que o estudante veria.",
+    "stemPlaceholder": "Se 3 painéis cobrem 12 m de cerca, quantos metros 8 painéis cobrem?",
+    "optionsLegend": "Opções de resposta",
+    "optionsHelp": "Preencha pelo menos duas se o formato for de múltipla escolha. Para um item construído (resposta aberta), deixe vazio.",
+    "explanationLabel": "Explicação da resposta correta",
+    "explanationHint": "Por que essa é a resposta. É o que torna a proposta revisável.",
+    "explanationPlaceholder": "É uma proporção direta: 12/3 = 4 m por painel, 8 × 4 = 32 m.",
+    "noteLabel": "Nota (opcional)",
+    "noteHint": "Fonte, justificativa extra, ou um aviso de que o item é seu e não está em uma estrutura oficial.",
+    "notePlaceholder": "Fonte: adaptado de um exercício do Khan Academy.",
+    "protocolLegend": "Etiquetagem do protocolo PISAStyle v1.1",
+    "protocolHelp": "Os 8 campos obrigatórios. Sem etiqueta completa o item não entra no banco.",
+    "fields": {
+      "domain": {
+        "label": "Domínio",
+        "hint": "Matemática, Leitura, Ciências ou Mundo Digital (LDW).",
+        "placeholder": "Matemática"
+      },
+      "process": {
+        "label": "Processo",
+        "hint": "A competência ou competência-chave avaliada.",
+        "placeholder": "interpretar"
+      },
+      "content": {
+        "label": "Conteúdo",
+        "hint": "Bloco de conteúdo da estrutura PISA.",
+        "placeholder": "quantity"
+      },
+      "context": {
+        "label": "Contexto",
+        "hint": "Pessoal, ocupacional, societal, científico, público, educacional.",
+        "placeholder": "pessoal"
+      },
+      "format": {
+        "label": "Formato",
+        "hint": "mc-single, mc-complex, constructed-closed ou constructed-open.",
+        "placeholder": "mc-single"
+      },
+      "demand": {
+        "label": "Demanda cognitiva",
+        "hint": "low, med ou high (Bloom × Webb). Não é a mesma coisa que dificuldade.",
+        "placeholder": "med"
+      },
+      "level": {
+        "label": "Nível",
+        "hint": "Nível de desempenho estimado: 1c, 1b, 2, 3, 4, 5 ou 6.",
+        "placeholder": "3"
+      },
+      "anchor": {
+        "label": "Âncora",
+        "hint": "Item liberado da OCDE ou referência de calibração.",
+        "placeholder": "Triangular Pattern (OCDE PISA 2022)"
+      }
+    },
+    "required": "Obrigatório",
+    "optional": "opcional",
+    "submit": "Abrir a issue no GitHub",
+    "download": "Baixar .md",
+    "clear": "Apagar o rascunho",
+    "restored": "Rascunho restaurado deste navegador."
+  },
+  "messages": {
+    "required": "Este campo é obrigatório.",
+    "optionsMin": "Preencha pelo menos duas opções.",
+    "optionsUnexpected": "Este formato não tem opções. Apague-as ou mude o formato para um de múltipla escolha.",
+    "errorSummaryTitle": "Faltam campos para preencher",
+    "errorSummaryBody": "Corrija estes campos e envie de novo:",
+    "draftRestored": "Recuperamos o rascunho que ficou salvo neste navegador.",
+    "tooLong": "A proposta é longa demais para um link, então o ficheiro .md é o caminho principal. Você já pode abrir a issue e colar.",
+    "urlTooLong": "A proposta é longa demais para abrir num link. Baixe o .md e cole numa issue nova.",
+    "copied": "Copiado.",
+    "copyFailed": "Não foi possível copiar. Selecione o texto e copie à mão.",
+    "repoLabel": "A issue vai abrir em"
+  }
+}

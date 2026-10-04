@@ -28,9 +28,9 @@ interface Props {
 const { locale = PISASTYLE_DEFAULT_LOCALE, current = '' } = Astro.props;
 
 const LABELS: Record<PisaLocale, Record<string, string>> = {
-  es: { home: 'Inicio', explorar: 'Unidades', metodo: 'Método', novedades: 'Novedades', evaluar: 'Evalúa tu nivel' },
-  en: { home: 'Home', explorar: 'Units', metodo: 'Method', novedades: 'News', evaluar: 'Check your level' },
-  pt: { home: 'Início', explorar: 'Unidades', metodo: 'Método', novedades: 'Novidades', avaliar: 'Avalie seu nível' },
+  es: { home: 'Inicio', explorar: 'Unidades', metodo: 'Método', novedades: 'Novedades', evaluar: 'Evalúa tu nivel', contribuir: 'Contribuir' },
+  en: { home: 'Home', explorar: 'Units', metodo: 'Method', novedades: 'News', evaluar: 'Check your level', contribuir: 'Contribute' },
+  pt: { home: 'Início', explorar: 'Unidades', metodo: 'Método', novedades: 'Novidades', avaliar: 'Avalie seu nível', contribuir: 'Contribuir' },
 };
 
 const LINKS = [
@@ -39,6 +39,10 @@ const LINKS = [
   { path: 'metodo', key: 'metodo', href: (l: PisaLocale) => `/${l}/metodo` },
   { path: 'novedades', key: 'novedades', href: (l: PisaLocale) => `/${l}/novedades` },
   { path: 'evaluar', key: 'evaluar', href: (l: PisaLocale) => `/${l}/evaluar` },
+  // Al final y no junto a las de lectura: Contribute es la accion para quien ya
+  // esta usando el producto, no la puerta de entrada. Seis enlaces caben en
+  // escritorio; en movil la ul hace scroll horizontal (ver @media abajo).
+  { path: 'contribuir', key: 'contribuir', href: (l: PisaLocale) => `/${l}/contribuir` },
 ];
 
 const t = LABELS[locale];
