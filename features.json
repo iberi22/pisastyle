@@ -4,10 +4,13 @@
   "status": "ciclo_1_in_progress",
   "note": "Medido contra codigo el 2026-10-04, NO contra el HECHO/PENDIENTE de docs/PISASTYLE_PLAN_2H.md — ese documento declara F0 'EN CURSO' y el Protocolo 'v1.0' cuando el codigo ya tiene F0 al 85% y el protocolo es v1.1. Los porcentajes de abajo son (code x 0.4) + (tests x 0.3) + (wired x 0.3).",
   "implementation_maturity": {
-    "code_exists": "62%",
-    "tests_coverage": "18%",
-    "router_wiring": "31%",
-    "overall_score": "39%"
+    "code_exists": "48%",
+    "tests_coverage": "41%",
+    "router_wiring": "38%",
+    "overall_score": "43%",
+    "basis": "Las cuatro cifras son la media de las 9 features de este fichero, derivadas por calculo y verificadas con una puerta que las recalcula. Si se quiere excluir S1 y S2 (scaffolding, no fases del plan), el score medio de las 7 fases F0-F6 es 30%.",
+    "plan_only_score": "30%",
+    "plan_only_basis": "media de score de las 7 fases F0-F6, sin S1/S2"
   },
   "total_features": 9,
   "features": [
