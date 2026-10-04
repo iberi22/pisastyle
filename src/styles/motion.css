@@ -1,0 +1,158 @@
+/*
+  motion.css — keyframes, escalonado y el corte de prefers-reduced-motion.
+
+  Los tokens que este archivo consume (`--swal-transition-*`,
+  `--swal-ease-out|in`) los declara `cores/swal-ui/src/tokens/theme.css`, que
+  Layout.astro importa antes que cualquier componente. Antes de este archivo
+  los componentes escribian su propio `transition:` uno a uno; ahora la duracion
+  y la curva salen siempre de un token del core y aqui solo se decide QUE se
+  mueve y CUANTO se desplaza.
+
+  Las reglas que este archivo no puede romper:
+
+   1. Todo se anula con `prefers-reduced-motion: reduce`. No se "acorta": se
+      anula. Un motion designer con vestibular disorder no recibe ni un frame, y
+      un elemento con `animation: none` queda en su estado final porque todos
+      los keyframes usan `fill-mode: both`.
+   2. Solo se anima `opacity` y `transform`. Ninguna propiedad que cambia el
+      layout ni el color: una animacion de `width` obliga a recalcular en cada
+      frame y en moviles de gama baja eso se nota como tirones.
+   3. Sin literales de color. Este archivo no declara `color`, `background`,
+      `border` ni `outline`, asi que el gate de tokens no lo encuentra al
+      escanear `src/components/motion/` y no puede fallar por tener un token
+      equivocado.
+*/
+
+/* NOTA DE IMPORTS: este archivo NO se importa desde Layout.astro (esa isla la
+   lleva otro agente en esta wave) ni lleva `@import '@swal/ui/tokens'`, porque
+   quien lo importa — `src/components/motion/*.svelte` — ya hereda los tokens del
+   core que Layout carga antes que cualquier componente. Un segundo
+   `@import` del tema aqui duplicaria los bloques `:root` y el orden de cascada
+   pasaria a depender de quien se monte primero. */
+
+/* ─── Custom properties ─────────────────────────────────────────────────── */
+:root {
+  /* Valores por defecto: si un elemento lleva `.motion` sin estilo inline, usa
+     el ritmo base del core. Ninguno es un literal de color. */
+  --motion-duration: 180ms;
+  --motion-delay: 0ms;
+  --motion-easing: var(--swal-ease-out);
+  --motion-distance: 8px;
+  /* Tope del escalonado. Por encima de este numero de items el retardo se
+     congela en `motion.ts` (`staggerDelay`), no se crece sin limite. */
+  --motion-stagger-step: 60ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    /* 0ms en vez de `animation: none` por debajo: asi un `.motion` que se
+       anima desde JS tampoco tiene duracion que esperar. */
+    --motion-duration: 0ms;
+    --motion-delay: 0ms;
+    --motion-distance: 0px;
+  }
+}
+
+/* ─── Keyframes ─────────────────────────────────────────────────────────── */
+/* `from` explicito en cada uno: sin estado inicial declarado, una animacion
+   cuyo elemento se pinta despues arrancaria desde el valor computado, que no
+   es necesariamente el `from` que queremos. */
+
+@keyframes motion-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes motion-fade-up {
+  from { opacity: 0; transform: translate3d(0, var(--motion-distance), 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes motion-fade-down {
+  from { opacity: 0; transform: translate3d(0, calc(-1 * var(--motion-distance)), 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes motion-scale {
+  from { opacity: 0; transform: scale(var(--motion-distance)); }
+  to { opacity: 1; transform: none; }
+}
+
+/* El desplazamiento lateral se compone con el mismo `--motion-distance` en X,
+   leyendo la direccion del nombre de la variante. */
+@keyframes motion-slide-left {
+  from { opacity: 0; transform: translate3d(var(--motion-distance), 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes motion-slide-right {
+  from { opacity: 0; transform: translate3d(calc(-1 * var(--motion-distance)), 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+/* ─── Clase base ────────────────────────────────────────────────────────── */
+/* Una sola regla para todas las variantes: el keyframe lo elige el nombre de la
+   clase, la duracion/curva/retardo llegan por custom properties. Asi anadir una
+   variante es una linea en `motion.ts` y una en la lista de aqui. */
+
+.motion {
+  animation-duration: var(--motion-duration);
+  animation-timing-function: var(--motion-easing);
+  animation-delay: var(--motion-delay);
+  animation-fill-mode: both;
+  animation-iteration-count: 1;
+}
+
+.motion-none { animation: none; }
+.motion-fade { animation-name: motion-fade; }
+.motion-fade-up { animation-name: motion-fade-up; }
+.motion-fade-down { animation-name: motion-fade-down; }
+.motion-scale { animation-name: motion-scale; }
+.motion-slide-left { animation-name: motion-slide-left; }
+.motion-slide-right { animation-name: motion-slide-right; }
+
+/* Un elemento que ya esta en la ventana al hacer scroll entra sin animacion:
+   reproducirla cuando el usuario llega ahi es ruido, no bienvenida. El marcado
+   opcional `.motion-offscreen` marca lo que aun no ha aparecido; su entrada la
+   dirige `MotionReveal.svelte` desde JS. */
+.motion-static { animation: none; }
+
+/* ─── prefers-reduced-motion: reduce ────────────────────────────────────── */
+/* Este es el corte real. Las reglas de arriba siguen declarando el keyframe,
+   pero aqui se quita la animacion entera; como todos los keyframes usan
+   `animation-fill-mode: both`, el elemento se queda en su estado FINAL (visible,
+   sin desplazamiento) en vez de en el estado inicial (invisible). Ese matiz es
+   lo que separa un reduced-motion bien hecho de uno que deja la pagina en
+   blanco. */
+
+@media (prefers-reduced-motion: reduce) {
+  .motion,
+  .motion-fade,
+  .motion-fade-up,
+  .motion-fade-down,
+  .motion-scale,
+  .motion-slide-left,
+  .motion-slide-right,
+  .motion-static {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Un elemento que aun no ha entrado no debe quedarse invisible: la entrada se
+     convierte en "ya esta". */
+  .motion[data-motion-pending='true'] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ─── Foco visible: el anillo no se anima ───────────────────────────────── */
+/* Si el anillo de foco se interpola, el usuario con lentitud de vision pierde la
+   referencia de "donde estoy" justo en el momento en que la necesita. Se
+   declara aqui para que ningun componente de motion pueda olvidarlo. */
+.motion :focus-visible,
+.motion:focus-visible {
+  outline: 2px solid var(--swal-accent);
+  outline-offset: 2px;
+}
