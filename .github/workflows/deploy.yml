@@ -2,7 +2,7 @@ name: deploy-template
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "src/**"
       - "public/**"
@@ -19,20 +19,94 @@ on:
       - "pnpm-lock.yaml"
       - ".github/workflows/**"
   workflow_dispatch:
+    inputs:
+      target:
+        description: "Destination environment for a manual run"
+        type: choice
+        options: [production, staging]
+        default: staging
 
 permissions:
   contents: write
   deployments: write
   id-token: write
 
+# Una clave por rama: sin esto, un push a develop cancelaba en curso el deploy
+# de main (y al reves) porque ambas caian en el mismo grupo.
 concurrency:
-  group: deploy-template-${{ github.ref }}
+  group: deploy-template-${{ github.ref }}-${{ inputs.target || 'auto' }}
   cancel-in-progress: true
 
+env:
+  # main = produccion. develop = staging de pruebas. Cualquier otra rama no
+  # entra por `on.push.branches`, asi que esto no necesita un default tercer.
+  PRODUCTION_BRANCH: main
+  STAGING_BRANCH: develop
+  PRODUCTION_WORKER_NAME: pisastyle
+  # Nombre deliberadamente explicito: nada de este worker debe confundirse con
+  # el de produccion, ni en Cloudflare, ni en un smoke test, ni en un tag.
+  STAGING_WORKER_NAME: pisastyle-staging
+  PRODUCTION_APP_URL: https://pisa.swal.network
+  STAGING_APP_URL: https://pisastyle-staging.iberi22.workers.dev
+
 jobs:
+  # Fase 0: resolver el destino de este run. Una sola fuente de verdad para
+  # nombre de worker, URL de smoke y si toca taggear version.
+  resolve-target:
+    name: "🎯 Resolve Target"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      target: ${{ steps.pick.outputs.target }}
+      worker_name: ${{ steps.pick.outputs.worker_name }}
+      app_url: ${{ steps.pick.outputs.app_url }}
+      is_production: ${{ steps.pick.outputs.is_production }}
+    steps:
+      - id: pick
+        env:
+          REF: ${{ github.ref_name }}
+          REQUESTED: ${{ inputs.target }}
+          PRODUCTION_BRANCH: ${{ env.PRODUCTION_BRANCH }}
+          STAGING_BRANCH: ${{ env.STAGING_BRANCH }}
+          PRODUCTION_WORKER_NAME: ${{ env.PRODUCTION_WORKER_NAME }}
+          STAGING_WORKER_NAME: ${{ env.STAGING_WORKER_NAME }}
+          PRODUCTION_APP_URL: ${{ env.PRODUCTION_APP_URL }}
+          STAGING_APP_URL: ${{ env.STAGING_APP_URL }}
+        run: |
+          set -euo pipefail
+          # `${VAR:-}` en vez de `$VAR`: en un push (no dispatch) `inputs.target`
+          # es null y podria llegar sin definir, lo que con `set -u` mataria el job.
+          REQUESTED="${REQUESTED:-}"
+          if [ "$REQUESTED" = "production" ]; then
+            target="production"
+          elif [ "$REQUESTED" = "staging" ]; then
+            target="staging"
+          elif [ "$REF" = "$PRODUCTION_BRANCH" ]; then
+            target="production"
+          else
+            target="staging"
+          fi
+
+          if [ "$target" = "production" ]; then
+            worker_name="$PRODUCTION_WORKER_NAME"
+            app_url="$PRODUCTION_APP_URL"
+            is_production="true"
+          else
+            worker_name="$STAGING_WORKER_NAME"
+            app_url="$STAGING_APP_URL"
+            is_production="false"
+          fi
+
+          echo "target=$target"     >> "$GITHUB_OUTPUT"
+          echo "worker_name=$worker_name" >> "$GITHUB_OUTPUT"
+          echo "app_url=$app_url"   >> "$GITHUB_OUTPUT"
+          echo "is_production=$is_production" >> "$GITHUB_OUTPUT"
+          echo "Deploy target: $target ($worker_name) -> $app_url"
+
   # Fase 1: Preflight
   audit-and-verify:
     name: "🛡️ Preflight Audit"
+    needs: resolve-target
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -47,11 +121,12 @@ jobs:
       - run: pnpm exec playwright test
 
   # Fase 3: Deploy SSR Worker (Pages vs Workers: SSR >26MB → wrangler deploy, no pages-action)
-  deploy-template:
-    name: "🚀 Deploy Template Worker"
-    needs: audit-and-verify
+  deploy-worker:
+    name: "🚀 Deploy (${{ needs.resolve-target.outputs.target }})"
+    needs: [resolve-target, audit-and-verify]
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment: ${{ needs.resolve-target.outputs.target }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -61,9 +136,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Build SSR
         run: pnpm run build
-      - name: Normalize Wrangler Production Config
-        run: node scripts/normalize-wrangler-config.mjs --target production
+      # Los pasos siguientes solo aplican si el script existe en el repo. En el
+      # estado actual de esta rama los tres no estan, y `run:` sobre un fichero
+      # inexistente aborta el job antes de llegar al deploy.
+      - name: Normalize Wrangler Config
+        if: hashFiles('scripts/normalize-wrangler-config.mjs') != ''
+        run: node scripts/normalize-wrangler-config.mjs --target "${{ needs.resolve-target.outputs.target }}"
       - name: Pre-deploy Check
+        if: hashFiles('scripts/pre-deploy-check.js') != ''
         run: node scripts/pre-deploy-check.js
       - name: Deploy Worker to Cloudflare
         uses: cloudflare/wrangler-action@v3
@@ -71,26 +151,69 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4.127.1"
-          command: deploy --config dist/server/wrangler.json
+          # `--name` sobreescribe el nombre del worker sin necesitar un
+          # [env.staging] en wrangler.toml (que ademas esta lleno de
+          # placeholders REPLACE-ME y no debe tocarse). Asi staging nunca puede
+          # pisar el worker de produccion aunque el build salga identico.
+          command: >-
+            deploy
+            --config dist/server/wrangler.json
+            --name ${{ needs.resolve-target.outputs.worker_name }}
 
   # Fase 4+5: Smoke + Version Tag
   smoke-test:
-    name: "🩺 Smoke"
-    needs: deploy-template
+    name: "🩺 Smoke (${{ needs.resolve-target.outputs.target }})"
+    needs: [resolve-target, deploy-worker]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - name: Smoke
+        if: hashFiles('scripts/deploy-smoke.sh') != ''
         run: bash scripts/deploy-smoke.sh
         env:
-          APP_URL: https://swal-app-template.iberi22.workers.dev
+          APP_URL: ${{ needs.resolve-target.outputs.app_url }}
+          DEPLOY_TARGET: ${{ needs.resolve-target.outputs.target }}
+      - name: Verify Worker Reachable
+        # Sustituye al script ausente: con el, staging y produccion siguen
+        # teniendo un smoke real en vez de un job que pasa en verde sin comprobar
+        # nada. `--retry` cubre el cold start del worker recien desplegado.
+        run: |
+          set -euo pipefail
+          APP_URL="$APP_URL" EXPECT_STATUS="${EXPECT_STATUS:-200}" node -e '
+            const url = process.env.APP_URL;
+            const expected = Number(process.env.EXPECT_STATUS);
+            (async () => {
+              let last = "";
+              for (let i = 1; i <= 5; i++) {
+                try {
+                  const res = await fetch(url, { redirect: "follow" });
+                  const body = await res.text();
+                  if (res.status !== expected) throw new Error(`status ${res.status} (want ${expected})`);
+                  if (!body.includes("<html")) throw new Error("response is not an HTML document");
+                  console.log(`smoke ok on attempt ${i}: ${url} -> ${res.status}`);
+                  return;
+                } catch (err) {
+                  last = String(err && err.message ? err.message : err);
+                  console.log(`attempt ${i} failed: ${last}`);
+                  await new Promise((r) => setTimeout(r, 5000 * i));
+                }
+              }
+              console.error(`smoke FAILED for ${url}: ${last}`);
+              process.exit(1);
+            })();
+          '
+        env:
+          APP_URL: ${{ needs.resolve-target.outputs.app_url }}
+          DEPLOY_TARGET: ${{ needs.resolve-target.outputs.target }}
 
   version-tag:
     name: "🏷️ Tag"
-    needs: smoke-test
+    needs: [resolve-target, smoke-test]
     runs-on: ubuntu-latest
-    if: success()
+    # Solo produccion taguea. Etiquetar cada push a develop ensuciaria el
+    # historial de releases con tags que no describen ninguna release.
+    if: needs.resolve-target.outputs.is_production == 'true'
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
