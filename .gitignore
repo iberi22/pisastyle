@@ -58,6 +58,9 @@ coverage/
 playwright-report/
 blob-report/
 .playwright/
+# Capturas de la suite E2E (playwright.config.ts). Se regeneran en cada corrida y
+# son binarios: el informe va en el adjunto de CI, no en el repo.
+shots/e2e/
 *.tsbuildinfo
 *.local
 *.log

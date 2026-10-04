@@ -11,8 +11,11 @@
     "check": "astro check",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
+    "test:e2e": "pnpm run build && bash scripts/with-nix-browser.sh playwright test",
     "test:tokens": "python3 scripts/verify-swallow-tokens.py",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "verify:seo": "node scripts/verify-seo.mjs",
+    "og:generate": "node scripts/generate-og.mjs"
   },
   "dependencies": {
     "@swal/ui": "file:../../cores/swal-ui",
