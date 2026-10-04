@@ -97,8 +97,15 @@ const OPTION_ROW_LOOSE = /^\s*[-*]\s*(?:\[[^\]]*\]|[A-Za-z][).:])/;
 const ALL_NONE_OF_ABOVE =
   /\b(?:todas\s+las\s+(?:anteriores|opciones)|ninguna\s+de\s+las\s+(?:anteriores|opciones)|todas\s+est(?:a|as)\s+anteriores|all\s+of\s+the\s+above|none\s+of\s+the\s+above|any\s+of\s+the\s+above)\b/i;
 
+// Los marcadores de relleno son SIGLAS en mayusculas: TODO, FIXME, TBD, XXX,
+// PLACEHOLDER. `lorem ipsum` y `???` se quedan case-insensitive porque son
+// cadenas colapsadas que no dependen de las mayusculas.
+//
+// OJO: con el flag `i` esta regla marking "todo" en espanol y "todo" en
+// portugues como relleno, y los items de lectura usan esas palabras legitimas.
+// Por eso las siglas NO llevan flag: TODO: falta si se marca, "todo el pais" no.
 const PLACEHOLDER =
-  /(?:\bTODO\b|\bFIXME\b|\bTBD\b|\bXXX+\b|\bPLACEHOLDER\b|lorem\s+ipsum|\?{3,})/i;
+  /(?:\bTODO\b|\bFIXME\b|\bTBD\b|\bXXX+\b|\bPLACEHOLDER\b|lorem\s+ipsum|\?{3,})/;
 
 const GLUED_TOKEN = /[A-Za-z]{3,}-[A-Za-z]{3,}/;
 
@@ -535,13 +542,18 @@ function validateAcrossFiles(files: ItemFileInput[]): Finding[] {
   }
 
   // Regla 6 · sesgo de la letra correcta.
+  //
+  // El denominador es el numero de ITEMS, no el numero de marcas [x]. Un item
+  // con dos opciones marcadas como correctas (que la regla `option-letters`
+  // ya reporta por separado) inflaba el total y hacia que un banco健康的
+  // pareciera sesgado. Aqui se cuenta cada item una vez por letra.
   const totals = new Map<string, number>();
   let grandTotal = 0;
   for (const f of parsedFiles) {
     for (const item of f.items) {
+      grandTotal += 1;
       for (const letter of new Set(item.correctLetters)) {
         totals.set(letter, (totals.get(letter) ?? 0) + 1);
-        grandTotal += 1;
       }
     }
   }

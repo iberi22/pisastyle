@@ -745,3 +745,92 @@ describe('control negativo · bundle con todas las reglas violadas', () => {
     expect(text.split('\n').some((l) => /^ERROR \[.+\] items\/math\/en\/broken\.md:item\d/.test(l))).toBe(true);
   });
 });
+
+/* ================================================================== */
+/* REGRESIONES DE 2026-10-04 — dos bugs hallados al auditar bundles reales.
+ *
+ * Los dos tenian la misma causa: una regla capturaba algo que en espanol y
+ * portugues son palabras legitimas, y por eso daba FALSOS POSITIVOS sobre
+ * contenido bueno. Un gate que se queja de texto correcto entrena a su
+ * equipo a ignorarlo, asi que estos tests existen para que no vuelvan.
+ * ================================================================== */
+
+describe('regresion · la regla placeholder no marca palabras legitimas', () => {
+  it('"todo el pais" en espanol NO es relleno', () => {
+    const conPalabra = item({
+      index: 1,
+      correct: 'A',
+      question:
+        'El texto dice que el parque es un lugar importante para todo el pais. Que se sigue?',
+      options: ['Todos lo valoran', 'Solo los ninos', 'No se puede saber', 'Crecio un 100 %'],
+      explanation:
+        'El texto afirma que es importante para todo el pais, asi que todos lo valoran. ' +
+        'Las demas opciones anaden informacion que el texto no contiene.',
+    });
+    expect(rulesFor([bundleFile({ path: 'items/read/es/ok.md', body: conPalabra })])).not.toContain(
+      RULE.placeholder,
+    );
+  });
+
+  it('"todos os dias" en portugues NO es relleno', () => {
+    const pt = item({
+      index: 1,
+      correct: 'A',
+      question: 'Leia o anuncio: todos os dias temos stock. O que se segue sobre a abertura?',
+      options: ['Abertura todos os dias', 'So aos domingos', 'Nunca sabemos', 'So com marcacao'],
+      explanation:
+        'O anuncio diz que ha estoque todos os dias, logo a abertura e diaria. ' +
+        'As outras opcoes contradizem o texto ou inventam condicoes que ele nao menciona.',
+    });
+    expect(rulesFor([bundleFile({ path: 'items/read/pt/ok.md', body: pt })])).not.toContain(
+      RULE.placeholder,
+    );
+  });
+
+  it('las siglas EN MAYUSCULAS siguen marcando: TODO, FIXME, XXX', () => {
+    for (const sigla of ['TODO: revisar el dato', 'FIXME: falta contexto', 'XXX']) {
+      const reglas = rulesFor([
+        bundleFile({ body: item({ index: 1, correct: 'A', question: sigla }) }),
+      ]);
+      expect(reglas, `esperaba detectar ${sigla}`).toContain(RULE.placeholder);
+    }
+  });
+
+  it('"lorem ipsum" y "???" siguen marcando (no dependen de mayusculas)', () => {
+    for (const relleno of ['lorem ipsum dolor', 'Which one is right???']) {
+      const reglas = rulesFor([
+        bundleFile({ body: item({ index: 1, correct: 'A', question: relleno }) }),
+      ]);
+      expect(reglas, `esperaba detectar ${relleno}`).toContain(RULE.placeholder);
+    }
+  });
+});
+
+describe('regresion · el sesgo de letra cuenta ITEMS, no marcas [x]', () => {
+  /** Item cuyo enununciado lleva DOS opciones marcadas [x]. */
+  const dosMarcas = item({
+    index: 2,
+    correct: 'A',
+    question: 'Segunda pregunta con dos marcas de correcta para probar el denominador.',
+    options: ['Primera', 'Segunda', 'Tercera', 'Cuarta'],
+  }).replace('- [x] A)', '- [x] A)\n- [x] B)');
+
+  it('un item con dos [x] no infla el denominador', () => {
+    const report = validateItemSet([
+      bundleFile({ body: [item({ index: 1, correct: 'A' }), dosMarcas].join('\n\n') }),
+    ]);
+    const reglas = report.findings.filter((f) => f.severity === 'ERROR').map((f) => f.rule);
+    // sigue detectando el doble [x] por la regla de letras repetidas
+    expect(reglas).toContain(RULE.optionLetters);
+    const sesgo = report.findings.find((f) => f.rule === RULE.answerLetterBias);
+    if (sesgo) {
+      // el denominador es el numero de ITEMS (2), no el de marcas [x] (3)
+      expect(sesgo.message).toMatch(/de 2 items/);
+      expect(sesgo.message).not.toMatch(/de 3 items/);
+    }
+  });
+
+  it('el bundle de referencia limpio NO dispara sesgo de letra', () => {
+    expect(rulesFor([CLEAN])).not.toContain(RULE.answerLetterBias);
+  });
+});
