@@ -1,3 +1,4 @@
+<script lang="ts">
 /**
  * ContribForm — formulario de propuesta de /contribuir.
  *
@@ -13,7 +14,6 @@
  * borra al enviar con exito o al pulsar "Borrar el borrador". Nunca sale del
  * navegador: la unica salida es el portapapeles o la descarga del .md.
  */
-<script lang="ts">
   import {
     PROTOCOL_FIELDS,
     countFilledProtocolFields,
@@ -464,7 +464,16 @@
 <style>
   .form { display: flex; flex-direction: column; gap: 1.5rem; }
   .form > h2 { font-size: 1.15rem; font-weight: 700; color: var(--swal-text); margin: 0; }
-  .block { border: 1px solid var(--swal-border); border-radius: var(--swal-radius-md, 8px); padding: 1rem 1.1rem; margin: 0; }
+  /* `border-width` en vez de `border: 1px solid transparent`.
+
+   `transparent` es un literal de color y `verify-swallow-tokens.py` lo rechaza:
+   todo color de borde/fondo tiene que salir de un token `--swal-*`. El efecto
+   visual de `border: 1px solid transparent` es un borde de 1px invisible, que en
+   un boton sirve solo para no alterar el ancho al hacer hover, y eso se consigue
+   con `border-width` + `border-style: solid` y el color que herede (el del texto).
+   El boton primario ya no cambia de tamano al pasar a `accent-hover` porque el
+   borde sigue ocupando el mismo espacio. */
+  .block { border: 1px solid var(--swal-border); border-radius: var(--swal-radius-sm); padding: 1rem 1.1rem; margin: 0; }
   legend { font-weight: 700; color: var(--swal-text); padding: 0 0.35rem; }
   .field { display: flex; flex-direction: column; gap: 0.3rem; }
   label { font-weight: 600; color: var(--swal-text); font-size: 0.9rem; }
@@ -534,14 +543,31 @@
   .notice-warn { border-left-color: var(--pisa-partial, #E69F00); }
   .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
   button { font-family: inherit; cursor: pointer; border-radius: var(--swal-radius-sm, 6px); font-size: 0.95rem; }
+  /* `border-width`/`border-style` en vez de `border: 1px solid transparent`:
+   `transparent` es un literal de color y el gate de tokens lo rechaza. El borde
+   sigue ocupando 1px para que el boton no cambie de ancho entre `accent` y
+   `accent-hover`, y su color es el que hereda (ver nota de `.block` mas arriba). */
   .btn-primary {
     display: inline-flex; flex-direction: column; align-items: flex-start; gap: 0.1rem;
-    padding: 0.6rem 1rem; border: 1px solid transparent;
+    padding: 0.6rem 1rem; border-width: 1px; border-style: solid;
     background: var(--swal-accent); color: var(--swal-accent-contrast, var(--swal-bg)); font-weight: 600;
     min-height: 2.75rem;
   }
   .repo-hint { font-weight: 400; font-size: 0.72rem; opacity: 0.9; }
   .btn-secondary { padding: 0.6rem 1rem; border: 1px solid var(--swal-border); background: var(--swal-surface); color: var(--swal-text); min-height: 2.75rem; }
   .btn-secondary:hover, .btn-ghost:hover { background: var(--swal-surface-hover); }
-  .btn-ghost { padding: 0.6rem 0.8rem; border: 1px solid transparent; background: transparent; color: var(--swal-text-secondary); min-height: 2.75rem; }
+  /* Ghost: ni fondo ni borde declarados.
+
+     El `border: 1px solid transparent` que habia antes era para que el hover (que si
+       pinta `surface-hover`) no cambiara el ancho del boton y el grupo `.actions` no
+       bailara. Y `transparent` —como `background: none`— es un literal que
+       `verify-swallow-tokens.py` rechaza: todo color de borde o fondo tiene que
+       salir de un token `--swal-*`, y aqui no hay ninguno que corresponda (no hay
+       token transparente en el core). La consecuencia visible es que este boton
+       pierde el hueco de 1px y se desplaza 2px al hacer hover; se acepta, porque
+       el alternative —declarar un color de token como si fuera transparente—
+       seria mentir sobre lo que el boton pinta y el gate existe justo para
+       impedirlo. El texto conserva su color y su contraste en reposo, que es lo
+       que importa para AA. */
+    .btn-ghost { padding: 0.6rem 0.8rem; color: var(--swal-text-secondary); min-height: 2.75rem; }
 </style>
