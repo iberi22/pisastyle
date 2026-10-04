@@ -9,51 +9,77 @@ import { dirname, join } from 'node:path';
  * ("Failed to resolve import astro:middleware"). Por eso este test lee el
  * SOURCE del middleware y afirma sobre su contenido.
  *
- * Es mas fragil que probar comportamiento, pero es lo que detecta la
- * regresion real: si alguien borra el redirect de la raiz, el build sigue
- * verde, los tests del resto siguen verdes, y la pagina de inicio vuelve a
- * servir la demo del scaffold ("SWAL app-template", "pnpm create @swal/app")
- * sin que nada falle. Eso fue exactamente lo que ocurrio el 2026-10-03.
+ * Es mas fragil que probar comportamiento, pero es lo que detecta la regresion
+ * real: si alguien borra el redirect, el build sigue verde, los tests del resto
+ * siguen verdes, y la raiz vuelve a servir la demo del scaffold sin que nada
+ * falle. Eso ocurrio el 2026-10-03.
  *
- * Se sustituyo una version anterior de este archivo que replicaba la logica de
- * decision en local: era un test que pasaba aunque el middleware no tuviera
- * redirect, porque comprobaba una copia de si mismo y no el codigo real.
- *
- * El comportamiento (302 effective, destino por Accept-Language) se verifica
- * aparte en runtime con curl y en el navegador.
+ * Una version anterior de este archivo replicaba la logica de decision en
+ * local: pasaba aunque el middleware no tuviera redirect, porque comprobaba una
+ * copia de si mismo. El comportamiento (302, destino por Accept-Language) se
+ * verifica aparte en runtime con curl.
  */
 
 const here = dirname(fileURLToPath(import.meta.url));
 const src = readFileSync(join(here, 'middleware.ts'), 'utf8');
 
-describe('middleware.ts — el source contiene el redirect de la raiz', () => {
-  it('redirige cuando el pathname es exactamente /', () => {
-    expect(src).toMatch(/url\.pathname\s*===\s*['"]\/['"]/);
-  });
-
-  it('el redirect usa context.redirect con 302, no reescribe la URL', () => {
+describe('middleware.ts — redirect de la raiz y del indice', () => {
+  it('redirige con context.redirect y 302, no reescribe la URL', () => {
     // Rewrite dejaria la URL canonica en '/', que rompe hreflang y los
-    // enlaces compartidos. Tiene que ser un 302.
+    // enlaces compartidos.
     expect(src).toMatch(/context\.redirect\(/);
     expect(src).toMatch(/,\s*302\s*\)/);
   });
 
-  it('el destino es /{locale}', () => {
-    expect(src).toMatch(/`\/\$\{locale\}/);
+  it('el locale de la RUTA gana sobre el fallback de Accept-Language', () => {
+    // Regresion real: pedir /es sin cabecera Accept-Language aterrizaba en
+    // /en/explorar. `locale` resuelve a 'en' (el fallback de pisa-i18n) y el
+    // destino se construia con el, asi que el usuario pedia espanol y recibia
+    // ingles. Una eleccion explicita en la URL no puede perder contra un
+    // default. La raiz `/` si decide por Accept-Language, porque ahi no hay
+    // eleccion explicita.
+    expect(src).toMatch(/const deRuta = PISASTYLE_LOCALES\.find\(/);
+    expect(src).toMatch(/const destino = deRuta \?\? locale/);
+    expect(src).toMatch(/`\/\$\{destino\}\/explorar/);
+  });
+
+  it('el destino es /{locale}/explorar, no el indice', () => {
+    // El indice tiene 650 chars de texto (hero + 3 dominios + cifras): es una
+    // portada, no producto. /explorar tiene 8.224. Medido sobre el servidor.
+    // El destino usa `destino`, no `locale` a secas: el locale de la ruta
+    // tiene prioridad sobre el fallback (ver el test de arriba).
+    expect(src).toMatch(/`\/\$\{destino\}\/explorar\$\{q\}`/);
+  });
+
+  it('el indice se detecta contra TODOS los locales, no contra el resuelto', () => {
+    // Regresion real del 2026-10-03: la condicion era
+    //   url.pathname === `/${locale}`
+    // Al pedir /es SIN cabecera Accept-Language, `locale` resuelve a 'en' (el
+    // fallback de pisa-i18n), asi que comparaba '/es' contra '/en', no
+    // entraba y /es se servia en vez de redirigir. Firma del bug: /en
+    // redirigia y /es y /pt no, de forma DETERMINISTA (no intermitente).
+    // La condicion no puede depender de `locale` porque `locale` describe el
+    // idioma deseado, no el pathname que se pidio.
+    expect(src).toMatch(/PISASTYLE_LOCALES\.some\(/);
+    expect(src).not.toMatch(/url\.pathname === `\/\$\{locale\}`/);
+  });
+
+  it('importa PISASTYLE_LOCALES para esa comprobacion', () => {
+    expect(src).toMatch(/import\s*\{[^}]*PISASTYLE_LOCALES[^}]*\}\s*from\s*'\.\/lib\/pisa-i18n'/);
   });
 
   it('no redirige durante el prerender', () => {
     // Astro corre el middleware tambien al prerenderizar, donde no hay request
-    // con headers que resolver. Sin este guard, /es/metodo (que SI se
-    // prerenderiza) saldria como stub de redirect.
+    // con headers. Sin el guard, las paginas prerenderizadas salen como stubs.
     expect(src).toMatch(/isPrerendered/);
-    expect(src).toMatch(/!\s*isPrerender\s*&&\s*url\.pathname/);
+    expect(src).toMatch(/!\s*isPrerender\s*&&/);
   });
 
-  it('solo aplica a la raiz exacta, no a subrutas', () => {
-    // Un startsWith('/') arrastraria /es/explorar, /es/metodo y /api/*.
-    expect(src).toMatch(/url\.pathname\s*===\s*['"]\/['"]/);
+  it('solo aplica a la raiz y al indice, no a subrutas', () => {
+    // /explorar, /metodo, /novedades, /api/* y assets deben quedar intactos.
     expect(src).not.toMatch(/pathname\.startsWith/);
+    // La subruta /explorar NO debe colarse en la condicion.
+    expect(src).toMatch(/url\.pathname === '\/'\s*\|\|\s*isIndex/);
   });
 
   it('conserva el ?lang= explicito al redirigir', () => {
@@ -61,10 +87,10 @@ describe('middleware.ts — el source contiene el redirect de la raiz', () => {
     expect(src).toMatch(/encodeURIComponent/);
   });
 
-  it('sigue resolviendo el locale por Accept-Language, no por IP', () => {
-    // El pais (CF-IPCountry) solo puede acabar en locals.pisaCountry. Si
-    // participara en la eleccion de locale, un visitante en Colombia veria
-    // 'es' solo por su IP, que es lo que el propio middleware prohibe.
+  it('el locale se elige por Accept-Language o cookie, nunca por IP', () => {
+    // CF-IPCountry solo puede acabar en locals.pisaCountry. Si participara en
+    // la eleccion de locale, un visitante en Colombia veria es y uno en
+    // Portugal pt solo por su IP, que es lo que el middleware prohibe.
     expect(src).toMatch(/resolveLocaleFromRequest/);
     expect(src).toMatch(/cf-ipcountry/);
     expect(src).not.toMatch(/locale\s*=\s*country/i);
@@ -77,9 +103,6 @@ describe('middleware.ts — el source contiene el redirect de la raiz', () => {
 });
 
 describe('middleware.ts — el fallback de locale no es el idioma del dueno', () => {
-  // Se lee de pisa-i18n.ts (no replicado) para comprobar la constante de
-  // fallback: PISA es un programa internacional y la copia de referencia esta
-  // en ingles. Caer a 'es' seria imponer el idioma por el servidor.
   const i18n = readFileSync(join(here, 'lib', 'pisa-i18n.ts'), 'utf8');
 
   it('el locale por defecto es en', () => {
