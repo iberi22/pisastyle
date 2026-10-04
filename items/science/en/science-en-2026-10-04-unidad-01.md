@@ -188,22 +188,27 @@ assumes a 20% transfer efficiency, a rule the stimulus explicitly does not give.
 ## Item 6
 
 A student buries 30 g of dry autumn leaves in a compost heap and weighs the dry
-residue every month. The measurements are: 3 g after month 1, 9 g after month 2,
-11 g after month 3 and 12 g after month 4. Which statement is best supported by
-these data?
+residue at the end of every month. The mass falls from 30 g to 19 g after the
+first month, to 13 g after the second, to 10 g after the third and to 8 g after
+the fourth. Which statement is best supported by these data?
 
 - [ ] A) The heap gained mass because the decomposers added matter to it
-- [x] B) The mass of residue lost in each successive month became smaller
+- [x] B) The mass lost in each successive month became smaller
 - [ ] C) Decomposition was fastest during the fourth month
 - [ ] D) The residue halved at a constant rate every month
 
 ### Explicacion Pedagogica
 
-The mass lost was 27 g in month 1, then 21 g, 19 g and 18 g, a decreasing series, so
-B is the statement the data support. A contradicts the measurements, which fall from
-30 g to 12 g. C reverses the trend: the smallest loss, 18 g, happened last. D
-expects a halving every month, so it would require 15 g after month 1 where the
-measurement is 3 g, and equal monthly losses, which never occur.
+Work out the mass lost each month by subtracting one measurement from the one
+before it: 30 minus 19 is 11 g in the first month, 19 minus 13 is 6 g in the
+second, 13 minus 10 is 3 g in the third and 10 minus 8 is 2 g in the fourth. That
+is 11, 6, 3 and 2: a decreasing series, so B is what the data support. A is ruled
+out because the heap never gains mass, it goes from 30 g down to 8 g and the four
+losses add up to exactly the 22 g that disappear. C reverses the trend: the
+smallest single loss, 2 g, is the one recorded in the fourth month. D would
+require halving every month, which would leave 15 g after the first month where
+the measurement is 19 g, and four equal losses where the losses are clearly
+unequal.
 
 ### Calibration
 - domain: science
@@ -256,22 +261,30 @@ distance and so multiplies the true time by ten.
 
 ## Item 8
 
-In a town near the equator the Sun rises at 07:12 and sets at 17:48 on 21 June. On
-21 December in the same town it rises at 08:04 and sets at 16:32. How much longer
-is the day in June than in December?
+In a city at about 41 degrees north, the Sun rises at 06:15 and sets at 20:45 on
+21 June. On 21 December in the same city it rises at 08:05 and sets at 17:35. How
+much longer is the day in June than in December?
 
-- [ ] A) 1 hour 4 minutes
-- [ ] B) 2 hours 36 minutes
-- [ ] C) 4 hours 16 minutes
-- [x] D) 2 hours 8 minutes
+- [ ] A) 2 hours 30 minutes
+- [ ] B) 6 hours 15 minutes
+- [ ] C) 10 hours 0 minutes
+- [x] D) 5 hours 0 minutes
 
 ### Explicacion Pedagogica
 
-The June day lasts 10 hours 36 minutes and the December day lasts 8 hours 28
-minutes, so the difference is 2 hours 8 minutes, confirming D. A halves that
-difference, which corresponds to comparing the equinox day length. B rounds the
-December day up to 8 hours and inflates the gap by 28 minutes. C doubles the
-difference, as if each sunrise and sunset had to be counted twice.
+The June day lasts from 06:15 to 20:45, which is 14 hours 30 minutes. The December
+day lasts from 08:05 to 17:35, which is 9 hours 30 minutes. The difference is
+14 h 30 min minus 9 h 30 min, that is 5 hours 0 minutes, so D is correct. A is
+what you get by halving the difference instead of subtracting, a slip that comes
+from treating the two day lengths as a single figure to split. B adds a quarter
+to the correct gap, as if one of the two day lengths had been read at the wrong
+hour. C doubles the difference, which happens when both the sunrise and the
+sunset are counted in each day length.
+
+The city matters: at 41 degrees north the tilt of the Earth's axis really does
+make summers long and winters short. At the equator it would not, because there
+the axis tilt changes only the angle of the sunlight and not the length of the
+day, which stays close to 12 hours all year.
 
 ### Calibration
 - domain: science
