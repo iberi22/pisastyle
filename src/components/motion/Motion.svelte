@@ -24,6 +24,13 @@
 -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  // El CSS entra aqui, no desde Layout.astro: esa isla la lleva otro agente en
+  // esta wave, y un componente cuyas clases no estan definidas en ningun sitio
+  // sale a la pagina sin animar sin que nada falle. `import` de un `.css` desde
+  // el script lo mete Vite en el bundle una sola vez (el mismo modulo importado
+  // dos veces se emite una vez), y sale GLOBAL, que es lo que necesitan los
+  // @keyframes y los selectores `.motion-*`.
+  import '../../styles/motion.css';
   import {
     motionClass,
     motionStyle,
