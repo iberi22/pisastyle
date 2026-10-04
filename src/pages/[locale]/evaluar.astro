@@ -374,13 +374,20 @@ if (submitted) {
            daba 4/10/2026, que se lee como dia/mes en es y como mes/dia en en.
            Con year/month/day largos es 4 de octubre de 2026 en las tres. */
         var when = prev.at
-          ? new Date(prev.at).toLocaleDateString(CFG.loc, {
+          ? new Date(prev.at).toLocaleDateString(LOC, {
               year: 'numeric', month: 'long', day: 'numeric',
             })
           : '';
         note.textContent = NOTICE + (when ? ' (' + when + ')' : '');
+        /* Se insertaba con insertBefore(note, main.firstChild.nextSibling).
+           main.firstChild es el <h1>, asi que la referencia caia en un nodo de
+           texto posterior y el aviso NO aparecia (medido: localStorage con el
+           resultado, .results ausente, sin .prev-result). Se usa insertBefore
+           sobre el hijo SIGUIENTE real del h1: null significa "al principio",
+           que es justo donde queremos el aviso. */
         var main = document.querySelector('main.wrap');
-        if (main && main.firstChild) main.insertBefore(note, main.firstChild.nextSibling);
+        var h1 = main ? main.querySelector('h1') : null;
+        if (main && h1) main.insertBefore(note, h1.nextElementSibling);
       }
     }
   })();
