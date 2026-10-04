@@ -36,6 +36,8 @@ export const RULE = {
   controlCharsEncoding: 'control-chars-encoding',
   malformedOptionRow: 'malformed-option-row',
   placeholder: 'placeholder',
+  anchorUnknown: 'anchor-unknown',
+  anchorDomainMismatch: 'anchor-domain-mismatch',
 } as const;
 
 /** Reglas estructurales: no son parte de las 15, pero el banco no las perdona. */
@@ -80,6 +82,105 @@ export const REQUIRED_ITEM_FIELDS = [
   'anchor',
 ] as const;
 
+/* ------------------------------------------------------------------ */
+/* Anclas PISAreleased — verificadas contra la propia pagina de la OCDE */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Las unidades que la OCDE publica en `pisa2022-questions.oecd.org` y en
+ * `pisa2018-questions.oecd.org`. NO es una lista inventada: cada codigo sale de
+ * las URLs de la plataforma, que son `platform/index.html?domain=<D>&unit=<U>`.
+ *
+ * El prefijo NO indica el dominio, asi que el dominio va en el propio catalogo:
+ *
+ *  - MA*  → MAT (matematicas)
+ *  - R*   → lectura PISA 2018 (`pisa2018-questions.oecd.org`)
+ *  - CR*  → unidades del PDF "PISA2018 Released REA Items" (los codigos de la
+ *           la plataforma online son R*, sin la C)
+ *  - T*   → CRT (PENSAMIENTO CREATIVO). OJO: estas NO son de lectura. Un item
+ *           de comprension lectora anclado a T400 esta MAL etiquetado.
+ *  - F*   → LDW (resolucion de problemas digitales)
+ */
+export const RELEASED_UNITS: Record<string, readonly string[]> = {
+  math: [
+    'MA104-CarPurchase',
+    'MA106-DVDSales',
+    'MA118-MovingTruck',
+    'MA123-SolarSystem',
+    'MA150-TriangularPattern',
+    'MA156-Points',
+    'MA159-Spinners',
+    'MA161-ForestedAreas',
+  ],
+  reading: [
+    'CR548-ChickenForum',
+    'CR551-RapaNui',
+    'CR557-CowsMilk',
+    'CR571-GalapagosIslands',
+    'R548-ChickenForum',
+    'R551-RapaNui',
+    'R557-CowsMilk',
+  ],
+  /** PENSAMIENTO CREATIVO: tareas abiertas de generar una idea. */
+  creativeThinking: [
+    'T400-SaveTheBees',
+    'T500-WheelchairAccessibleLibrary',
+    'T570-RobotStory',
+    'T630-Carpooling',
+    'T690-SaveTheRiver',
+  ],
+  digital: ['F082-NewBike', 'F403-SellingOnline'],
+} as const;
+
+/** Todas las unidades conocidas, indexadas por su dominio real. */
+const ANCHOR_DOMAIN_BY_CODE = new Map<string, string>();
+for (const [domain, codes] of Object.entries(RELEASED_UNITS)) {
+  for (const code of codes) ANCHOR_DOMAIN_BY_CODE.set(code, domain);
+}
+
+/** Nombre legible de cada familia de dominios, para los mensajes de error. */
+const DOMAIN_LABEL: Record<string, string> = {
+  math: 'matematicas',
+  reading: 'lectura',
+  creativeThinking: 'PENSAMIENTO CREATIVO (tareas abiertas, no multiple choice)',
+  digital: 'lectura digital de problemas',
+};
+
+/**
+ * Sugiere la unidad real mas parecida a un ancla inventada. Solo ayuda a que
+ * el mensaje sea accionable ("quiza querias decir MA123-SolarSystem"); no
+ * decide nada.
+ */
+function closestReleased(anchor: string): string | undefined {
+  const codigo = anchor.split('-')[0]?.toLowerCase() ?? '';
+  const cola = anchor.slice(anchor.indexOf('-') + 1).toLowerCase();
+  if (!cola) return undefined;
+  const candidatos = [...ANCHOR_DOMAIN_BY_CODE.keys()];
+  const puntuados = candidatos
+    .map((c) => {
+      const partes = c.toLowerCase().split('-');
+      const cCola = partes.slice(1).join('');
+      let puntos = 0;
+      if (partes[0] === codigo) puntos += 3;
+      if (cCola === cola) puntos += 5;
+      else if (cCola.includes(cola) || cola.includes(cCola)) puntos += 2;
+      return { c, puntos };
+    })
+    .filter((x) => x.puntos >= 5)
+    .sort((a, b) => b.puntos - a.puntos);
+  return puntuados[0]?.c;
+}
+
+/** Dominios que el banco admite, y a que unidades pueden anclarse. */
+const DOMAIN_ANCHOR_FAMILY: Record<string, readonly string[]> = {
+  math: ['math'],
+  reading: ['reading'],
+  science: [], // ningun dominio liberado es de ciencias: la ciencia PISA no
+  //             publica unidades released, asi que un ancla de ciencia debe
+  //             ser un contexto cros-curricular (matematicas o lectura).
+  digital: ['digital'],
+};
+
 export interface ItemFileInput {
   path: string;
   content: string;
@@ -98,14 +199,15 @@ const ALL_NONE_OF_ABOVE =
   /\b(?:todas\s+las\s+(?:anteriores|opciones)|ninguna\s+de\s+las\s+(?:anteriores|opciones)|todas\s+est(?:a|as)\s+anteriores|all\s+of\s+the\s+above|none\s+of\s+the\s+above|any\s+of\s+the\s+above)\b/i;
 
 // Los marcadores de relleno son SIGLAS en mayusculas: TODO, FIXME, TBD, XXX,
-// PLACEHOLDER. `lorem ipsum` y `???` se quedan case-insensitive porque son
-// cadenas colapsadas que no dependen de las mayusculas.
+// PLACEHOLDER. Sin flag `i` global a proposito: con el flag, "todo el pais"
+// (es) y "todos os alunos" (pt) saltaban como relleno, y los items de lectura los
+// usan como palabras normales. El coste es que la sigla se escribe en
+// mayusculas, que es como se escribe un marcador de relleno de verdad.
 //
-// OJO: con el flag `i` esta regla marking "todo" en espanol y "todo" en
-// portugues como relleno, y los items de lectura usan esas palabras legitimas.
-// Por eso las siglas NO llevan flag: TODO: falta si se marca, "todo el pais" no.
+// Las cadenas colapsadas (`lorem ipsum`, `???`) si son insensibles a mayusculas,
+// asi que llevan su propio grupo `(?i:...)` en vez del flag global.
 const PLACEHOLDER =
-  /(?:\bTODO\b|\bFIXME\b|\bTBD\b|\bXXX+\b|\bPLACEHOLDER\b|lorem\s+ipsum|\?{3,})/;
+  /\bTODO\b|\bFIXME\b|\bTBD\b|\bXXX+\b|\bPLACEHOLDER\b|(?i:lorem\s+ipsum|\?{3,})/;
 
 const GLUED_TOKEN = /[A-Za-z]{3,}-[A-Za-z]{3,}/;
 
@@ -388,6 +490,10 @@ function validateOne(file: ItemFileInput): Finding[] {
   }
 
   const { frontmatter, items } = parsed;
+  // El dominio es del BUNDLE (frontmatter), no de cada item: el fichero vive en
+  // items/<domain>/<lang>/ y lo declara una vez. Por eso la regla del ancla
+  // compara contra el dominio del fichero, no contra item.domain (que no existe).
+  const bundleDomain = (frontmatter?.domain?.[0] ?? '').trim();
 
   // Regla 1 · frontmatter ausente. Regla 3 · protocol_version (seccion 9 del
   // protocolo: "cada unidad declara su protocol_version").
@@ -438,6 +544,39 @@ function validateOne(file: ItemFileInput): Finding[] {
     const missing = REQUIRED_ITEM_FIELDS.filter((f) => !item.fields[f] || item.fields[f].length === 0);
     if (missing.length > 0) {
       add(RULE.protocolFieldMissing, 'ERROR', idx, `faltan campos obligatorios del protocolo v1.1: ${missing.join(', ')}`);
+    }
+
+    // Regla 16 · el ancla tiene que existir de verdad y ser del dominio correcto.
+    //
+    // Sin esto el validador aceptaba `MA104-SolarSystem` (que no existe: las
+    // unidades reales son MA104-CarPurchase y MA123-SolarSystem) y aceptaba
+    // `T400-SaveTheBees` como ancla de lectura, siendo las T* de PENSAMIENTO
+    // CREATIVO. Un ancla inventada hace que la calibracion que el protocolo
+    // promete en su seccion 5 sea una fiction.
+    const anchor = item.fields.anchor?.trim();
+    if (anchor && !/^PISA\b/i.test(anchor)) {
+      const realDomain = ANCHOR_DOMAIN_BY_CODE.get(anchor);
+      if (!realDomain) {
+        const hint = closestReleased(anchor);
+        add(
+          RULE.anchorUnknown,
+          'ERROR',
+          idx,
+          `ancla "${anchor}" no existe en el catalogo de unidades liberadas por la OCDE` +
+            (hint ? `; quizá querías decir ${hint}` : ''),
+        );
+      } else {
+        const allowed = DOMAIN_ANCHOR_FAMILY[bundleDomain] ?? [];
+        if (allowed.length > 0 && !allowed.includes(realDomain)) {
+          const label = DOMAIN_LABEL[realDomain] ?? realDomain;
+          add(
+            RULE.anchorDomainMismatch,
+            'ERROR',
+            idx,
+            `ancla "${anchor}" es de ${label} y el bundle "${bundleDomain}" no admite esa familia`,
+          );
+        }
+      }
     }
 
     // Regla 4 a nivel de item · sources.
@@ -545,7 +684,7 @@ function validateAcrossFiles(files: ItemFileInput[]): Finding[] {
   //
   // El denominador es el numero de ITEMS, no el numero de marcas [x]. Un item
   // con dos opciones marcadas como correctas (que la regla `option-letters`
-  // ya reporta por separado) inflaba el total y hacia que un banco健康的
+  // ya reporta por separado) inflaba el total y hacia que un banco sano
   // pareciera sesgado. Aqui se cuenta cada item una vez por letra.
   const totals = new Map<string, number>();
   let grandTotal = 0;

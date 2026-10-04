@@ -145,7 +145,7 @@ const TEXT = {
     content: 'quantity',
     contextTag: 'personal',
     format: 'mc_simple',
-    anchor: 'MA104-SolarSystem',
+    anchor: 'MA123-SolarSystem',
     context: (a, b) => `Un alumno de grado noveno divide ${a} entre ${b} usando el algoritmo de division entera y anota el cociente y el resto en su cuaderno.`,
     question: (a, b, r) => `Al dividir ${a} entre ${b} el resto es ${r}. Cual de las siguientes igualdades es correcta?`,
     explanation: (a, b, q, r) =>
@@ -161,7 +161,7 @@ const TEXT = {
     content: 'quantity',
     contextTag: 'personal',
     format: 'mc_single',
-    anchor: 'MA104-SolarSystem',
+    anchor: 'MA123-SolarSystem',
     context: (a, b) => `A ninth grade student divides ${a} by ${b} with the integer division algorithm and writes the quotient and the remainder in the notebook.`,
     question: (a, b, r) => `When ${a} is divided by ${b} the remainder is ${r}. Which of the following equalities is correct?`,
     explanation: (a, b, q, r) =>
@@ -177,7 +177,7 @@ const TEXT = {
     content: 'quantity',
     contextTag: 'personal',
     format: 'mc_simples',
-    anchor: 'MA104-SolarSystem',
+    anchor: 'MA123-SolarSystem',
     context: (a, b) => `Um aluno do nono ano divide ${a} por ${b} com o algoritmo da divisao inteira e anota o quociente e o resto no caderno.`,
     question: (a, b, r) => `Ao dividir ${a} por ${b} o resto e ${r}. Qual das seguintes igualdades esta correta?`,
     explanation: (a, b, q, r) =>

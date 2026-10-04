@@ -197,9 +197,11 @@ describe('items-validate :: baseline', () => {
     expect(report.findings.filter((f) => f.severity === 'ERROR')).toEqual([]);
   });
 
-  it('declara las 15 reglas con nombre estable y cuenta lo que analiza', () => {
+  it('declara las 17 reglas con nombre estable y cuenta lo que analiza', () => {
     const report = validateItemSet([CLEAN]);
-    expect(Object.values(RULE)).toHaveLength(15);
+    // 15 del banco + 2 de ancla (unknown / domain-mismatch) anadidas el
+    // 2026-10-04 al descubrir que el validador aceptaba anclas inventadas.
+    expect(Object.values(RULE)).toHaveLength(17);
     // Ejercicio de autocomprobacion: si items fuera 0, el gate no miraria nada.
     expect(report.files).toBe(1);
     expect(report.items).toBe(2);
@@ -545,6 +547,29 @@ describe('regla 15 · placeholder', () => {
     }
   });
 
+  // La regla distingue el marcador de la palabra: en espanol y portugues "todo"
+  // es una palabra normal que los items de lectura usan a diario, asi que la
+  // sigla se reconoce en mayusculas. Las cadenas colapsadas (`lorem ipsum`,
+  // `???`) si son insensibles a mayusculas. Cada mitad del caso tiene su test:
+  // aqui se cae el patron "todo Case-Insensitive" que hacia pasar "todo el
+  // pais" por relleno.
+  it('NO confunde "todo" legitimo con el marcador TODO', () => {
+    for (const question of [
+      'todo el pais produce cafe',
+      'Lee el texto y responde sobre todos los alumnos',
+      'Todo indica que la parcela es pequena',
+    ]) {
+      expect(rulesFor([bundleFile({ body: item({ question }) })]), question).not.toContain(RULE.placeholder);
+    }
+  });
+
+  it('lorem ipsum salta con cualquier capitalizacion', () => {
+    for (const text of ['lorem ipsum dolor sit amet', 'Lorem Ipsum dolor sit amet', 'LOREM IPSUM']) {
+      const body = item({ question: `${text} en el enunciado del problema.` });
+      expect(rulesFor([bundleFile({ body })]), text).toContain(RULE.placeholder);
+    }
+  });
+
   it('detecta ??? como relleno de opcion', () => {
     const body = item({ options: ['40', '???', '1.440'], correct: 'A' });
     expect(rulesFor([bundleFile({ body })])).toContain(RULE.placeholder);
@@ -656,7 +681,7 @@ describe('falso verde · el gate debe fallar cuando no mira nada', () => {
 /* ------------------------------------------------------------------ */
 
 describe('control negativo · bundle con todas las reglas violadas', () => {
-  // Un unico bundle que viola las 15 reglas a la vez. Si el validador dejara de
+  // Un unico bundle que viola las 17 reglas a la vez. Si el validador dejara de
   // mirar una sola de ellas, este test se pone rojo.
   //
   // Nota sobre la regla 1: el frontmatter SI esta aqui (con protocol_version
@@ -703,7 +728,7 @@ describe('control negativo · bundle con todas las reglas violadas', () => {
       index: 5,
       correct: 'A',
       question: 'Quinta pregunta distinta con el token pegado otro-caso en el texto.',
-      fields: { ...baseFields(), level: '', format: '' },
+      fields: { ...baseFields(), level: '', format: '', anchor: 'MA104-SolarSystem' },
       sources: [],
     }),
   ].join('\n\n');
@@ -711,18 +736,73 @@ describe('control negativo · bundle con todas las reglas violadas', () => {
   const findings = errorsFor([{ path: 'items/math/en/broken.md', content: horrible }]);
   const found = new Set(findings.map((f) => f.rule));
 
-  it('detecta 14 de las 15 reglas en un solo bundle', () => {
-    // Falta solo `frontmatter-missing`, porque las reglas 1 y 3 son excluyentes
-    // por diseno: si no hay frontmatter no hay protocol_version que leer. La 15
-    // se cubre en el test siguiente, y el conjunto de las 15 esta cubierto.
-    const expected = Object.values(RULE).filter((r) => r !== RULE.frontmatterMissing);
+  it('detecta 15 de las 17 reglas en un solo bundle', () => {
+    // Quedan fuera dos reglas, y las dos son excluyentes por diseno en ESTE
+    // bundle, no carencias del validador:
+    //  - `frontmatter-missing`: si no hay frontmatter no hay protocol_version
+    //    que leer, asi que las reglas 1 y 3 no pueden dispararse a la vez.
+    //  - `anchor-domain-mismatch`: este bundle es `domain: math` y sus anclas
+    //    (inventada aparte) son de matematicas, luego no hay desajuste que ver.
+    // Las dos se cubren en los tests siguientes.
+    const expected = Object.values(RULE).filter(
+      (r) => r !== RULE.frontmatterMissing && r !== RULE.anchorDomainMismatch,
+    );
     expect([...found].sort()).toEqual([...expected].sort());
   });
 
-  it('las 15 reglas quedan cubiertas entre los dos casos', () => {
+  it('las 17 reglas quedan cubiertas entre los tres casos', () => {
     const noFm = errorsFor([{ path: 'a.md', content: horrible.replace(/^---\n[\s\S]*?\n---\n/, '') }]);
-    const rules = new Set([...found, ...noFm.map((f) => f.rule)]);
+    const wrongFamily = rulesFor([
+      {
+        path: 'items/read/es/wrong.md',
+        content: [
+          '---',
+          'id: read-es-wrong',
+          'domain: reading',
+          'lang: es',
+          'protocol_version: v1.1',
+          'items: 1',
+          '---',
+          '',
+          item({
+            index: 1,
+            correct: 'A',
+            question: 'Item de lectura anclado a una unidad de pensamiento creativo.',
+            fields: { ...baseFields(), anchor: 'T400-SaveTheBees' },
+          }),
+        ].join('\n'),
+      },
+    ]);
+    const rules = new Set([...found, ...noFm.map((f) => f.rule), ...wrongFamily]);
     expect([...rules].sort()).toEqual([...Object.values(RULE)].sort());
+  });
+
+  it('el caso sin frontmatter cubre tambien el desajuste de dominio del ancla', () => {
+    // Sin frontmatter no hay domain de bundle, asi que esta regla solo se puede
+    // provocar en un fichero CON frontmatter de otro dominio.
+    const wrongFamily = item({
+      index: 1,
+      correct: 'A',
+      question: 'Item de lectura anclado a una unidad de pensamiento creativo.',
+      fields: { ...baseFields(), anchor: 'T400-SaveTheBees' },
+    });
+    const reglas = rulesFor([
+      {
+        path: 'items/read/es/wrong.md',
+        content: [
+          '---',
+          'id: read-es-wrong',
+          'domain: reading',
+          'lang: es',
+          'protocol_version: v1.1',
+          'items: 1',
+          '---',
+          '',
+          wrongFamily,
+        ].join('\n'),
+      },
+    ]);
+    expect(reglas).toContain(RULE.anchorDomainMismatch);
   });
 
   it('sin frontmatter salta la regla 1 y NO la 3: no hay version que leer', () => {
@@ -832,5 +912,107 @@ describe('regresion · el sesgo de letra cuenta ITEMS, no marcas [x]', () => {
 
   it('el bundle de referencia limpio NO dispara sesgo de letra', () => {
     expect(rulesFor([CLEAN])).not.toContain(RULE.answerLetterBias);
+  });
+});
+
+/* ================================================================== */
+/* REGRESION · el ancla tiene que existir y ser del dominio correcto.
+ *
+ * El validador aceptaba `MA104-SolarSystem` (que no existe: las unidades reales
+ * son MA104-CarPurchase y MA123-SolarSystem) y aceptaba `T400-SaveTheBees`
+ * como ancla de lectura, siendo las T* de PENSAMIENTO CREATIVO. Con eso, la
+ * calibracion que promete la seccion 5 del protocolo era una fiction: el item
+ * decia estar anclado a una unidad que nadie puede abrir.
+ * ================================================================== */
+
+describe('regresion · el ancla existe y pertenece al dominio', () => {
+  it('rechaza un ancla INVENTADA y sugiere la real mas parecida', () => {
+    const rules = rulesFor([
+      bundleFile({
+        path: 'items/math/en/bad-anchor.md',
+        fm: { domain: 'math' },
+        body: item({
+          index: 1,
+          correct: 'A',
+          fields: { ...baseFields(), anchor: 'MA104-SolarSystem' },
+        }),
+      }),
+    ]);
+    expect(rules).toContain(RULE.anchorUnknown);
+  });
+
+  it('el mensaje de ancla inventada SUGIERE la unidad real', () => {
+    const report = validateItemSet([
+      bundleFile({
+        path: 'items/math/en/bad-anchor.md',
+        fm: { domain: 'math' },
+        body: item({
+          index: 1,
+          correct: 'A',
+          fields: { ...baseFields(), anchor: 'MA104-SolarSystem' },
+        }),
+      }),
+    ]);
+    const hallazgo = report.findings.find((f) => f.rule === RULE.anchorUnknown);
+    expect(hallazgo?.message).toMatch(/MA123-SolarSystem/);
+  });
+
+  it('acepta las ocho unidades de matematicas liberadas por la OCDE', () => {
+    for (const anchor of [
+      'MA104-CarPurchase',
+      'MA106-DVDSales',
+      'MA118-MovingTruck',
+      'MA123-SolarSystem',
+      'MA150-TriangularPattern',
+      'MA156-Points',
+      'MA159-Spinners',
+      'MA161-ForestedAreas',
+    ]) {
+      const rules = rulesFor([
+        bundleFile({
+          fm: { domain: 'math' },
+          body: item({ index: 1, correct: 'A', fields: { ...baseFields(), anchor } }),
+        }),
+      ]);
+      expect(rules, `esperaba aceptar ${anchor}`).not.toContain(RULE.anchorUnknown);
+      expect(rules, `esperaba aceptar ${anchor}`).not.toContain(RULE.anchorDomainMismatch);
+    }
+  });
+
+  it('rechaza una ancla de PENSAMIENTO CREATIVO en un bundle de lectura', () => {
+    // Las T* son CRT: tareas abiertas de generar una idea, no multiple choice.
+    const rules = rulesFor([
+      bundleFile({
+        path: 'items/read/es/bad-anchor.md',
+        fm: { domain: 'reading' },
+        body: item({
+          index: 1,
+          correct: 'A',
+          fields: { ...baseFields(), anchor: 'T400-SaveTheBees' },
+        }),
+      }),
+    ]);
+    expect(rules).toContain(RULE.anchorDomainMismatch);
+  });
+
+  it('rechaza una ancla de matematicas en un bundle de lectura', () => {
+    const rules = rulesFor([
+      bundleFile({
+        path: 'items/read/es/wrong-family.md',
+        fm: { domain: 'reading' },
+        body: item({
+          index: 1,
+          correct: 'A',
+          fields: { ...baseFields(), anchor: 'MA104-CarPurchase' },
+        }),
+      }),
+    ]);
+    expect(rules).toContain(RULE.anchorDomainMismatch);
+  });
+
+  it('el bundle de referencia con ancla real NO dispara reglas de ancla', () => {
+    const rules = rulesFor([CLEAN]);
+    expect(rules).not.toContain(RULE.anchorUnknown);
+    expect(rules).not.toContain(RULE.anchorDomainMismatch);
   });
 });

@@ -146,7 +146,7 @@ rate, which is not the rate given.
 - demand: med
 - difficulty_band: D5-D6
 - level: 3
-- anchor: T400-SaveTheBees
+- anchor: MA161-ForestedAreas
 - sources:
   - https://pisa2022-questions.oecd.org/
 
@@ -179,7 +179,7 @@ assumes a 20% transfer efficiency, a rule the stimulus explicitly does not give.
 - demand: med
 - difficulty_band: D5-D6
 - level: 4
-- anchor: T400-SaveTheBees
+- anchor: MA161-ForestedAreas
 - sources:
   - https://pisa2022-questions.oecd.org/
 
@@ -214,7 +214,7 @@ measurement is 3 g, and equal monthly losses, which never occur.
 - demand: high
 - difficulty_band: D7-D8
 - level: 4
-- anchor: T400-SaveTheBees
+- anchor: MA161-ForestedAreas
 - sources:
   - https://pisa2022-questions.oecd.org/
 
