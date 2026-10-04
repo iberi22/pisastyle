@@ -1934,6 +1934,7 @@ packages:
 
   '@swal/ui@file:../../cores/swal-ui':
     resolution: {directory: ../../cores/swal-ui, type: directory}
+    engines: {node: '>=18'}
     peerDependencies:
       svelte: ^5.0.0
 
