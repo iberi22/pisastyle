@@ -1,0 +1,130 @@
+{
+  "version": "8.0",
+  "updated": "2026-10-04",
+  "status": "ciclo_1_in_progress",
+  "note": "Medido contra codigo el 2026-10-04, NO contra el HECHO/PENDIENTE de docs/PISASTYLE_PLAN_2H.md — ese documento declara F0 'EN CURSO' y el Protocolo 'v1.0' cuando el codigo ya tiene F0 al 85% y el protocolo es v1.1. Los porcentajes de abajo son (code x 0.4) + (tests x 0.3) + (wired x 0.3).",
+  "implementation_maturity": {
+    "code_exists": "62%",
+    "tests_coverage": "18%",
+    "router_wiring": "31%",
+    "overall_score": "39%"
+  },
+  "total_features": 9,
+  "features": [
+    {
+      "id": "F0",
+      "name": "Scaffold + repo publico",
+      "code": 100,
+      "tests": 40,
+      "wired": 90,
+      "score": 81,
+      "evidence": "src/lib/domain.config.ts (5 entidades PISA), pisa-i18n.ts es/en/pt, middleware sin imponer idioma por IP, repo iberi22/pisastyle PUBLIC, 99 tests",
+      "pending": "wrangler.toml con 2x database_id=REPLACE-ME, sin bloque routes/custom_domain, DNS pisa.swal.network no resuelve, package.json:6 describe el scaffold"
+    },
+    {
+      "id": "F1",
+      "name": "5 infografias piloto",
+      "code": 0,
+      "tests": 0,
+      "wired": 0,
+      "score": 0,
+      "evidence": "CERO <svg> en src/. ranking-bars/trend-line/modelling-cycle/proficiency-pyramid/pisa2025-whats-new no existen. Solo hay el string 'ranking-bars' en alternates.test.ts:39 (una URL de test)",
+      "pending": "Los 5 componentes + dataset temporal 2000-2022 de trend-line + descriptores de los 6 niveles para la piramide + ruta /[locale]/infografias/",
+      "skill_available": "~/.hermes/skills/swal/pisastyle-infographics/SKILL.md v1.0.0 — YA INSTALADA (el plan la daba por STAGED pendiente)"
+    },
+    {
+      "id": "F2",
+      "name": "Protocolo v1.1 + validador + 10 unidades",
+      "code": 35,
+      "tests": 60,
+      "wired": 20,
+      "score": 37,
+      "evidence": "docs/PISASTYLE_PROTOCOL_v1.md v1.1; vault/backend_adapters/validate_pisa.js valida de verdad (0 errores sobre MAT-001); 1 unidad de 10 en el vault (PISA-MAT-001-mosaico-solar.md, 110 lineas, study_minutes 75)",
+      "pending": "9 unidades mas (2 mat, 3 lec, 3 cie, 1 LDW). study_content / answer_keys / content_packs NO existen ni en repo ni en vault: el validador comprueba la DECLARACION (study_minutes en frontmatter), no la EXISTENCIA del material de 1-2h"
+    },
+    {
+      "id": "F3",
+      "name": "Player de examen + estudio",
+      "code": 25,
+      "tests": 0,
+      "wired": 0,
+      "score": 10,
+      "evidence": "ExamTimer.svelte (127 l) y StudyRenderer.svelte (145 l) existen pero HUERFANOS: 0 imports en src/pages/",
+      "pending": "No existe ruta de unidad ([locale]/pisa/[unit]/). Ni estimulo+items+estudio, ni score-hash (attempt_hash solo es string en domain.config.ts:41), ni el estudio previo obligatorio. Ningun componente esta montado en ninguna pagina"
+    },
+    {
+      "id": "F4",
+      "name": "Area info/rankings i18n",
+      "code": 35,
+      "tests": 70,
+      "wired": 30,
+      "score": 45,
+      "evidence": "src/lib/alternates.ts genera hreflang es/en/pt + x-default, 12 tests; hero Colombia 383/409/411 en las 3 locales",
+      "pending": "src/pages/[locale]/ tiene 4 paginas aplanadas; NO existen los directorios pisa/, rankings/ ni infografias/. El hreflang esta construido y testeado contra rutas fantasma (alternates.test.ts:39 prueba /infografias/ranking-bars)"
+    },
+    {
+      "id": "F5",
+      "name": "Telemetria + nodo de tokens",
+      "code": 20,
+      "tests": 15,
+      "wired": 10,
+      "score": 16,
+      "evidence": "docs/PISASTYLE_TELEMETRY.md (esquema, 38 lineas); src/lib/pisa-telemetry.ts existe pero DIVERGE del esquema",
+      "pending": "allowlist VACIA (0 campos permitidos). 0 ocurrencias de event_type/instance_ref/duration_ms/consent_version/country_hint en pisa-telemetry.ts. SIN hash rotatorio diario, SIN redondeo a 5s, SIN k-anonimato. ConsentBanner tiene contrato 'pisa-consent-v1' pero NO llama setOptIn ni clearTelemetryBuffer: el opt-out en un tap no esta cableado",
+      "critical": "src/lib/pisa-telemetry.test.ts:44-45 fija 'expect(allowlist).toEqual([])' — un test VERDE que CONSAGRA el defecto"
+    },
+    {
+      "id": "F6",
+      "name": "Mesh ready + produccion",
+      "code": 30,
+      "tests": 30,
+      "wired": 5,
+      "score": 23,
+      "evidence": "mesh.ts construye la room correcta swal/pisastyle/{hash}; xavier.ts construye el ns app/pisastyle/instance/{id}; billing.ts con tier payg; migrations/001_billing.sql y 002_domain.sql",
+      "pending": "pisa.swal.network no resuelve. 20 runs de deploy = 4 failure + 16 cancelled, 0 exitos. d1_databases con REPLACE-ME impide aplicar las migraciones. xavierSearch/xavierAdd/meshPublish/meshSubscribe: 0 usos en UI",
+      "critical": "xavier.ts sigue siendo el stub del CORE: return {memories: []} en catch silencioso + TODO queue to IndexedDB. PISAStyle es tan agentic como el ecosistema, y el ecosistema no es agentic en memoria"
+    },
+    {
+      "id": "S1",
+      "name": "Design system conectado",
+      "code": 100,
+      "tests": 85,
+      "wired": 100,
+      "score": 96,
+      "evidence": "Layout.astro importa @swal/ui/tokens + @swal/ui/ui.css (hoja que exporta el core desde 43eb694); 8 reglas .swal-btn aplicadas; tema Bone Warm; src/styles/pisa-tokens.css con capa semantica --pisa-series-* sobre paleta Okabe-Ito accesible + rampas prefers-contrast y print",
+      "pending": "src/styles/print.css (16 lineas) NO lo importa nadie: codigo muerto, y la skill exige print con fondo blanco/tinta negra. CSS hardcodeado en ExamTimer (4 hex Tailwind) pendiente de mapear"
+    },
+    {
+      "id": "S2",
+      "name": "Infraestructura de desarrollo",
+      "code": 90,
+      "tests": 70,
+      "wired": 85,
+      "score": 83,
+      "evidence": "pnpm-workspace.yaml con packages: [] + allowBuilds booleanos (2d169cc); deploy.yml dispara con cambios de pnpm/workspace/lock/workflows (5369f3e); @types/node añadido, type-check exit 0; 99 tests",
+      "pending": "CI apunta a cores/swal-app-template (ruta inexistente). deps file:../../cores/ → ENOENT en el runner: ningun runner puede instalar este repo. CI y deploy imposibles hasta publicar @swal/ui",
+      "critical": "el deploy actual falla en ENOENT scandir '/home/runner/work/cores/swal-ui'"
+    }
+  ],
+  "not_wired_modules": [
+    "xavierSearch / xavierAdd (0 usos en UI)",
+    "meshPublish / meshSubscribe (0 usos en UI)",
+    "ExamTimer.svelte (0 imports)",
+    "StudyRenderer.svelte (0 imports)",
+    "src/styles/print.css (0 imports)"
+  ],
+  "tech_debt": [
+    "pisa-telemetry.test.ts consagra el contrato equivocado ({id,name,timestamp} en vez del esquema publico)",
+    "alternates.test.ts verifica rutas que no existen",
+    "validate_pisa.js comprueba declaracion, no existencia de study_content",
+    "workerd resuelve @swal/ui de forma intermitente (8 de 12 bien) pese al fix del core",
+    "cores/swal-ui.main local y remoto divergen 4<->4 (otro agente), el fix 43eb694 no esta en origin/main"
+  ],
+  "next_cycle_recommendations": [
+    "W1: publicar @swal/ui (desbloquea CI y deploy, ~15 apps)",
+    "W2: ranking-bars como primera infografia (100% de los datos ya en home.*.json)",
+    "W3: montar el player de unidad con las 2 piezas huerfanas",
+    "W4: una funcion de memoria real (intento -> Xavier -> perfil del estudiante)",
+    "W5: implementar el esquema de telemetria o borrar el test que consagra el defecto"
+  ]
+}
