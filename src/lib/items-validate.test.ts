@@ -31,6 +31,7 @@ import {
   validateItemFile,
   formatReport,
   RULE,
+  STRUCT,
   MIN_EXPLANATION_CHARS,
   EXPECTED_PROTOCOL_VERSION,
   MAX_ANSWER_LETTER_SHARE,
@@ -197,11 +198,11 @@ describe('items-validate :: baseline', () => {
     expect(report.findings.filter((f) => f.severity === 'ERROR')).toEqual([]);
   });
 
-  it('declara las 17 reglas con nombre estable y cuenta lo que analiza', () => {
+  it('declara las 15 reglas con nombre estable y cuenta lo que analiza', () => {
     const report = validateItemSet([CLEAN]);
     // 15 del banco + 2 de ancla (unknown / domain-mismatch) anadidas el
     // 2026-10-04 al descubrir que el validador aceptaba anclas inventadas.
-    expect(Object.values(RULE)).toHaveLength(17);
+    expect(Object.values(RULE)).toHaveLength(15);
     // Ejercicio de autocomprobacion: si items fuera 0, el gate no miraria nada.
     expect(report.files).toBe(1);
     expect(report.items).toBe(2);
@@ -736,73 +737,26 @@ describe('control negativo · bundle con todas las reglas violadas', () => {
   const findings = errorsFor([{ path: 'items/math/en/broken.md', content: horrible }]);
   const found = new Set(findings.map((f) => f.rule));
 
-  it('detecta 15 de las 17 reglas en un solo bundle', () => {
-    // Quedan fuera dos reglas, y las dos son excluyentes por diseno en ESTE
-    // bundle, no carencias del validador:
-    //  - `frontmatter-missing`: si no hay frontmatter no hay protocol_version
-    //    que leer, asi que las reglas 1 y 3 no pueden dispararse a la vez.
-    //  - `anchor-domain-mismatch`: este bundle es `domain: math` y sus anclas
-    //    (inventada aparte) son de matematicas, luego no hay desajuste que ver.
-    // Las dos se cubren en los tests siguientes.
-    const expected = Object.values(RULE).filter(
-      (r) => r !== RULE.frontmatterMissing && r !== RULE.anchorDomainMismatch,
-    );
-    expect([...found].sort()).toEqual([...expected].sort());
+  it('detecta 14 de las 15 reglas en un solo bundle, y son exactamente esas', () => {
+    // Falta `frontmatter-missing` porque este bundle SI tiene frontmatter (con
+    // la protocol_version equivocada, regla 3). Las reglas 1 y 3 son excluyentes
+    // por diseno: sin frontmatter no hay version que leer, y lo cubre el test
+    // siguiente. Comparar SOLO las 15 evita que este test dependa de cuantas
+    // reglas de ancla exista en STRUCT.
+    // Set<string> explicito: `Set` inferido de las as const se estrecha al union
+    // de literales y `has(string)` no compila.
+    const fifteen: ReadonlySet<string> = new Set<string>(Object.values(RULE));
+    const expected = [...fifteen].filter((r) => r !== RULE.frontmatterMissing);
+    expect([...found].filter((r) => fifteen.has(r)).sort()).toEqual(expected.sort());
   });
 
-  it('las 17 reglas quedan cubiertas entre los tres casos', () => {
+  it('las 15 reglas quedan cubiertas entre los dos casos', () => {
     const noFm = errorsFor([{ path: 'a.md', content: horrible.replace(/^---\n[\s\S]*?\n---\n/, '') }]);
-    const wrongFamily = rulesFor([
-      {
-        path: 'items/read/es/wrong.md',
-        content: [
-          '---',
-          'id: read-es-wrong',
-          'domain: reading',
-          'lang: es',
-          'protocol_version: v1.1',
-          'items: 1',
-          '---',
-          '',
-          item({
-            index: 1,
-            correct: 'A',
-            question: 'Item de lectura anclado a una unidad de pensamiento creativo.',
-            fields: { ...baseFields(), anchor: 'T400-SaveTheBees' },
-          }),
-        ].join('\n'),
-      },
-    ]);
-    const rules = new Set([...found, ...noFm.map((f) => f.rule), ...wrongFamily]);
-    expect([...rules].sort()).toEqual([...Object.values(RULE)].sort());
-  });
-
-  it('el caso sin frontmatter cubre tambien el desajuste de dominio del ancla', () => {
-    // Sin frontmatter no hay domain de bundle, asi que esta regla solo se puede
-    // provocar en un fichero CON frontmatter de otro dominio.
-    const wrongFamily = item({
-      index: 1,
-      correct: 'A',
-      question: 'Item de lectura anclado a una unidad de pensamiento creativo.',
-      fields: { ...baseFields(), anchor: 'T400-SaveTheBees' },
-    });
-    const reglas = rulesFor([
-      {
-        path: 'items/read/es/wrong.md',
-        content: [
-          '---',
-          'id: read-es-wrong',
-          'domain: reading',
-          'lang: es',
-          'protocol_version: v1.1',
-          'items: 1',
-          '---',
-          '',
-          wrongFamily,
-        ].join('\n'),
-      },
-    ]);
-    expect(reglas).toContain(RULE.anchorDomainMismatch);
+    // Set<string> explicito: `Set` inferido de las as const se estrecha al union
+    // de literales y `has(string)` no compila.
+    const fifteen: ReadonlySet<string> = new Set<string>(Object.values(RULE));
+    const union = new Set([...found, ...noFm.map((f) => f.rule)].filter((r) => fifteen.has(r)));
+    expect(union.size).toBe(15);
   });
 
   it('sin frontmatter salta la regla 1 y NO la 3: no hay version que leer', () => {
@@ -938,7 +892,7 @@ describe('regresion · el ancla existe y pertenece al dominio', () => {
         }),
       }),
     ]);
-    expect(rules).toContain(RULE.anchorUnknown);
+    expect(rules).toContain(STRUCT.anchorUnknown);
   });
 
   it('el mensaje de ancla inventada SUGIERE la unidad real', () => {
@@ -953,7 +907,7 @@ describe('regresion · el ancla existe y pertenece al dominio', () => {
         }),
       }),
     ]);
-    const hallazgo = report.findings.find((f) => f.rule === RULE.anchorUnknown);
+    const hallazgo = report.findings.find((f) => f.rule === STRUCT.anchorUnknown);
     expect(hallazgo?.message).toMatch(/MA123-SolarSystem/);
   });
 
@@ -974,8 +928,8 @@ describe('regresion · el ancla existe y pertenece al dominio', () => {
           body: item({ index: 1, correct: 'A', fields: { ...baseFields(), anchor } }),
         }),
       ]);
-      expect(rules, `esperaba aceptar ${anchor}`).not.toContain(RULE.anchorUnknown);
-      expect(rules, `esperaba aceptar ${anchor}`).not.toContain(RULE.anchorDomainMismatch);
+      expect(rules, `esperaba aceptar ${anchor}`).not.toContain(STRUCT.anchorUnknown);
+      expect(rules, `esperaba aceptar ${anchor}`).not.toContain(STRUCT.anchorDomainMismatch);
     }
   });
 
@@ -992,7 +946,7 @@ describe('regresion · el ancla existe y pertenece al dominio', () => {
         }),
       }),
     ]);
-    expect(rules).toContain(RULE.anchorDomainMismatch);
+    expect(rules).toContain(STRUCT.anchorDomainMismatch);
   });
 
   it('rechaza una ancla de matematicas en un bundle de lectura', () => {
@@ -1007,12 +961,12 @@ describe('regresion · el ancla existe y pertenece al dominio', () => {
         }),
       }),
     ]);
-    expect(rules).toContain(RULE.anchorDomainMismatch);
+    expect(rules).toContain(STRUCT.anchorDomainMismatch);
   });
 
   it('el bundle de referencia con ancla real NO dispara reglas de ancla', () => {
     const rules = rulesFor([CLEAN]);
-    expect(rules).not.toContain(RULE.anchorUnknown);
-    expect(rules).not.toContain(RULE.anchorDomainMismatch);
+    expect(rules).not.toContain(STRUCT.anchorUnknown);
+    expect(rules).not.toContain(STRUCT.anchorDomainMismatch);
   });
 });

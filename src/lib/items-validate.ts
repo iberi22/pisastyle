@@ -36,14 +36,18 @@ export const RULE = {
   controlCharsEncoding: 'control-chars-encoding',
   malformedOptionRow: 'malformed-option-row',
   placeholder: 'placeholder',
-  anchorUnknown: 'anchor-unknown',
-  anchorDomainMismatch: 'anchor-domain-mismatch',
 } as const;
 
-/** Reglas estructurales: no son parte de las 15, pero el banco no las perdona. */
+/**
+ * Reglas estructurales y de catalogo: NO son parte de las 15, pero el banco no
+ * las perdona. `RULE` queda clavada en las 15 del encargo para que un test
+ * pueda contar exactamente esas; lo que se anada va aqui.
+ */
 export const STRUCT = {
   missingItemHeaders: 'missing-item-headers',
   itemCountMismatch: 'item-count-mismatch',
+  anchorUnknown: 'anchor-unknown',
+  anchorDomainMismatch: 'anchor-domain-mismatch',
 } as const;
 
 export type Severity = 'ERROR' | 'WARNING';
@@ -559,7 +563,7 @@ function validateOne(file: ItemFileInput): Finding[] {
       if (!realDomain) {
         const hint = closestReleased(anchor);
         add(
-          RULE.anchorUnknown,
+          STRUCT.anchorUnknown,
           'ERROR',
           idx,
           `ancla "${anchor}" no existe en el catalogo de unidades liberadas por la OCDE` +
@@ -570,7 +574,7 @@ function validateOne(file: ItemFileInput): Finding[] {
         if (allowed.length > 0 && !allowed.includes(realDomain)) {
           const label = DOMAIN_LABEL[realDomain] ?? realDomain;
           add(
-            RULE.anchorDomainMismatch,
+            STRUCT.anchorDomainMismatch,
             'ERROR',
             idx,
             `ancla "${anchor}" es de ${label} y el bundle "${bundleDomain}" no admite esa familia`,
