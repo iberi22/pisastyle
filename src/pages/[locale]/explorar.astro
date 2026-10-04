@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import { Card, Badge } from '@swal/ui';
 import { buildAlternates, routeLocale } from '../../lib/alternates';
+import { loadUnit } from '../../lib/units';
 
 export function getStaticPaths() {
   return [
@@ -13,12 +14,13 @@ export function getStaticPaths() {
 
 const { locale } = Astro.params;
 
-const unitModules = import.meta.glob('../../data/sample-unit.*.json', { eager: true });
 const faqModules = import.meta.glob('../../data/faq.*.json', { eager: true });
 
-const unitData = unitModules[`../../data/sample-unit.${locale}.json`]
-  ? (unitModules[`../../data/sample-unit.${locale}.json`] as any).default
-  : null;
+// Las unidades no se leen con un glob sobre src/data/: no existen ahi (LICENSE.md
+// punto 2 las declara privadas y viven en el vault). Ese glob vacio era la causa
+// de que las tres locales mostraran "Unidad no disponible".
+// Ver src/lib/units.ts para el por que de import.meta.glob y no readFileSync.
+const { data: unitData, origin: unitOrigin } = loadUnit(routeLocale(locale));
 const faqData = faqModules[`../../data/faq.${locale}.json`]
   ? (faqModules[`../../data/faq.${locale}.json`] as any).default
   : [];
@@ -31,6 +33,7 @@ const t = {
     items: "Ítems",
     faq: "Preguntas Frecuentes",
     no_unit: "Unidad no disponible en este idioma.",
+    vault_notice: "Unidad de demostración cargada desde el vault privado del laboratorio. No está en el repositorio.",
     minutes: "minutos",
     sources: "Fuentes: OECD PISA 2022 Results: COL 383/409/411 puesto 64/81, OCDE 472/476/485, SGP 575/543/561. Contenido ORIGINAL tipo PISA no oficial, sin afiliación OECD."
   },
@@ -41,6 +44,7 @@ const t = {
     items: "Items",
     faq: "FAQ",
     no_unit: "Unit not available in this language.",
+    vault_notice: "Demonstration unit loaded from the laboratory's private vault. It is not in the repository.",
     minutes: "minutes",
     sources: "Sources: OECD PISA 2022 Results: COL 383/409/411 rank 64/81, OECD 472/476/485, SGP 575/543/561. ORIGINAL unofficial PISA-style content, no OECD affiliation."
   },
@@ -51,6 +55,7 @@ const t = {
     items: "Itens",
     faq: "Perguntas Frequentes",
     no_unit: "Unidade não disponível neste idioma.",
+    vault_notice: "Unidade de demonstração carregada do vault privado do laboratório. Não está no repositório.",
     minutes: "minutos",
     sources: "Fontes: Resultados OCDE PISA 2022: COL 383/409/411 posição 64/81, OCDE 472/476/485, SGP 575/543/561. Conteúdo ORIGINAL tipo PISA não oficial, sem afiliação à OCDE."
   }
@@ -61,7 +66,9 @@ const t = {
   <div class="wrap">
     <h1 class="title">{t.explore}</h1>
 
-    {(unitData) ? (
+    {unitData && unitOrigin === 'vault' && <p class="origin-note">{t.vault_notice}</p>}
+
+    {unitData ? (
       <div class="grid">
         <Card variant="surface" padding="lg">
           <h2>{t.stimulus}</h2>
