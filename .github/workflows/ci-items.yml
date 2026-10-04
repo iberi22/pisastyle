@@ -1,0 +1,65 @@
+name: ci-items
+
+# Gate for the item bank on every Pull Request. Deliberately separate from
+# ci-template.yml, whose `paths` filters point at cores/swal-app-template (the
+# scaffold repo) and would therefore never fire for this app's items/ tree.
+on:
+  pull_request:
+    paths:
+      - 'items/**'
+      - 'scripts/validate-items.mjs'
+      - 'scripts/items-generate.mjs'
+      - '.github/workflows/items-daily.yml'
+      - '.github/workflows/ci-items.yml'
+      - 'docs/PISASTYLE_PROTOCOL_v1.md'
+  push:
+    branches: [main]
+    paths:
+      - 'items/**'
+      - 'scripts/validate-items.mjs'
+      - 'scripts/items-generate.mjs'
+  workflow_dispatch:
+
+# Read-only. This workflow inspects and reports; it never writes to the repo and
+# never merges anything.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-items-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-items:
+    name: 'Validate items'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate items
+        run: node scripts/validate-items.mjs items/
+
+      # The generator must stay self-consistent: if it can no longer build an
+      # item its own validator accepts, the daily pipeline is silently dead.
+      # --dry-run writes nothing, so this cannot touch the working tree.
+      - name: Smoke-test the generator (dry run, writes nothing)
+        run: node scripts/items-generate.mjs --dry-run --seed 1
+
+      - name: Confirm the dry run left the tree clean
+        run: |
+          set -euo pipefail
+          if git status --porcelain | grep -q .; then
+            echo "::error::the generator's dry run modified the working tree"
+            git --no-pager diff
+            exit 1
+          fi
+          echo "Generator dry run left the tree clean."

@@ -1,0 +1,148 @@
+name: items-daily
+
+on:
+  schedule:
+    # 06:17 UTC, deliberately off the hour so this run does not pile onto the
+    # top-of-hour GitHub Actions scheduling spike.
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Date (YYYY-MM-DD) for the item id. Defaults to today (UTC).'
+        required: false
+      domain:
+        description: 'Domain to generate into'
+        required: false
+        default: 'math'
+        type: choice
+        options: [math, read, science]
+      lang:
+        description: 'Language to generate into'
+        required: false
+        default: 'es'
+        type: choice
+        options: [es, en, pt]
+
+# Least privilege, and exactly what is needed: push the generated branch and
+# open the pull request. Nothing else. No deploy, no id-token.
+permissions:
+  contents: write
+  pull-requests: write
+
+# Two runs on the same day must not race each other into two PRs.
+concurrency:
+  group: items-daily
+  cancel-in-progress: true
+
+jobs:
+  # Job 1: gate. If the bank on this commit is invalid, nothing gets generated.
+  validate:
+    name: 'Validate items'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate items
+        run: node scripts/validate-items.mjs items/
+
+  # Job 2: generation. `needs: validate` is the whole safety story — a red
+  # validate job means this job is skipped, never "generate anyway".
+  generate:
+    name: 'Generate one item (PR only, never auto-merged)'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # ITEMS_DATE keys the item id on the UTC date, so re-running a day that
+      # failed finds the file already there and writes nothing: no duplicates.
+      # Without --seed the generator derives a seed from that same date, so
+      # every day produces a different item while staying reproducible.
+      - name: Generate item
+        env:
+          # Settable from the UI when replaying a specific day.
+          ITEMS_DATE: ${{ inputs.date }}
+        run: |
+          set -euo pipefail
+          export ITEMS_DATE="${ITEMS_DATE:-$(date -u +%F)}"
+          echo "ITEMS_DATE=$ITEMS_DATE"
+          node scripts/items-generate.mjs \
+            --domain "${{ inputs.domain || 'math' }}" \
+            --lang "${{ inputs.lang || 'es' }}"
+
+      # The generator only ever writes a valid item, or nothing at all. An empty
+      # diff therefore means "nothing to do today", which is a SUCCESS — not a
+      # reason to open an empty PR.
+      - name: Detect whether anything was generated
+        id: changes
+        run: |
+          set -euo pipefail
+          if git status --porcelain -- items/ | grep -q .; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git --no-pager diff --stat -- items/
+            git status --short -- items/
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No new item generated (bank clean or nothing to do today). Nothing to open."
+          fi
+
+      # peter-evans/create-pull-request opens or updates a single branch + PR and
+      # exits 0 with created=false when there are no changes. There is no merge
+      # step anywhere in this workflow: main is only ever changed by a human
+      # reviewing the PR.
+      - name: Open pull request for human review
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          add-paths: items/
+          commit-message: 'chore(items): generated item of the day'
+          title: 'chore(items): item generado automaticamente - requiere revision'
+          body: |
+            ## Item generado automaticamente
+
+            Generado por `scripts/items-generate.mjs` desde el workflow diario
+            (`items-daily.yml`). **No se fusiona solo**: la revision es humana.
+
+            - Commit base: `${{ github.sha }}`
+            - Ejecucion: `${{ github.run_id }}` (`${{ github.event_name }}`)
+
+            Este PR no se habria abierto si el job `validate` no hubiera pasado:
+            el generador se autovalida contra `scripts/validate-items.mjs` antes
+            de escribir nada.
+
+            ### Que revisar
+
+            1. Que el `anchor` declarado sea el adecuado para el dominio (§5).
+            2. Que `process`, `content` y `context` correspondan al dominio real
+               de la tabla del §2, no a un valor por defecto.
+            3. Que la aritmetica de la justificacion sea correcta: el generador
+               la calcula en `solve()`, pero el nivel de demanda sigue siendo
+               decision editorial.
+            4. Que `demand` y `level` reflejen la dificultad real, no la
+               teorica (§2: la demanda cognitiva no es la dificultad empirica).
+
+            Si el item no sirve, cierralo: el siguiente run ya generara otro.
+
+            refs: docs/PISASTYLE_PROTOCOL_v1.md
+          branch: items/daily
+          delete-branch: true
+          labels: generated,items
