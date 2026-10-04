@@ -64,6 +64,7 @@ interface Copy {
   scoreLabel: string;
   submit: string;
   reset: string;
+  prevNotice: string;
   resultHeading: string;
   resultNote: string;
   questions: Record<DomainKey, Question[]>;
@@ -81,6 +82,7 @@ const COPY: Record<'es' | 'en' | 'pt', Copy> = {
     scoreLabel: 'correctas',
     submit: 'Ver mi nivel',
     reset: 'Empezar de nuevo',
+    prevNotice: 'Tu última evaluación guardada:',
     resultHeading: 'Tu estimación',
     resultNote:
       'Escala orientativa propia: los cortes numéricos del Protocolo PISAStyle ' +
@@ -121,6 +123,7 @@ const COPY: Record<'es' | 'en' | 'pt', Copy> = {
     scoreLabel: 'correct',
     submit: 'See my level',
     reset: 'Start over',
+    prevNotice: 'Your last saved evaluation:',
     resultHeading: 'Your estimate',
     resultNote:
       'Own orientative scale: the numeric cuts in PISAStyle Protocol v1.1 §3 ' +
@@ -161,6 +164,7 @@ const COPY: Record<'es' | 'en' | 'pt', Copy> = {
     scoreLabel: 'corretas',
     submit: 'Ver meu nível',
     reset: 'Começar de novo',
+    prevNotice: 'Sua última avaliação guardada:',
     resultHeading: 'Sua estimativa',
     resultNote:
       'Escala orientativa própria: os cortes numéricos do Protocolo PISAStyle ' +
@@ -243,7 +247,7 @@ if (submitted) {
         <h2>{L.resultHeading}</h2>
         <ul class="result-list">
           {results.map((r) => (
-            <li class="result">
+            <li class="result" data-domain={r.key}>
               <span class="result-domain">{r.label}</span>
               <span class="result-score">{r.correct}/5 {L.scoreLabel}</span>
               <span class={`level-chip tone-${r.tone}`}>
@@ -280,6 +284,107 @@ if (submitted) {
       <button type="submit" class="submit">{L.submit}</button>
     </form>
   </main>
+{/* Persistencia del resultado. El formulario es SSR con GET, asi que sin esto
+    recargar pierde la estimacion: la app no recordaria nada del visitante.
+    Solo se guarda el agregado (nivel y aciertos por dominio) — nunca las
+    respuestas ni los enunciados, que son contenido privado (LICENSE.md p2).
+    Ver src/lib/evaluation-store.ts, con sus tests. */}
+{/* Config del script en un <script type="application/json">, no con
+    define:vars: define:vars inyecta una variable que TypeScript no puede ver
+    (warning ts(2570)) y obliga a duplicar el nombre. Leyendo del DOM el
+    check queda limpio y los datos siguen siendo JSON, no codigo. */}
+{/* Config en atributos data-, no en un <script type="application/json"> ni con
+    define:vars. Los dos jalan problemas distintos: define:vars inyecta una
+    variable que TypeScript no ve (ts(2570)), y el data-tag hace que Astro
+    tipifique el script siguiente (ts(7053) por los objects sin indice). Un
+    <div data-...> es HTML normal: sin tipos, sin bundling, sin hydration. */}
+<div
+  hidden
+  id="eval-config"
+  data-key="pisastyle:evaluacion"
+  data-loc={routeLocale(locale)}
+  data-notice={L.prevNotice}
+/>
+<script is:inline>
+  (function () {
+    var el = document.getElementById('eval-config');
+    if (!el) return;
+    var KEY = el.getAttribute('data-key');
+    var LOC = el.getAttribute('data-loc');
+    var NOTICE = el.getAttribute('data-notice') || '';
+
+    function read() {
+      try { var raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : {}; }
+      catch (e) { return {}; }
+    }
+    function write(obj) {
+      try { localStorage.setItem(KEY, JSON.stringify(obj)); } catch (e) { /* cuota */ }
+    }
+
+    // Al enviar: guarda SOLO el agregado (nivel y aciertos por dominio).
+    // Nunca las respuestas ni los enunciados: son contenido privado.
+    var form = document.querySelector('form.quiz');
+    if (form) {
+      /* Se guarda alEnviar se persistía vacío: el submit navega por GET y el
+         listener corre ANTES de que la página nueva llegue a renderizar sus
+         .result — no habia nada que leer. Por eso se guarda al cargar la
+         pagina de resultados, que es donde el DOM ya existe. */
+      form.addEventListener('submit', function () {
+        try { sessionStorage.setItem('pisastyle:pendiente', '1'); } catch (e) {}
+      });
+    }
+
+    function guardar() {
+      var out = read();
+        var levels = {};
+        var scores = {};
+        var rows = document.querySelectorAll('.result');
+        for (var i = 0; i < rows.length; i++) {
+          var row = rows[i];
+          var dom = (row.getAttribute('data-domain') || '').trim();
+          if (!dom) continue;
+          var chip = row.querySelector('.level-chip');
+          var score = row.querySelector('.result-score');
+          /* El chip dice "Nivel 2" (con &nbsp;). Se quedaban los ultimos 2
+             caracteres ALFABETICOS y salia "o2" (la "o" de Nivel). Se extrae el
+             numero con un patron, no recortando. */
+          if (chip) {
+            var lm = (chip.textContent || '').match(/(\d+[a-z]?)/i);
+            if (lm) levels[dom] = lm[1];
+          }
+          if (score) {
+            var m = (score.textContent || '').match(/(\d+)\s*\/\s*5/);
+            if (m) scores[dom] = Number(m[1]);
+          }
+        }
+      out[LOC] = { levels: levels, scores: scores, at: new Date().toISOString() };
+      write(out);
+    }
+
+    // Si esta pagina YA trae resultados (viene por URL con ?enviar=1), se guarda.
+    if (document.querySelector('.results')) guardar();
+
+    // Al volver sin resultados en la URL: repone el ultimo guardado.
+    if (!document.querySelector('.results')) {
+      var prev = read()[LOC];
+      if (prev && prev.levels) {
+        var note = document.createElement('p');
+        note.className = 'prev-result';
+        /* Fecha en formato largo y sin ambiguedad: `toLocaleDateString` corto
+           daba 4/10/2026, que se lee como dia/mes en es y como mes/dia en en.
+           Con year/month/day largos es 4 de octubre de 2026 en las tres. */
+        var when = prev.at
+          ? new Date(prev.at).toLocaleDateString(CFG.loc, {
+              year: 'numeric', month: 'long', day: 'numeric',
+            })
+          : '';
+        note.textContent = NOTICE + (when ? ' (' + when + ')' : '');
+        var main = document.querySelector('main.wrap');
+        if (main && main.firstChild) main.insertBefore(note, main.firstChild.nextSibling);
+      }
+    }
+  })();
+</script>
 </Layout>
 
 <style>
@@ -287,7 +392,9 @@ if (submitted) {
   h1 { font-size: 1.8rem; font-weight: 800; color: var(--swal-text); margin: 0; letter-spacing: -0.02em; }
   .intro { color: var(--swal-text-secondary); margin: 0; line-height: 1.6; }
   fieldset { border: 1px solid var(--swal-border); border-radius: 10px; padding: 1rem 1.1rem; margin: 0; background: var(--swal-surface); }
-  legend { padding: 0 0.4rem; font-weight: 700; color: var(--swal-text); }
+  /* El <legend> se sentaba pegado al borde superior del fieldset (vision lo
+     marco como superposicion). Con margin-bottom queda dentro del recuadro. */
+  legend { padding: 0 0.4rem; font-weight: 700; color: var(--swal-text); margin-bottom: 0.35rem; }
   .q { padding: 0.6rem 0; border-top: 1px solid var(--swal-border); }
   .q:first-of-type { border-top: 0; }
   .q-text { margin: 0 0 0.5rem; color: var(--swal-text); line-height: 1.5; }
@@ -305,6 +412,17 @@ if (submitted) {
   .submit:hover { background: var(--swal-accent-hover); }
   .results { background: var(--swal-surface); border: 1px solid var(--swal-border); border-radius: 10px; padding: 1rem 1.1rem; }
   .results h2 { margin: 0 0 0.6rem; font-size: 1.15rem; color: var(--swal-text); }
+  /* El aviso lo CREA el script en runtime, asi que el elemento no lleva el
+     data-astro-cid que Astro añade a los estaticos: un selector normal
+     (.prev-result) se compila a .prev-result[data-astro-cid-...] y no casaba
+     con nada — salia con fondo transparente, sin borde y a 16px. :global()
+     deja el selector sin scope para que aplique al elemento inyectado. */
+  :global(.prev-result) {
+    margin: 0; padding: 0.6rem 0.9rem; font-size: 0.85rem; line-height: 1.5;
+    color: var(--swal-text-secondary); background: var(--swal-surface);
+    border: 1px solid var(--swal-border); border-left: 3px solid var(--swal-accent);
+    border-radius: 8px;
+  }
   .result-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
   .result { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
   .result-domain { font-weight: 600; color: var(--swal-text); min-width: 7rem; }

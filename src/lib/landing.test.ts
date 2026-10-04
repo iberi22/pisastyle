@@ -12,7 +12,6 @@ import { landingCtas, type LandingCta } from './landing';
  */
 
 describe('landingCtas', () => {
-  const BASE = 'https://example.test';
 
   it('ofrece los dos destinos que importan: estudiar y evaluarse', () => {
     for (const loc of ['es', 'en', 'pt'] as const) {
