@@ -12,11 +12,11 @@ import { isPisaLocale } from '../../lib/pisa-i18n';
 // prerender handler en dev (vite-plugin-astro-server/plugin.js solo lo usa si
 // el entorno 'prerender' es runnable), asi que la ruta se cae.
 //
-// El build de produccion si prerenderiza y el HTML resultante es correcto
-// (7343 bytes, lang y hreflang bien), pero un 500 en dev hace imposible
-// trabajar en la pagina. Todo SSR es coherente con las otras dos rutas, asi
-// que la opcion segura es quitarlo. Si alguna vez hace falta prerenderizar
-// esta pagina, hay que hacerlo por build, no por dev."""
+// El build de produccion si prerenderiza y el HTML resultante es correcto,
+// pero un 500 en dev hace imposible trabajar en la pagina. Todo SSR es
+// coherente con las otras dos rutas, asi que la opcion segura es quitarlo. Si
+// alguna vez hace falta prerenderizar esta pagina, hay que hacerlo por build,
+// no por dev."""
 
 export function getStaticPaths() {
   return [
@@ -35,65 +35,459 @@ if (!isPisaLocale(locale)) {
   return Astro.redirect('/404');
 }
 
+/**
+ * El contenido vive en un diccionario por locale, no en un JSON aparte, porque
+ * las secciones se enumeran en el markup: anadir una seccion obliga a tocar el
+ * texto de los tres idiomas a la vez, que es justo lo que evita que queden
+ * descuadradas.
+ *
+ * `src` es la fuente de cada afirmacion. Todo lo que no viene de la OCDE esta
+ * marcado como propio, para no dar a entender que es oficial.
+ */
 const textDict: Record<string, any> = {
   es: {
     title: 'Método PISAStyle',
-    description: 'Conoce el método PISAStyle v1.1. Unidades con estímulo, estudio y examen para dominar PISA.',
-    cycleTitle: 'Ciclo PISA',
-    cycleDesc: 'En PISAStyle nos basamos en el ciclo de formular, emplear e interpretar problemas del mundo real.',
-    dataTitle: 'Datos de Referencia PISA 2022',
-    colData: 'Colombia (COL): Matemáticas 383, Lectura 409, Ciencias 411. Puesto 64/81.',
-    ocdeData: 'Promedio OCDE: 472/476/485.',
-    sgpData: 'Singapur (SGP): 575/543/561.',
-    disclaimer: 'Contenido educativo NO OFICIAL, sin afiliación con la OECD. Fuente de datos: OECD PISA 2022 Results Vol I.'
+    description:
+      'Qué mide PISA, cómo está construido cada ítem y cómo se calibra una unidad. Con las fuentes de la OCDE.',
+    badge: 'v1.1',
+
+    whatTitle: 'Qué es PISA',
+    whatBody:
+      'PISA es el Programa para la Evaluación Internacional de Estudiantes de la OCDE. Mide lo que alumnos de unos 15 años saben aplicar en contextos reales, no lo que memorizan. Se aplica cada tres años, por ordenador en la mayoría de países, y no es un examen de la OCDE: es una evaluación diagnóstica comparada entre países.',
+    whatS1: 'Mide competencia, no currículo',
+    whatS1d:
+      'Las preguntas no preguntan por una fórmula concreta sino por resolver un problema formulado en la vida real. Por eso la misma destreza puede aparecer en un entorno doméstico o de política pública.',
+    whatS2: 'Cíclico y comparable',
+    whatS2d:
+      'Cada ronda permite comparar con las anteriores porque el marco se mantiene estable. Las puntuaciones se leen sobre una escala con media 500 y desviación 100, no como un porcentaje.',
+    whatS3: 'Aportado por los países',
+    whatS3d:
+      'Los ítems los desarrollan equipos de expertos de los propios países participantes, no la OCDE en solitario. Eso es lo que hace comparables los resultados entre sistemas distintos.',
+
+    frameworksTitle: 'Los tres marcos de dominio',
+    frameworksNote:
+      'Cada dominio evalúa con procesos distintos. Conocerlos es lo que evita el error más común: practicar solo el de matemáticas.',
+
+    mathTitle: 'Matemáticas',
+    mathProcesses: 'Procesos',
+    mathProcess1: 'Formular',
+    mathProcess1d:
+      'Traducir un problema del mundo real al lenguaje matemático: detectar qué matemáticas hay en él y darle estructura.',
+    mathProcess2: 'Emplear',
+    mathProcess2d:
+      'Aplicar conceptos, hechos, procedimientos y razonamiento sobre un problema ya formulado para llegar a una conclusión.',
+    mathProcess3: 'Interpretar y evaluar',
+    mathProcess3d:
+      'Volver al contexto original: comprobar si el resultado es razonable y si tiene sentido en el mundo real.',
+    mathContent: 'Contenidos',
+    mathContentValue:
+      'Cantidad · Incertidumbre · Cambio y relaciones · Patrones. Dos ítems suelen ir sobre modelización matemática, el corazón del razonamiento.',
+    mathContexts: 'Contextos',
+    mathContextsValue: 'Personal · Social · Global · Académico',
+    mathContextsNote:
+      'La mayoría de los ítems released usan el contexto personal: dinero del día a día, transporte, unplanned household tasks.',
+
+    readingTitle: 'Lectura',
+    readingBody:
+      'El marco de lectura organiza la comprensión en tres vertentes amplias: localizar información, comprender el texto e inferir, y reflexionar y evaluar sobre lo que se ha leído. Cada texto pide algo distinto y la dificultad crece cuando hay que sostener una inferencia más de una frase.',
+    readingNote:
+      'Los ítems released de PISA 2018 que usamos como ancla están en CR551, CR548, CR557 y CR571. Fíjate en el estilo: preguntas que obligan a volver al texto más de una vez.',
+
+    scienceTitle: 'Ciencias',
+    scienceBody:
+      'La ciencia se evalúa con tres competencias: explicar fenómenos científicamente, interpretar y evaluar datos y evidencia, y producir o evaluar el conocimiento científico. La competencia central es razonar con evidencia, no memorizar datos.',
+    scienceNote:
+      'En sciences no hay unidades liberadas oficiales de PISA: el ancla se toma del contexto matemático que sostiene el razonamiento, y por eso el dominio aparece marcado como tal en el validador.',
+
+    levelsTitle: 'Niveles de desempeño',
+    levelsBody:
+      'PISA agrupa el desempeño en seis niveles, del 1c al 6. El nivel 2 es el umbral de competencia: por debajo no se considera que el alumno aplique matemáticas, lectura o ciencias con soltura. La escala oficial no arranca en cero, así que un 400 no es "casi cero": es un nivel bajo pero por encima del mínimo.',
+    levelsNote:
+      'Nuestro autoexamen de /evaluar devuelve una estimación orientativa en esa escala. No es comparable con un resultado oficial de PISA.',
+
+    methodTitle: 'El método PISAStyle v1.1',
+    methodBody:
+      'Cada unidad tiene tres partes: un estímulo que sitúa el problema, un bloque de estudio de una a dos horas y una evaluación. Cada ítem lleva ocho campos obligatorios del protocolo v1.1 —dominio, proceso, contenido, contexto, formato, demanda, nivel y ancla— y la explicación de por qué la clave es esa y no otra.',
+    methodStep1: 'Estímulo',
+    methodStep1d: 'El texto o situación que da contexto. Tiene que ser de la vida real, no un ejercicio abstracto.',
+    methodStep2: 'Estudio de 1–2 h',
+    methodStep2d:
+      'Trabajo dirigido con los conceptos y las destrezas que el estímulo exige. Es la parte que más gente se salta y la que más pesa en el resultado.',
+    methodStep3: 'Evaluación',
+    methodStep3d:
+      'Ítems etiquetados por dominio y nivel, con explicación de cada distractor. Al final obtienes una estimación de nivel.',
+
+    qualityTitle: 'Calidad y límites',
+    qualityBody:
+      'Nuestro validador exige que todo ítem lleve los ocho campos del protocolo, una explicación de al menos 80 caracteres y una fuente citada, y rechaza duplicados, sesgo de letra y patrones predecibles. Es un filtro de forma, no de calidad: decide si un ítem está bien escrito, no si es pedagógicamente bueno. Ese juicio sigue siendo de una persona.',
+    whatNotTitle: 'Qué no es PISAStyle',
+    whatNot1: 'No es una evaluación oficial',
+    whatNot1d: 'No la realiza la OCDE, no tiene su certificación y sus resultados no son comparables con PISA.',
+    whatNot2: 'Sin afiliación',
+    whatNot2d: 'PISA® es una marca de la OCDE. Este contenido es educativo y no oficial.',
+    whatNot3: 'Las unidades de estímulo y estudio son privadas',
+    whatNot3d:
+      'Viven en un almacén privado del laboratorio y no forman parte del repositorio público. El banco de ítems sí es público.',
+
+    evaluateTitle: 'Empieza por aquí',
+    evaluateBody:
+      'Si no sabes por dónde arrancar, mide tu nivel: quince preguntas orientativas, cinco por dominio, en tres minutos. Te dice qué dominio que conviene reforzar antes de la primera unidad.',
+    ctaEvaluate: 'Evalúa tu nivel',
+    ctaExplore: 'Ver una unidad',
+    ctaContribute: 'Corrige un ítem',
+
+    dataTitle: 'Datos de referencia, PISA 2022',
+    dataNote:
+      'Puntuaciones medias en la escala oficial. La OCDE publica el puesto por rangos y por dominio, no como un número único sobre 81: por eso aquí no damos un puesto exacto.',
+    colData: 'Colombia (COL): Matemáticas 383, Lectura 409, Ciencias 411.',
+    ocdeData: 'Promedio OCDE: 472 / 476 / 485.',
+    sgpData: 'Singapur (SGP): 575 / 543 / 561.',
+
+    sourcesTitle: 'Fuentes',
+    disclaimer:
+      'Contenido educativo NO OFICIAL, sin afiliación con la OCDE. Las cifras proceden de PISA 2022 Results Vol I. Los marcos se citan con su fuente oficial.'
   },
+
   en: {
     title: 'PISAStyle Method',
-    description: 'Learn about the PISAStyle v1.1 method. Units with stimulus, study, and exam to master PISA.',
-    cycleTitle: 'PISA Cycle',
-    cycleDesc: 'PISAStyle is based on the cycle of formulating, employing, and interpreting real-world problems.',
-    dataTitle: 'PISA 2022 Reference Data',
-    colData: 'Colombia (COL): Mathematics 383, Reading 409, Science 411. Rank 64/81.',
-    ocdeData: 'OECD Average: 472/476/485.',
-    sgpData: 'Singapore (SGP): 575/543/561.',
-    disclaimer: 'UNOFFICIAL educational content, no OECD affiliation. Data source: OECD PISA 2022 Results Vol I.'
+    description:
+      'What PISA measures, how each item is built, and how a unit is calibrated. With the OECD sources.',
+    badge: 'v1.1',
+
+    whatTitle: 'What PISA is',
+    whatBody:
+      'PISA is the OECD Programme for International Student Assessment. It measures what students around 15 can apply in real contexts, not what they memorise. It runs every three years, computer-based in most countries, and it is not an OECD exam: it is a diagnostic assessment compared across countries.',
+    whatS1: 'It measures competence, not syllabus',
+    whatS1d:
+      'The questions do not ask for a specific formula but for solving a problem set in the real world. The same skill can show up in a home budget or in public policy.',
+    whatS2: 'Cyclic and comparable',
+    whatS2d:
+      'Each round can be compared with the previous ones because the framework stays stable. Scores are read on a scale with mean 500 and standard deviation 100, not as a percentage.',
+    whatS3: 'Built by the countries',
+    whatS3d:
+      'Items are developed by expert teams from the participating countries themselves, not by the OECD alone. That is what makes results comparable across different systems.',
+
+    frameworksTitle: 'The three domain frameworks',
+    frameworksNote:
+      'Each domain assesses different processes. Knowing them avoids the most common mistake: practising only the maths one.',
+
+    mathTitle: 'Mathematics',
+    mathProcesses: 'Processes',
+    mathProcess1: 'Formulate',
+    mathProcess1d:
+      'Translate a real-world problem into mathematical language: spot which mathematics is in it and give it structure.',
+    mathProcess2: 'Employ',
+    mathProcess2d:
+      'Apply concepts, facts, procedures and reasoning to a problem that has already been formulated, to reach a conclusion.',
+    mathProcess3: 'Interpret and evaluate',
+    mathProcess3d:
+      'Come back to the original context: check whether the result is reasonable and makes sense in the real world.',
+    mathContent: 'Content',
+    mathContentValue:
+      'Quantity · Uncertainty · Change and relationships · Patterns. Two items usually sit on mathematical modelling, the heart of reasoning.',
+    mathContexts: 'Contexts',
+    mathContextsValue: 'Personal · Social · Global · Academic',
+    mathContextsNote:
+      'Most released items use the personal context: everyday money, transport, unplanned household tasks.',
+
+    readingTitle: 'Reading',
+    readingBody:
+      'The reading framework organises comprehension into three broad strands: locate information, comprehend and infer, and reflect and evaluate. Each text asks for something different, and difficulty grows when a student has to hold an inference across more than one sentence.',
+    readingNote:
+      'The PISA 2018 released items we use as anchors are CR551, CR548, CR557 and CR571. Notice the style: questions that send you back to the text more than once.',
+
+    scienceTitle: 'Science',
+    scienceBody:
+      'Science is assessed with three competencies: explaining phenomena scientifically, interpreting and evaluating data and evidence, and producing or evaluating scientific knowledge. The core competency is reasoning with evidence, not memorising facts.',
+    scienceNote:
+      'There are no official released PISA science units: the anchor comes from the mathematical context that carries the reasoning, which is why the validator marks the domain as such.',
+
+    levelsTitle: 'Performance levels',
+    levelsBody:
+      'PISA groups performance into six levels, from 1c to 6. Level 2 is the proficiency threshold: below it, a student is not considered to apply mathematics, reading or science with confidence. The official scale does not start at zero, so 400 is not "almost nothing": it is a low level but above the floor.',
+    levelsNote:
+      'Our self-assessment at /evaluar returns an indicative estimate on that scale. It is not comparable to an official PISA result.',
+
+    methodTitle: 'The PISAStyle v1.1 method',
+    methodBody:
+      'Every unit has three parts: a stimulus that sets the problem, one to two hours of study, and an assessment. Every item carries the eight mandatory fields of protocol v1.1 —domain, process, content, context, format, demand, level and anchor— plus an explanation of why that key and not another.',
+    methodStep1: 'Stimulus',
+    methodStep1d: 'The text or situation that gives context. It has to come from real life, not an abstract exercise.',
+    methodStep2: '1–2 h of study',
+    methodStep2d:
+      'Directed work with the concepts and skills the stimulus demands. This is the part most people skip and the one that weighs most in the result.',
+    methodStep3: 'Assessment',
+    methodStep3d:
+      'Items tagged by domain and level, with an explanation of each distractor. At the end you get a level estimate.',
+
+    qualityTitle: 'Quality and limits',
+    qualityBody:
+      'Our validator requires every item to carry the eight protocol fields, an explanation of at least 80 characters and a cited source, and rejects duplicates, letter bias and predictable patterns. It is a filter on form, not on quality: it decides whether an item is well written, not whether it is pedagogically good. That judgement still belongs to a person.',
+    whatNotTitle: 'What PISAStyle is not',
+    whatNot1: 'Not an official assessment',
+    whatNot1d: 'The OECD does not run it, it carries no certification, and its results are not comparable to PISA.',
+    whatNot2: 'No affiliation',
+    whatNot2d: 'PISA® is an OECD trademark. This content is educational and unofficial.',
+    whatNot3: 'The stimulus and study units are private',
+    whatNot3d:
+      'They live in a private store at the laboratory and are not part of the public repository. The item bank is public.',
+
+    evaluateTitle: 'Start here',
+    evaluateBody:
+      'If you do not know where to begin, measure your level: fifteen indicative questions, five per domain, in three minutes. It tells you which domain is worth strengthening before the first unit.',
+    ctaEvaluate: 'Check your level',
+    ctaExplore: 'See a unit',
+    ctaContribute: 'Correct an item',
+
+    dataTitle: 'Reference data, PISA 2022',
+    dataNote:
+      'Mean scores on the official scale. The OECD publishes rank by band and by domain, not as a single number out of 81: that is why no exact rank is given here.',
+    colData: 'Colombia (COL): Mathematics 383, Reading 409, Science 411.',
+    ocdeData: 'OECD average: 472 / 476 / 485.',
+    sgpData: 'Singapore (SGP): 575 / 543 / 561.',
+
+    sourcesTitle: 'Sources',
+    disclaimer:
+      'UNOFFICIAL educational content, no OECD affiliation. The figures come from PISA 2022 Results Vol I. Frameworks are cited with their official source.'
   },
+
   pt: {
     title: 'Método PISAStyle',
-    description: 'Conheça o método PISAStyle v1.1. Unidades com estímulo, estudo e exame para dominar o PISA.',
-    cycleTitle: 'Ciclo PISA',
-    cycleDesc: 'No PISAStyle baseamo-nos no ciclo de formular, empregar e interpretar problemas do mundo real.',
-    dataTitle: 'Dados de Referência PISA 2022',
-    colData: 'Colômbia (COL): Matemática 383, Leitura 409, Ciências 411. Posição 64/81.',
-    ocdeData: 'Média OCDE: 472/476/485.',
-    sgpData: 'Singapura (SGP): 575/543/561.',
-    disclaimer: 'Conteúdo educacional NÃO OFICIAL, sem afiliação com a OECD. Fonte de dados: OECD PISA 2022 Results Vol I.'
+    description:
+      'O que o PISA mede, como cada item é construído e como uma unidade é calibrada. Com as fontes da OCDE.',
+    badge: 'v1.1',
+
+    whatTitle: 'O que é o PISA',
+    whatBody:
+      'O PISA é o Programa para a Avaliação Internacional de Estudantes da OCDE. Mede o que estudantes com cerca de 15 anos sabem aplicar em contextos reais, não o que memorizam. Realiza-se de três em três anos, por computador na maioria dos países, e não é um exame da OCDE: é uma avaliação diagnóstica comparada entre países.',
+    whatS1: 'Mede competência, não currículo',
+    whatS1d:
+      'As perguntas não pedem uma fórmula concreta, mas resolver um problema colocado na vida real. A mesma competência pode aparecer num orçamento doméstico ou numa política pública.',
+    whatS2: 'Cíclico e comparável',
+    whatS2d:
+      'Cada ronda pode ser comparada com as anteriores porque o marco mantém-se estável. As pontuações leem-se numa escala com média 500 e desvio 100, não como percentagem.',
+    whatS3: 'Construído pelos países',
+    whatS3d:
+      'Os itens são desenvolvidos por equipas de especialistas dos próprios países participantes, não pela OCDE sozinha. É isso que torna os resultados comparáveis entre sistemas diferentes.',
+
+    frameworksTitle: 'Os três marcos de domínio',
+    frameworksNote:
+      'Cada domínio avalia processos diferentes. Conhecê-los evita o erro mais comum: praticar apenas o de matemática.',
+
+    mathTitle: 'Matemática',
+    mathProcesses: 'Processos',
+    mathProcess1: 'Formular',
+    mathProcess1d:
+      'Traduzir um problema do mundo real para a linguagem matemática: identificar que matemática existe nele e dar-lhe estrutura.',
+    mathProcess2: 'Empregar',
+    mathProcess2d:
+      'Aplicar conceitos, factos, procedimentos e raciocínio a um problema já formulado, para chegar a uma conclusão.',
+    mathProcess3: 'Interpretar e avaliar',
+    mathProcess3d:
+      'Voltar ao contexto original: verificar se o resultado é razoável e faz sentido no mundo real.',
+    mathContent: 'Conteúdos',
+    mathContentValue:
+      'Quantidade · Incerteza · Mudança e relações · Padrões. Dois itens costumam incidir sobre modelação matemática, o centro do raciocínio.',
+    mathContexts: 'Contextos',
+    mathContextsValue: 'Pessoal · Social · Global · Académico',
+    mathContextsNote:
+      'A maioria dos itens released usa o contexto pessoal: dinheiro do dia a dia, transportes, tarefas domésticas imprevistas.',
+
+    readingTitle: 'Leitura',
+    readingBody:
+      'O marco de leitura organiza a compreensão em três vertentes amplas: localizar informação, compreender e inferir, e refletir e avaliar sobre o que se leu. Cada texto pede algo diferente, e a dificuldade cresce quando é preciso sustentar uma inferência ao longo de mais do que uma frase.',
+    readingNote:
+      'Os itens released do PISA 2018 que usamos como âncoras são CR551, CR548, CR557 e CR571. Repare no estilo: perguntas que obrigam a voltar ao texto mais do que uma vez.',
+
+    scienceTitle: 'Ciências',
+    scienceBody:
+      'A ciência é avaliada com três competências: explicar fenómenos cientificamente, interpretar e avaliar dados e evidência, e produzir ou avaliar conhecimento científico. A competência central é raciocinar com evidência, não memorizar factos.',
+    scienceNote:
+      'Não existem unidades released oficiais de PISA em ciências: a âncora vem do contexto matemático que sustenta o raciocínio, e por isso o validador marca o domínio como tal.',
+
+    levelsTitle: 'Níveis de desempenho',
+    levelsBody:
+      'O PISA agrupa o desempenho em seis níveis, de 1c a 6. O nível 2 é o limiar de competência: abaixo dele, não se considera que o aluno aplique matemática, leitura ou ciência com segurança. A escala oficial não começa no zero, por isso 400 não é "quase zero": é um nível baixo, mas acima do mínimo.',
+    levelsNote:
+      'A nossa autoavaliação em /evaluar devolve uma estimativa indicativa nessa escala. Não é comparável a um resultado oficial do PISA.',
+
+    methodTitle: 'O método PISAStyle v1.1',
+    methodBody:
+      'Cada unidade tem três partes: um estímulo que situa o problema, um bloco de estudo de uma a duas horas e uma avaliação. Cada item leva os oito campos obrigatórios do protocolo v1.1 —domínio, processo, conteúdo, contexto, formato, exigência, nível e âncora— mais a explicação de porque a chave é essa e não outra.',
+    methodStep1: 'Estímulo',
+    methodStep1d: 'O texto ou situação que dá contexto. Tem de vir da vida real, não de um exercício abstrato.',
+    methodStep2: 'Estudo de 1–2 h',
+    methodStep2d:
+      'Trabalho dirigido com os conceitos e as competências que o estímulo exige. É a parte que mais gente salta e a que mais pesa no resultado.',
+    methodStep3: 'Avaliação',
+    methodStep3d:
+      'Itens etiquetados por domínio e nível, com explicação de cada distrator. No fim obtém uma estimativa de nível.',
+
+    qualityTitle: 'Qualidade e limites',
+    qualityBody:
+      'O nosso validador exige que cada item leve os oito campos do protocolo, uma explicação de pelo menos 80 caracteres e uma fonte citada, e rejeita duplicados, viés de letra e padrões previsíveis. É um filtro de forma, não de qualidade: decide se um item está bem escrito, não se é pedagogicamente bom. Esse juízo continua a ser de uma pessoa.',
+    whatNotTitle: 'O que o PISAStyle não é',
+    whatNot1: 'Não é uma avaliação oficial',
+    whatNot1d: 'Não é feita pela OCDE, não tem certificação e os seus resultados não são comparáveis com o PISA.',
+    whatNot2: 'Sem afiliação',
+    whatNot2d: 'PISA® é uma marca da OCDE. Este conteúdo é educativo e não oficial.',
+    whatNot3: 'As unidades de estímulo e estudo são privadas',
+    whatNot3d:
+      'Vivem num armazém privado do laboratório e não fazem parte do repositório público. O banco de itens é público.',
+
+    evaluateTitle: 'Comece aqui',
+    evaluateBody:
+      'Se não sabe por onde começar, meça o seu nível: quinze questões indicativas, cinco por domínio, em três minutos. Diz-lhe qual o domínio que vale a pena reforçar antes da primeira unidade.',
+    ctaEvaluate: 'Avalie o seu nível',
+    ctaExplore: 'Ver uma unidade',
+    ctaContribute: 'Corrigir um item',
+
+    dataTitle: 'Dados de referência, PISA 2022',
+    dataNote:
+      'Pontuações médias na escala oficial. A OCDE publica a posição por faixas e por domínio, não como um número único em 81: por isso aqui não se dá uma posição exata.',
+    colData: 'Colômbia (COL): Matemática 383, Leitura 409, Ciências 411.',
+    ocdeData: 'Média OCDE: 472 / 476 / 485.',
+    sgpData: 'Singapura (SGP): 575 / 543 / 561.',
+
+    sourcesTitle: 'Fontes',
+    disclaimer:
+      'Conteúdo educacional NÃO OFICIAL, sem afiliação com a OCDE. As cifras provêm de PISA 2022 Results Vol I. Os marcos são citados com a sua fonte oficial.'
   }
 };
 
 const texts = textDict[locale as string] || textDict['en'];
+
+/** Fuentes oficiales de cada afirmacion, para que se puedan comprobar. */
+const SOURCES = [
+  { label: 'PISA 2022 Mathematics Framework (OCDE)', href: 'https://pisa2022-maths.oecd.org/' },
+  { label: 'PISA 2022 Assessment and Analytical Framework (OCDE)', href: 'https://www.oecd.org/en/publications/pisa-2022-assessment-and-analytical-framework_ac1d1f2b-en.html' },
+  { label: 'PISA Released Units (OCDE)', href: 'https://pisa2022-questions.oecd.org/' },
+  { label: 'PISA 2022 Results Vol. I (OCDE)', href: 'https://www.oecd.org/en/publications/pisa-2022-results-volume-i_2ef9f27e-en.html' }
+];
 ---
 
 <Layout title={texts.title} locale={routeLocale(locale)} current="metodo" alternates={buildAlternates({ path: 'metodo', locale, site: Astro.site })}>
   <div class="wrap">
-    <h1 class="title">{texts.title} <Badge variant="info">v1.1</Badge></h1>
+    <h1 class="title">{texts.title} <Badge variant="info">{texts.badge}</Badge></h1>
     <p class="sub">{texts.description}</p>
 
-    <div class="grid">
-      <Card variant="surface" padding="md">
-        <h2>{texts.cycleTitle}</h2>
-        <p>{texts.cycleDesc}</p>
+    <section aria-labelledby="s-what">
+      <h2 id="s-what">{texts.whatTitle}</h2>
+      <p class="body">{texts.whatBody}</p>
+      <div class="grid3">
+        <Card variant="surface" padding="md">
+          <h3>{texts.whatS1}</h3>
+          <p class="body sm">{texts.whatS1d}</p>
+        </Card>
+        <Card variant="surface" padding="md">
+          <h3>{texts.whatS2}</h3>
+          <p class="body sm">{texts.whatS2d}</p>
+        </Card>
+        <Card variant="surface" padding="md">
+          <h3>{texts.whatS3}</h3>
+          <p class="body sm">{texts.whatS3d}</p>
+        </Card>
+      </div>
+    </section>
+
+    <section aria-labelledby="s-frameworks">
+      <h2 id="s-frameworks">{texts.frameworksTitle}</h2>
+      <p class="body">{texts.frameworksNote}</p>
+
+      <Card variant="elevated" padding="lg">
+        <h3>{texts.mathTitle}</h3>
+        <dl class="defs">
+          <dt>{texts.mathProcess1}</dt><dd>{texts.mathProcess1d}</dd>
+          <dt>{texts.mathProcess2}</dt><dd>{texts.mathProcess2d}</dd>
+          <dt>{texts.mathProcess3}</dt><dd>{texts.mathProcess3d}</dd>
+        </dl>
+        <dl class="defs">
+          <dt>{texts.mathContent}</dt><dd>{texts.mathContentValue}</dd>
+          <dt>{texts.mathContexts}</dt><dd>{texts.mathContextsValue}</dd>
+        </dl>
+        <p class="note">{texts.mathContextsNote}</p>
       </Card>
 
-      <Card variant="surface" padding="md">
-        <h2>{texts.dataTitle}</h2>
-        <ul>
-          <li>{texts.colData}</li>
-          <li>{texts.ocdeData}</li>
-          <li>{texts.sgpData}</li>
-        </ul>
+      <Card variant="elevated" padding="lg">
+        <h3>{texts.readingTitle}</h3>
+        <p class="body">{texts.readingBody}</p>
+        <p class="note">{texts.readingNote}</p>
       </Card>
-    </div>
+
+      <Card variant="elevated" padding="lg">
+        <h3>{texts.scienceTitle}</h3>
+        <p class="body">{texts.scienceBody}</p>
+        <p class="note">{texts.scienceNote}</p>
+      </Card>
+    </section>
+
+    <section aria-labelledby="s-levels">
+      <h2 id="s-levels">{texts.levelsTitle}</h2>
+      <p class="body">{texts.levelsBody}</p>
+      <p class="note">{texts.levelsNote}</p>
+    </section>
+
+    <section aria-labelledby="s-method">
+      <h2 id="s-method">{texts.methodTitle}</h2>
+      <p class="body">{texts.methodBody}</p>
+      <ol class="steps">
+        <li>
+          <strong>{texts.methodStep1}</strong>
+          <p class="body sm">{texts.methodStep1d}</p>
+        </li>
+        <li>
+          <strong>{texts.methodStep2}</strong>
+          <p class="body sm">{texts.methodStep2d}</p>
+        </li>
+        <li>
+          <strong>{texts.methodStep3}</strong>
+          <p class="body sm">{texts.methodStep3d}</p>
+        </li>
+      </ol>
+    </section>
+
+    <section aria-labelledby="s-quality">
+      <h2 id="s-quality">{texts.qualityTitle}</h2>
+      <p class="body">{texts.qualityBody}</p>
+
+      <h3>{texts.whatNotTitle}</h3>
+      <ul class="bullets">
+        <li><strong>{texts.whatNot1}</strong><span class="body sm"> {texts.whatNot1d}</span></li>
+        <li><strong>{texts.whatNot2}</strong><span class="body sm"> {texts.whatNot2d}</span></li>
+        <li><strong>{texts.whatNot3}</strong><span class="body sm"> {texts.whatNot3d}</span></li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="s-data" class="cta-section">
+      <h2 id="s-data">{texts.evaluateTitle}</h2>
+      <p class="body">{texts.evaluateBody}</p>
+      <div class="ctas">
+        <a class="cta primary" href={`/${locale}/evaluar`}>{texts.ctaEvaluate}</a>
+        <a class="cta" href={`/${locale}/explorar`}>{texts.ctaExplore}</a>
+        <a class="cta" href={`/${locale}/contribuir`}>{texts.ctaContribute}</a>
+      </div>
+    </section>
+
+    <section aria-labelledby="s-data">
+      <h2 id="s-data">{texts.dataTitle}</h2>
+      <ul class="bullets">
+        <li>{texts.colData}</li>
+        <li>{texts.ocdeData}</li>
+        <li>{texts.sgpData}</li>
+      </ul>
+      <p class="note">{texts.dataNote}</p>
+    </section>
+
+    <section aria-labelledby="s-sources">
+      <h2 id="s-sources">{texts.sourcesTitle}</h2>
+      <ul class="sources">
+        {SOURCES.map((s) => (
+          <li>
+            <a href={s.href} rel="noopener noreferrer external" target="_blank">{s.label}</a>
+          </li>
+        ))}
+      </ul>
+    </section>
 
     <footer class="footer">
       <p class="disclaimer">{texts.disclaimer}</p>
@@ -102,12 +496,36 @@ const texts = textDict[locale as string] || textDict['en'];
 </Layout>
 
 <style>
-  .wrap { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 2rem 1rem 3rem; }
   .title { font-size: 2rem; font-weight: 800; color: var(--swal-text); display: flex; align-items: center; gap: 0.5rem; }
-  .sub { color: var(--swal-text-secondary); line-height: 1.6; margin-bottom: 2rem; }
-  .grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-bottom: 2rem; }
-  h2 { font-size: 1.25rem; font-weight: 700; color: var(--swal-text); margin-bottom: 0.75rem; }
-  ul { padding-left: 1.5rem; color: var(--swal-text-secondary); line-height: 1.6; }
-  .footer { border-top: 1px solid var(--swal-border); padding-top: 1.5rem; text-align: center; }
-  .disclaimer { font-size: 0.85rem; color: var(--swal-text-muted); }
+  .sub { color: var(--swal-text-secondary); line-height: 1.6; margin-bottom: 2.5rem; }
+  section { margin-bottom: 2.5rem; }
+  h2 { font-size: 1.35rem; font-weight: 700; color: var(--swal-text); margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--swal-border); }
+  h3 { font-size: 1.05rem; font-weight: 700; color: var(--swal-text); margin: 0 0 0.5rem; }
+  .body { color: var(--swal-text-secondary); line-height: 1.65; }
+  .body.sm { font-size: 0.92rem; }
+  .note { font-size: 0.85rem; color: var(--swal-text-muted); margin-top: 0.75rem; line-height: 1.55; }
+  .grid3 { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-top: 1rem; }
+  .defs { margin: 0.75rem 0; }
+  .defs dt { font-weight: 700; color: var(--swal-text); margin-top: 0.6rem; }
+  .defs dd { margin: 0.15rem 0 0; color: var(--swal-text-secondary); line-height: 1.6; font-size: 0.93rem; }
+  .steps { margin: 1rem 0 0; padding-left: 1.4rem; }
+  .steps li { margin-bottom: 0.9rem; }
+  .steps strong { color: var(--swal-text); }
+  .bullets { padding-left: 1.3rem; color: var(--swal-text-secondary); line-height: 1.65; }
+  .bullets li { margin-bottom: 0.5rem; }
+  .bullets strong { color: var(--swal-text); }
+  .sources { padding-left: 1.3rem; line-height: 1.7; font-size: 0.92rem; }
+  .ctas { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.1rem; }
+  .cta { display: inline-flex; align-items: center; min-height: 2.5rem; padding: 0 1rem; border: 1px solid var(--swal-border); border-radius: 6px; text-decoration: none; color: var(--swal-text); font-weight: 600; }
+  .cta.primary { background: var(--swal-text); color: var(--swal-bg); border-color: var(--swal-text); }
+  .cta-section { padding: 1.25rem; border: 1px solid var(--swal-border); border-radius: 8px; background: var(--swal-surface, transparent); }
+  .footer { border-top: 1px solid var(--swal-border); padding-top: 1.5rem; }
+  .disclaimer { font-size: 0.85rem; color: var(--swal-text-muted); line-height: 1.6; }
+  @media (max-width: 640px) {
+    .wrap { padding: 1.25rem 1rem 2rem; }
+    .title { font-size: 1.6rem; }
+    .ctas { flex-direction: column; align-items: stretch; }
+    .cta { justify-content: center; min-height: 2.75rem; }
+  }
 </style>
