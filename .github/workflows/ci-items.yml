@@ -47,6 +47,10 @@ jobs:
 
       - name: Validate items
         run: node scripts/validate-items.mjs items/
+
+      - name: Check that the copy matches the real item count
+        # Un numero equivocado en un texto no rompe el build ni los tests, asi que
+        # este gate solo lo atrapa si mira los items de verdad.
         run: node scripts/verify-item-count.mjs
 
       # The generator must stay self-consistent: if it can no longer build an

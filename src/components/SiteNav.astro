@@ -30,8 +30,13 @@ const { locale = PISASTYLE_DEFAULT_LOCALE, current = '' } = Astro.props;
 const LABELS: Record<PisaLocale, Record<string, string>> = {
   es: { home: 'Inicio', explorar: 'Unidades', metodo: 'Método', novedades: 'Novedades', evaluar: 'Evalúa tu nivel', contribuir: 'Contribuir' },
   en: { home: 'Home', explorar: 'Units', metodo: 'Method', novedades: 'News', evaluar: 'Check your level', contribuir: 'Contribute' },
-  pt: { home: 'Início', explorar: 'Unidades', metodo: 'Método', novedades: 'Novidades', avaliar: 'Avalie seu nível', contribuir: 'Contribuir' },
+  pt: { home: 'Início', explorar: 'Unidades', metodo: 'Método', novedades: 'Novedades', evaluar: 'Avalie seu nível', contribuir: 'Contribuir' },
 };
+
+// OJO: la clave debe ser `evaluar` en los TRES locales, es la que busca LINKS.
+// Escribirla como `avaliar` dejaba el enlace PT sin texto: una pildora gris
+// vacia y sin forma visible de llegar a la autoevaluacion desde el menu.
+// Lo cubre src/lib/sitenav-labels.test.ts (WCAG 2.4.4 y 4.1.2, nivel A).
 
 const LINKS = [
   { path: '', key: 'home', href: (l: PisaLocale) => `/${l}` },
