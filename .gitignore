@@ -68,3 +68,5 @@ blob-report/
 Thumbs.db
 .idea/
 .vscode/
+# Planes y artefactos del harness de Hermes (no son del producto).
+.hermes/
