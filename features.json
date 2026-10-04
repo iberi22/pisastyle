@@ -17,7 +17,7 @@
       "code": 100,
       "tests": 40,
       "wired": 90,
-      "score": 81,
+      "score": 79,
       "evidence": "src/lib/domain.config.ts (5 entidades PISA), pisa-i18n.ts es/en/pt, middleware sin imponer idioma por IP, repo iberi22/pisastyle PUBLIC, 99 tests",
       "pending": "wrangler.toml con 2x database_id=REPLACE-ME, sin bloque routes/custom_domain, DNS pisa.swal.network no resuelve, package.json:6 describe el scaffold"
     },
