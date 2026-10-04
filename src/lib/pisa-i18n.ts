@@ -71,6 +71,22 @@ const pt: Catalog = {
 
 const catalogs: Record<PisaLocale, Catalog> = { es, en, pt };
 
+/**
+ * ¿Es este string uno de los tres locales del sitio?
+ *
+ * A diferencia de `normalizePisaLocale`, NO perdona: si el valor no es un
+ * locale devuelve false en vez de caer al default. La distincion importa porque
+ * `[locale]` hace match con cualquier primer segmento, asi que `/no-existe`
+ * llegaba hasta `dataMap['no-existe']` y reventaba con 500 al leer `.hero`.
+ *
+ * Case-sensitive a proposito: las rutas son /es /en /pt en minuscula y aceptar
+ * /ES generaria duplicados que compiten en buscadores, justo lo que el hreflang
+ * de `alternates.ts` evita.
+ */
+export function isPisaLocale(value?: string | null): value is PisaLocale {
+  return typeof value === 'string' && (PISASTYLE_LOCALES as string[]).includes(value);
+}
+
 export function normalizePisaLocale(value?: string | null): PisaLocale {
   if (!value) return PISASTYLE_DEFAULT_LOCALE;
   const v = value.toLowerCase();

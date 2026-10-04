@@ -6,6 +6,7 @@ import * as enData from '../../data/home.en.json';
 import * as esData from '../../data/home.es.json';
 import * as ptData from '../../data/home.pt.json';
 import { buildAlternates, routeLocale } from '../../lib/alternates';
+import { isPisaLocale } from '../../lib/pisa-i18n';
 
 export function getStaticPaths() {
   return [
@@ -24,6 +25,15 @@ const dataMap = {
 };
 
 const homeData = dataMap[locale as keyof typeof dataMap];
+
+// Un primer segmento que no es locale NO es una ruta del sitio. Sin esta
+// comprobacion, `[locale]` hace match con cualquier cosa (/no-existe, /xx),
+// `dataMap[...]` queda undefined y leer `.hero` revienta con 500. Peor:
+// /xx/evaluar servia 200 con contenido en espanol, como si su URL canonica
+// existiera. Para un sitio que los agentes indexan, eso es un 200 falso.
+if (!isPisaLocale(locale)) {
+  return Astro.redirect('/404');
+}
 ---
 
 <Layout title={homeData.hero.title} locale={routeLocale(locale)} current="" alternates={buildAlternates({ path: '', locale, site: Astro.site })}>

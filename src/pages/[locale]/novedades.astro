@@ -1,13 +1,20 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { Card, Badge } from '@swal/ui';
-import { t, normalizePisaLocale } from '../../lib/pisa-i18n';
+import { t, normalizePisaLocale, isPisaLocale } from '../../lib/pisa-i18n';
 import novedadesEs from '../../data/novedades.es.json';
 import novedadesEn from '../../data/novedades.en.json';
 import novedadesPt from '../../data/novedades.pt.json';
 import { buildAlternates, routeLocale } from '../../lib/alternates';
 
 const { locale } = Astro.params;
+
+// Un primer segmento que no es locale NO es una ruta del sitio: `[locale]`
+// hace match con cualquier cosa y la pagina se serviria con la locale por
+// defecto bajo una URL canonica inexistente. Un 200 falso es peor que un 404.
+if (!isPisaLocale(locale)) {
+  return Astro.redirect('/404');
+}
 const currentLocale = normalizePisaLocale(locale);
 
 let data = novedadesEn;

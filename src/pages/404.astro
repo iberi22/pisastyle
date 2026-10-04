@@ -22,6 +22,10 @@ const texts = {
     disclaimer: 'Fonte de dados: OECD PISA 2022 Results Vol I + MEN. Conteúdo não oficial PISAStyle.',
   }
 };
+
+// Sin esto Astro sirve la pagina con status 200 y una ruta inexistente se
+// declara "exitosa" a cualquier crawler. Se fija 404 de verdad.
+Astro.response.status = 404;
 ---
 
 <Layout title="404 Not Found - PISAStyle" hideNav>

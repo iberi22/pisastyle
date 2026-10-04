@@ -22,6 +22,7 @@
 import Layout from '../../layouts/Layout.astro';
 
 import { buildAlternates, routeLocale } from '../../lib/alternates';
+import { isPisaLocale } from '../../lib/pisa-i18n';
 
 export function getStaticPaths() {
   return [
@@ -32,6 +33,14 @@ export function getStaticPaths() {
 }
 
 const { locale } = Astro.params;
+
+// Un primer segmento que no es locale NO es una ruta del sitio. Sin esta
+// comprobacion, `[locale]` hace match con cualquier cosa (/xx) y la pagina se
+// sirve con la locale por defecto bajo una URL canonica que no existe: un 200
+// falso, que es lo peor que puede tener un sitio que los agentes indexan.
+if (!isPisaLocale(locale)) {
+  return Astro.redirect('/404');
+}
 const loc = routeLocale(locale);
 
 /**

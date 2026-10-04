@@ -5,6 +5,7 @@ import { buildAlternates, routeLocale } from '../../lib/alternates';
 import RankingBars from '../../components/RankingBars.astro';
 import { landingCtas, LANDING_TAGLINE } from '../../lib/landing';
 import { loadUnit } from '../../lib/units';
+import { isPisaLocale } from '../../lib/pisa-i18n';
 
 export function getStaticPaths() {
   return [
@@ -15,6 +16,14 @@ export function getStaticPaths() {
 }
 
 const { locale } = Astro.params;
+
+// Un primer segmento que no es locale NO es una ruta del sitio. Sin esta
+// comprobacion, `[locale]` hace match con cualquier cosa (/no-existe, /xx) y
+// los datos de la pagina quedan undefined: 500 al leerlos, o 200 con el
+// contenido de la locale por defecto bajo una URL canonica que no existe.
+if (!isPisaLocale(locale)) {
+  return Astro.redirect('/404');
+}
 
 const faqModules = import.meta.glob('../../data/faq.*.json', { eager: true });
 const homeModules = import.meta.glob('../../data/home.*.json', { eager: true });
