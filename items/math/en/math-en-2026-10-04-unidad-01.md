@@ -21,9 +21,9 @@ A used car is listed at 20,000 euros. The dealer offers a 15% discount on the
 listed price. What is the final price the buyer pays?
 
 - [x] A) 17,000 euros
-- [ ] B) 20,000 euros
-- [ ] C) 23,000 euros
-- [ ] D) 3,000 euros
+- [ ] B) 23,000 euros
+- [ ] C) 3,000 euros
+- [ ] D) 20,000 euros
 
 ### Explicacion Pedagogica
 
@@ -52,10 +52,10 @@ confuses the part with the whole.
 A video shop sold 240 DVDs in Week 1 and 300 DVDs in Week 2. What is the
 percentage increase from Week 1 to Week 2?
 
-- [ ] A) 20%
+- [ ] A) 11.1%
 - [x] B) 25%
-- [ ] C) 11.1%
-- [ ] D) 60%
+- [ ] C) 60%
+- [ ] D) 20%
 
 ### Explicacion Pedagogica
 
@@ -84,10 +84,10 @@ increase of 60 DVDs, a correct quantity expressed in the wrong unit.
 A removal truck has a cargo volume of 48 cubic metres. Each box takes up
 0.6 cubic metres. What is the greatest number of boxes the truck can carry?
 
-- [ ] A) 28.8 boxes
+- [ ] A) 8 boxes
 - [ ] B) 96 boxes
 - [x] C) 80 boxes
-- [ ] D) 8 boxes
+- [ ] D) 28.8 boxes
 
 ### Explicacion Pedagogica
 
@@ -117,9 +117,9 @@ A rooftop solar array covers 18 square metres. Each square metre produces 3
 kilowatt hours per day. The household needs 90 kilowatt hours per day. What
 percentage of the daily need is covered by the array?
 
-- [ ] A) 20%
-- [ ] B) 40%
-- [ ] C) 5%
+- [ ] A) 40%
+- [ ] B) 5%
+- [ ] C) 20%
 - [x] D) 60%
 
 ### Explicacion Pedagogica
@@ -152,10 +152,10 @@ A spinner is divided into 5 equal sectors, 2 of which are shaded. The spinner
 is spun twice. What is the probability that both spins land on a shaded
 sector?
 
-- [x] A) 4/25
-- [ ] B) 2/5
-- [ ] C) 3/5
-- [ ] D) 4/5
+- [ ] A) 4/5
+- [ ] B) 3/5
+- [x] C) 4/25
+- [ ] D) 2/5
 
 ### Explicacion Pedagogica
 
@@ -186,10 +186,10 @@ A row of connected triangles is built from matchsticks. The first figure uses 3
 matchsticks, the second uses 5, the third uses 7, and each new figure adds 2
 matchsticks. How many matchsticks are needed for the figure with 24 triangles?
 
-- [ ] A) 47
-- [x] B) 49
-- [ ] C) 72
-- [ ] D) 24
+- [ ] A) 24
+- [ ] B) 72
+- [ ] C) 47
+- [x] D) 49
 
 ### Explicacion Pedagogica
 
@@ -220,10 +220,10 @@ Four countries protect the following shares of their land as forest: 12%, 25%,
 30% and 33%. What is the mean share of protected forest land across the four
 countries?
 
-- [ ] A) 20%
+- [x] A) 25%
 - [ ] B) 27.5%
-- [x] C) 25%
-- [ ] D) 33%
+- [ ] C) 33%
+- [ ] D) 20%
 
 ### Explicacion Pedagogica
 
@@ -254,10 +254,10 @@ A car costs 24,000 euros. The buyer pays a deposit of 4,800 euros and then 48
 monthly instalments of 460 euros. By what percentage does the total amount paid
 exceed the listed price?
 
-- [ ] A) 20%
-- [ ] B) 92%
+- [ ] A) 92%
+- [x] B) 12%
 - [ ] C) 112%
-- [x] D) 12%
+- [ ] D) 20%
 
 ### Explicacion Pedagogica
 

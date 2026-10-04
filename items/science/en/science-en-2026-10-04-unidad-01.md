@@ -60,8 +60,8 @@ A delivery van drives at a constant 50 km/h for 1 hour and then at a constant
 
 - [ ] A) 60 km/h
 - [x] B) 65 km/h
-- [ ] C) 70 km/h
-- [ ] D) 87 km/h
+- [ ] C) 87 km/h
+- [ ] D) 70 km/h
 
 ### Explicacion Pedagogica
 
@@ -91,8 +91,8 @@ counting one of the two legs and inflating the result.
 A steel block measures 20 cm by 10 cm by 1 cm and has a mass of 1.6 kg. What is
 the density of the block, expressed in kg/m3?
 
-- [ ] A) 8 kg/m3
-- [ ] B) 800 kg/m3
+- [ ] A) 800 kg/m3
+- [ ] B) 8 kg/m3
 - [x] C) 8,000 kg/m3
 - [ ] D) 80 kg/m3
 
@@ -124,9 +124,9 @@ In early spring a beekeeper counts 3,200 bees in a hive. The population then gro
 by 15% every month for two months. How many bees are in the hive after those two
 months?
 
-- [ ] A) 3,680
-- [ ] B) 4,160
-- [ ] C) 3,872
+- [ ] A) 4,160
+- [ ] B) 3,872
+- [ ] C) 3,680
 - [x] D) 4,232
 
 ### Explicacion Pedagogica
@@ -158,9 +158,9 @@ An energy pyramid for a grassland ecosystem shows 4,000 kJ stored in the produce
 Consumers at each higher level receive about 10% of the energy of the level below.
 How much energy is stored in the secondary consumers?
 
-- [x] A) 40 kJ
+- [ ] A) 4 kJ
 - [ ] B) 400 kJ
-- [ ] C) 4 kJ
+- [x] C) 40 kJ
 - [ ] D) 160 kJ
 
 ### Explicacion Pedagogica
@@ -192,10 +192,10 @@ residue at the end of every month. The mass falls from 30 g to 19 g after the
 first month, to 13 g after the second, to 10 g after the third and to 8 g after
 the fourth. Which statement is best supported by these data?
 
-- [ ] A) The heap gained mass because the decomposers added matter to it
-- [x] B) The mass lost in each successive month became smaller
-- [ ] C) Decomposition was fastest during the fourth month
-- [ ] D) The residue halved at a constant rate every month
+- [ ] A) The residue halved at a constant rate every month
+- [ ] B) Decomposition was fastest during the fourth month
+- [ ] C) The heap gained mass because the decomposers added matter to it
+- [x] D) The mass lost in each successive month became smaller
 
 ### Explicacion Pedagogica
 
@@ -230,9 +230,9 @@ unequal.
 Sunlight travels from the Sun to Earth across a distance of 150,000,000 km at a
 speed of 300,000 km/s. How long does that light take to reach Earth?
 
-- [ ] A) 50 seconds
+- [x] A) 500 seconds
 - [ ] B) 1,500 seconds
-- [x] C) 500 seconds
+- [ ] C) 50 seconds
 - [ ] D) 5,000 seconds
 
 ### Explicacion Pedagogica
@@ -265,10 +265,10 @@ In a city at about 41 degrees north, the Sun rises at 06:15 and sets at 20:45 on
 21 June. On 21 December in the same city it rises at 08:05 and sets at 17:35. How
 much longer is the day in June than in December?
 
-- [ ] A) 2 hours 30 minutes
-- [ ] B) 6 hours 15 minutes
-- [ ] C) 10 hours 0 minutes
-- [x] D) 5 hours 0 minutes
+- [ ] A) 10 hours 0 minutes
+- [x] B) 5 hours 0 minutes
+- [ ] C) 6 hours 15 minutes
+- [ ] D) 2 hours 30 minutes
 
 ### Explicacion Pedagogica
 
