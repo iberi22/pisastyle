@@ -47,6 +47,7 @@ jobs:
 
       - name: Validate items
         run: node scripts/validate-items.mjs items/
+        run: node scripts/verify-item-count.mjs
 
       # The generator must stay self-consistent: if it can no longer build an
       # item its own validator accepts, the daily pipeline is silently dead.
