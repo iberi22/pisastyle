@@ -1,89 +1,124 @@
-# @swal/app-template — Scaffold canonico SWAL
+# PISAStyle
 
-Scaffold separado en `cores/swal-app-template` — no toca `apps/gara-g` del otro agente. Coherente con ola 03.01 + plan hosteler-ia.
+Preparación PISA en español, inglés y portugués: evaluación de nivel, unidades
+de estudio con estímulo e ítems, e infografías de resultados.
 
-## Stack
+> Contenido educativo **no oficial**, sin afiliación, patrocinio ni aprobación
+> de la OCDE. Las cifras del informe PISA 2022 se citan con su fuente en cada
+> página.
 
-Astro 7 + Svelte 5 + @astrojs/cloudflare 14.2.5 + @astrojs/svelte 7 + vite-plugin-pwa 1.3.0 + @swal/ui 0.2.0 + Xavier + edge-mesh + LLM
-
-Tokens: `@import '@swal/ui/tokens'` (--swal-bg #020617, --swal-accent #06b6d4, etc.)
-
-## Crear una app nueva (2 comandos)
-
-```bash
-node cores/swal-app-template/scripts/create-app.mjs mi-tienda --target apps/mi-tienda
-# o con entidades: --entities "product,order,customer"
-
-cd apps/mi-tienda && pnpm install && pnpm run build
-# edita src/lib/domain.config.ts para tu modelo de negocio
-```
-
-El script:
-- copia el template (sin node_modules/dist/.astro/scripts)
-- reescribe `package.json` name + dep `@swal/ui` relativa correcta
-- reescribe `src/lib/domain.config.ts` con appId y entities[]
-- reescribe `wrangler.toml` name + `public/manifest.json` name
-
-## Modelo de negocio -> capa agentica
-
-```
-src/lib/domain.config.ts  <- UNICO archivo obligatorio (appId + entities[])
-  |-> Xavier ns: app/{appId}/instance/{id}  (src/lib/xavier.ts)
-  |-> Mesh room: swal/{appId}/{id}          (src/lib/mesh.ts)
-  |-> LLM: llmComplete({prompt,useMemory})  (src/lib/llm.ts + ProviderRouter)
-  |-> SurrealDB tables: entities[].name     (edge-hive, futuro)
-```
-
-- **Xavier:** `xavierSearch(query)` / `xavierAdd(content)` -> http://localhost:8006 + fallback IndexedDB. Usalo para RAG antes de LLM.
-- **Mesh:** `meshPublish(topic, payload)` / `meshSubscribe(topic, handler)` -> Yjs/y-webrtc via edge-mesh (realtime + offline buffer).
-- **LLM:** `llmComplete({prompt, system, useMemory})` -> ProviderRouter: local xavier-gpud -> opencode-go -> openrouter -> gemini (reusa cores/swal-agent-runner/src/services/llm/*) + Clavis leases.
-
-Tu modelo de negocio no habla directo a OpenAI — pasa por `lib/llm.ts` que ya hace RAG con Xavier y mesh.
-
-## Estructura
-
-```
-src/
-├── layouts/Layout.astro (@swal/ui/tokens + Toaster)
-├── pages/index.astro (demo Card/Badge/Button/StatusBadge)
-├── components/ (islas Svelte, client:load solo con estado, usa @swal/ui)
-├── lib/
-│   ├── domain.config.ts (appId + entities)
-│   ├── xavier.ts
-│   ├── mesh.ts
-│   ├── llm.ts
-│   └── README.md
-└── env.d.ts
-public/manifest.json (192/512 maskable, standalone)
-wrangler.toml (Cloudflare Pages)
-astro.config.mjs (cloudflare + svelte + VitePWA workbox)
-```
-
-## Comandos
+## Arrancar
 
 ```bash
 pnpm install
-pnpm run check   # 0 errors
-pnpm run build   # 0 errors (server + cloudflare + _headers)
-pnpm run dev     # astro dev
+pnpm run dev        # http://127.0.0.1:4321
 ```
 
-Verificado: pnpm install 622 + build 1.39s (cloudflare), check 0 errors.
+| Comando | Qué hace |
+|---|---|
+| `pnpm run dev` | Servidor de desarrollo (Astro) |
+| `pnpm run check` | `astro check` |
+| `pnpm test` | Vitest — 125 tests |
+| `pnpm run type-check` | `tsc --noEmit` |
+| `pnpm run test:tokens` | Contraste WCAG de los tokens en ambos temas |
+| `pnpm run build` | Build de producción (salida en `dist/`) |
+| `pnpm run preview` | Sirve el build |
 
-## Coherencia con planes existentes
+## Rutas
 
-- **Gara-G 03.01:** `apps/gara-g/.hermes/ola-swal-gara/body-03.01.md` -- este template es la extraccion canonica de ese scaffold. El otro agente sigue en `apps/gara-g/packages/app-pwa` sin conflicto.
-- **Hosteler-ia:** `apps/hosteler-ia/docs/plans/PLAN_MIGRACION_UI_CORE_ESQUELETO.md` Fase 0-1 + `apps/hosteler-ia/src-astro/` (ya usa mismo lib con appId hosteler-ia). Puede migrar a `cores/swal-app-template` como base.
-- **Cores:** `cores/swal-ui` (design system), `cores/edge-mesh` (P2P), `apps/xavier` (:8006), `cores/swal-agent-runner` (LLM router + PWA pattern).
+Todo el contenido vive bajo un locale: `/es`, `/en`, `/pt`.
 
-## Plano coherente (no pisar ola)
+| Ruta | Qué hace |
+|---|---|
+| `/[locale]/explorar` | Landing. Unidad con estímulo, contenido e ítems; infografía de rankings PISA 2022 |
+| `/[locale]/evaluar` | Autoevaluación: 10 preguntas, devuelve el nivel por dominio y guarda el resultado |
+| `/[locale]/metodo` | El método PISAStyle v1.1 |
+| `/[locale]/novedades` | Novedades |
 
-- No modificar `apps/gara-g/packages/app-pwa` del otro agente mas alla de dejarlo build verde (ya hecho).
-- No crear `cores/swal-econ` etc. aqui -- eso es ola 01.x del otro agente.
-- Template es isla autonoma: todo se implementa para replicar (directiva core-isla Belal 2026-08-03).
-- Futuro: extraer `swal-agent-runner` LLM router a `cores/swal-llm` para que template y runner compartan codigo (ahora duplicado como stub).
+`/` y `/{locale}` redirigen a `/{locale}/explorar`. `[locale]/index.astro` existe
+pero es **inalcanzable**: el middleware manda la raíz y el locale a `/explorar`,
+así que la landing real es `/explorar`.
 
-## AUI + Billing
+## Contenido: dónde vive y por qué
 
-- **AUI:** `AuiRenderer.svelte` + `src/lib/aui.ts` (ver USAGE.md). Whitelist Card/Button/Badge/Input/Table/Tabs/Modal/StatusBadge/Skeleton. Demo en `src/pages/index.astro` con `demoAui`.
-- **Billing:** `src/lib/billing.ts` — TIERS socio/managed, 20% handling SWAL sobre infra 100% + AI 10% min (Workers AI power by Cloudflare). Ver `USAGE.md` y `src/lib/worker-ai.example.ts`.
+Las unidades **no están en el repositorio**. `LICENSE.md` punto 2 declara
+privados los contenidos de preguntas y de `study_content`, y las unidades
+llevan clave de respuestas. Viven en un vault privado:
+
+```
+~/.proyectosSWAL/.private/pisastyle/src/data/sample-<dominio>-<locale>.json
+```
+
+`src/lib/units.ts` las resuelve en tiempo de build con `import.meta.glob`
+—relativo, no absoluto— porque Vite solo resuelve globs dentro del root del
+proyecto, y el SSR corre en workerd (adapter de Cloudflare), que no tiene
+sistema de ficheros: `readFileSync` daría error en cada petición.
+
+La UI distingue tres estados:
+
+- **vault**: hay unidad y se muestra, con aviso de que viene del vault.
+- **sin unidad**: la página avisa en vez de fingir contenido.
+- `origin: 'local'`: alguien creó un fichero en `src/data/`.
+
+`scripts/private-material.sh` mueve el material sensible fuera del root y
+documenta por qué: el dev server sirve por HTTP cualquier archivo del project
+root, no solo los de `src/`.
+
+## Stack
+
+- **Astro 7**, `output: 'server'` con `@astrojs/cloudflare` (SSR en workerd)
+- **Svelte 5** para los componentes interactivos; páginas e infografías en
+  `.astro` estático
+- **@swal/ui** como design system: tokens `--swal-*` y componentes. El CSS se
+  importa desde el core, no se genera a mano en cada componente
+- **@swal/vault**, **Xavier**, **edge-mesh** (Yjs) y router de LLM en
+  `src/lib/` — capa agéntica disponible pero todavía sin consumidor en las
+  páginas públicas
+- **localStorage** para el resultado de la evaluación (sin cuenta, sin registro)
+- **Vitest** para las pruebas
+
+## Capa agéntica
+
+Disponible en `src/lib/`, sin uso en las rutas públicas por ahora:
+
+- **Xavier:** `xavierSearch(query)` / `xavierAdd(content)` → `localhost:8006`
+  con fallback a IndexedDB.
+- **Mesh:** `meshPublish(topic, payload)` / `meshSubscribe(topic, handler)` →
+  Yjs/y-webrtc.
+- **LLM:** `llmComplete({prompt, system, useMemory})` → `ProviderRouter`.
+- **AUI:** `AuiRenderer.svelte` + `src/lib/aui.ts` (whitelist de componentes).
+- **Billing:** `src/lib/billing.ts`, tiers socio/managed con 20 % de handling.
+
+`src/lib/domain.config.ts` es el archivo que conecta el modelo de negocio
+(appId + entities) con esa capa.
+
+## Verificación
+
+```bash
+pnpm run check   # 0 errores, 0 warnings
+pnpm test        # 125 tests
+pnpm run test:tokens
+pnpm run build
+```
+
+Los tres locales responden 200 y el build deja el sitio con el worker de
+Cloudflare listo para desplegar. El historial está en `CHANGELOG.md`.
+
+## Licencia
+
+`PISAStyle Public Core License — Uso exclusivo del laboratorio SWAL`
+(`LicenseRef-SWAL-PISAStyle-1.0`):
+
+1. El código es visible públicamente como vitrina técnica bajo AGPL-3.0-only.
+2. El despliegue en producción bajo `pisa.swal.network`, la marca PISAStyle, los
+   contenidos de preguntas y de `study_content`, la lógica de backend y los
+   planes internos son **privados** y requieren licencia comercial escrita.
+3. PISA es un programa de la OCDE. Este proyecto es contenido educativo no
+   oficial.
+
+Texto completo en `LICENSE.md`.
+
+---
+
+ Scaffold base: `@swal/app-template` en `cores/swal-app-template`.
+ Design system: `cores/swal-ui`. P2P: `cores/edge-mesh`. LLM: `cores/swal-agent-runner`.
