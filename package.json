@@ -5,9 +5,8 @@
   "type": "module",
   "description": "SWAL App Template — Astro + Svelte 5 + @swal/ui + vite-pwa + edge-mesh + Xavier + LLM (scaffold canonico, copiar para crear apps)",
   "scripts": {
-    "swal-ui-css": "node scripts/generate-swal-ui-css.mjs",
-    "dev": "npm run swal-ui-css && astro dev",
-    "build": "npm run swal-ui-css && astro check && astro build",
+    "dev": "astro dev",
+    "build": "astro check && astro build",
     "preview": "astro preview",
     "check": "astro check",
     "type-check": "tsc --noEmit",

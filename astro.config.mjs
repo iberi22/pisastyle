@@ -2,17 +2,6 @@ import { defineConfig } from 'astro/config';
 import svelte from '@astrojs/svelte';
 import cloudflare from '@astrojs/cloudflare';
 import { VitePWA } from 'vite-plugin-pwa';
-import { fileURLToPath } from 'node:url';
-
-// workerd (el runtime de `astro dev` con el adaptador de Cloudflare) no resuelve
-// `@swal/ui`: el `exports` del core solo declara la condicion `svelte`, que el
-// resolver de workerd no aplica, y el import a mano falla con
-// "Unable to resolve [@swal/ui]", dejando la pagina a medio renderizar (HTML
-// truncado justo antes de <Toaster>, y /es/metodo en 500). Un alias a la ruta
-// real del paquete sortea el mapa de `exports`. Es ajuste de la APP: el core no
-// se toca. La ruta se resuelve con fileURLToPath para no hardcodear el symlink
-// de pnpm ni una ruta absoluta.
-const swalUiPkg = fileURLToPath(new URL('./node_modules/@swal/ui/', import.meta.url));
 
 export default defineConfig({
   site: 'https://pisa.swal.network',
@@ -24,33 +13,35 @@ export default defineConfig({
   server: { host: '127.0.0.1' },
   integrations: [svelte()],
   vite: {
-    // Ver el comentario de `swalUiPkg` mas arriba: sin este alias workerd no
-    // resuelve `@swal/ui` y el render de la pagina se corta a mitad.
-    resolve: {
-      alias: [{ find: /^@swal\/ui$/, replacement: swalUiPkg + 'src/components/index.js' }],
-    },
     // El runner de @astrojs/cloudflare carga los modulos SSR por ruta absoluta y el optimizador de
-    // dependencias de Vite los re-optimiza y recarga a mitad de vuelo, de modo que `astro dev` moria
-    // con: "The file does not exist at node_modules/.vite/deps_ssr/handler-*.js ... Try adding it to
-    // optimizeDeps.exclude". Se excluye la integracion de Svelte del optimizador y el arranque queda
-    // estable (necesario para `hermes verify` y para cualquier dev local de este template).
+    // dependencias de Vite los re-optimiza y recarga a mitad de vuelo, de modo que `astro dev` puede
+    // morir con: "The file does not exist at node_modules/.vite/deps_ssr/handler-*.js ... Try adding
+    // it to optimizeDeps.exclude". Se excluye la integracion de Svelte del optimizador y el arranque
+    // queda estable (necesario para `hermes verify` y para cualquier dev local).
     //
-    // `@swal/ui` va excluido como SEGUNDA barrera, no como causa raiz.
+    // Lo que este config tenia antes y ya NO hace falta, porque se arreglo en el
+    // core (2026-10-03, github.com/iberi22/swal-ui):
     //
-    // Averiguado con control negativo (2026-10-03): quitando esta linea y
-    // arrancando en limpio, /es sigue dando 200 y deps_ssr/@swal_ui.js NO se
-    // crea. El `resolve.alias` de arriba ya evita que el optimizador toque
-    // @swal/ui, y ese alias es la causa raiz real. El 500 que se vio
-    // ('The file does not exist at .../@swal_ui.js') venia de una cache de
-    // Vite corrupta entre reinicios de `hermes verify`, no de la ausencia de
-    // esta linea; se arregla con `rm -rf node_modules/.vite .astro/dev.json`.
+    //   1. El alias `resolve.alias` hacia la ruta real de node_modules/@swal/ui.
+    //      Existia solo porque `exports['.']` del core declaraba unicamente la
+    //      condicion `svelte`, que el resolver de workerd no aplica — de ahi el
+    //      "Unable to resolve [@swal/ui]" y el render cortado a mitad. Con la
+    //      condicion `default` anadida en el core, el mapa de exports se resuelve
+    //      solo y el alias sobra.
     //
-    // Se mantiene como defensa en profundidad: si el alias deja de resolver (un
-    // cambio en el core, otro resolutor, otro symlink de pnpm), el exclude
-    // impide que el optimizador genere un archivo que luego no se encuentra.
-    // Cuesta una linea y evita un 500 en todas las rutas.
+    //   2. `@swal/ui` en este exclude. Mismo motivo: segunda barrera que ya no
+    //      hace falta, y que ademas estorba (ver la nota de abajo).
+    //
+    // Y lo que NO hay que excluir, al reves de lo que sugiere el mensaje de
+    // error: `@astrojs/cloudflare/entrypoints/server.js`. Exclusionarlo lo
+    // EMPEORA: deja de crearse el archivo y workerd sigue pidiendolo, convirtiendo
+    // un fallo intermitente en uno permanente (medido 2026-10-03: con el exclude
+    // el 500 es SIEMPRE; sin el exclude es estable en 200).
+    //
+    // Si reaparece un fallo de deps_ssr tras limpiar: `rm -rf node_modules/.vite
+    // .astro/dev.json` antes de arrancar. La cache corrupta no se recupera sola.
     optimizeDeps: {
-      exclude: ['@astrojs/svelte/server.js', '@astrojs/svelte', '@swal/ui'],
+      exclude: ['@astrojs/svelte/server.js', '@astrojs/svelte'],
     },
     plugins: [
       VitePWA({

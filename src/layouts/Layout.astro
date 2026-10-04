@@ -1,7 +1,6 @@
 ---
 import { Toaster } from '@swal/ui';
 import { PISASTYLE_DEFAULT_LOCALE, type PisaLocale } from '../lib/pisa-i18n';
-import swalUiComponentsCss from '../styles/swal-ui-components.css?raw';
 
 interface Props {
   title?: string;
@@ -38,23 +37,23 @@ const {
     <slot />
     <Toaster client:load />
 
-    {/* CSS de los componentes Svelte de @swal/ui — SOLO en dev.
-        En `astro dev` Vite externaliza @swal/ui en SSR: sus .svelte no pasan por
-        el pipeline de Svelte, asi que su CSS scoped nunca entra en el grafo y
-        no se inyecta. Las clases llegan correctas al DOM pero CERO reglas las
-        aplican, y <Button> se ve como un boton nativo del navegador (133x21,
-        Times, padding 1px 6px) en vez del del design system. En `astro build`
-        Vite ya emite estas mismas reglas, asi que incluirlas ahi solo duplicaria
-        CSS en el bundle (medido: Layout.css 16.7KB -> 24.1KB).
+    {/* CSS de los componentes de @swal/ui.
+        Antes esto no se podia hacer y la app llevaba parches propios: el core
+        no exportaba su CSS, solo los TOKENS (que son variables, no estilos),
+        asi que node_modules/@swal/ui/dist/ui.css no existia en ninguna app. Los
+        componentes Svelte usados sin `client:*` salian con sus clases
+        correctas pero con CERO reglas que las aplicaran (boton 133x21, Times
+        New Roman, padding 1px 6px).
 
-        El fichero lo genera `scripts/generate-swal-ui-css.mjs` compilando los
-        .svelte del CORE con el mismo `filename` que usa Vite, de modo que el
-        hash `svelte-*` coincide con el del HTML ya emitido. No se transcriben
-        estilos: un retoque en el core se refleja al regenerar. */}
-    {import.meta.env.DEV && <style is:global set:html={swalUiComponentsCss} />}
+        Arreglado en el core (2026-10-03): `exports['./ui.css']` y `dist` en
+        `files`. Por eso ahora basta con importar la hoja del paquete, sin
+        generar nada ni compilar los .svelte a mano.
+        https://github.com/iberi22/swal-ui */}
 
     <style is:global>
       @import '@swal/ui/tokens';
+      /* Estilos de los componentes (hoja de entrada que exporta el core) */
+      @import '@swal/ui/ui.css';
       /* Capa semantica PISAStyle (series Okabe-Ito accesibles) — DESPUES del
          core para que pueda mapear sobre `--swal-*`. Ver src/styles/pisa-tokens.css */
       @import '../styles/pisa-tokens.css';
