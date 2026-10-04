@@ -1,0 +1,187 @@
+---
+/**
+ * SiteNav — navegación global de PISAStyle.
+ *
+ * Va en el Layout, no en cada página: hoy las cuatro páginas no tienen ni un
+ * <nav> (verificado 2026-10-03 con grep sobre src/pages/**), así que el
+ * usuario aterriza en Explorar sin ninguna salida visible a Método, Novedades
+ * o el índice. Esto es lo que hace que "no parezca una app".
+ *
+ * Por qué .astro y no el <Landing> del core: Landing trae un header completo de
+ * landing (hero, botones) que aquí no aplica — el hero ya lo tiene index.astro.
+ * Aquí solo hace falta la barra. Reutilizar un componente entero para sacar un
+ * <nav> arrastraría su estructura y sus estilos.
+ *
+ * Activo por locale, sin JS: el servidor ya sabe el locale (Astro.params), así
+ * que marcar el enlace activo no necesita hidratación.
+ *
+ * Accesibilidad: <nav aria-label> + <a aria-current="page"> en el activo. Es lo
+ * que permite a un lector de pantalla saber dónde está.
+ */
+import { PISASTYLE_DEFAULT_LOCALE, type PisaLocale } from '../lib/pisa-i18n';
+
+interface Props {
+  locale?: PisaLocale;
+  /** Ruta sin locale, para el enlace activo: 'explorar' | 'metodo' | ... */
+  current?: string;
+}
+const { locale = PISASTYLE_DEFAULT_LOCALE, current = '' } = Astro.props;
+
+const LABELS: Record<PisaLocale, Record<string, string>> = {
+  es: { home: 'Inicio', explorar: 'Unidades', metodo: 'Método', novedades: 'Novedades', evaluar: 'Evalúa tu nivel' },
+  en: { home: 'Home', explorar: 'Units', metodo: 'Method', novedades: 'News', evaluar: 'Check your level' },
+  pt: { home: 'Início', explorar: 'Unidades', metodo: 'Método', novedades: 'Novidades', avaliar: 'Avalie seu nível' },
+};
+
+const LINKS = [
+  { path: '', key: 'home', href: (l: PisaLocale) => `/${l}` },
+  { path: 'explorar', key: 'explorar', href: (l: PisaLocale) => `/${l}/explorar` },
+  { path: 'metodo', key: 'metodo', href: (l: PisaLocale) => `/${l}/metodo` },
+  { path: 'novedades', key: 'novedades', href: (l: PisaLocale) => `/${l}/novedades` },
+  { path: 'evaluar', key: 'evaluar', href: (l: PisaLocale) => `/${l}/evaluar` },
+];
+
+const t = LABELS[locale];
+---
+
+<nav class="nav" aria-label={t.home}>
+  <a class="nav-brand" href={`/${locale}`}>PISAStyle</a>
+
+  <ul class="nav-links">
+    {LINKS.map((link) => {
+      const isCurrent = current === link.path;
+      return (
+        <li>
+          <a
+            href={link.href(locale)}
+            class:list={['nav-link', { 'is-active': isCurrent }]}
+            aria-current={isCurrent ? 'page' : undefined}
+          >
+            {t[link.key]}
+          </a>
+        </li>
+      );
+    })}
+  </ul>
+
+  <div class="nav-langs" role="group" aria-label="Language">
+    {(['es', 'en', 'pt'] as const).map((l) => (
+      <a
+        class:list={['nav-lang', { 'is-active': l === locale }]}
+        href={`/${l}${current ? `/${current}` : ''}`}
+        hreflang={l}
+        lang={l}
+        aria-current={l === locale ? 'true' : undefined}
+      >
+        {l.toUpperCase()}
+      </a>
+    ))}
+  </div>
+</nav>
+
+<style>
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--swal-border);
+    background: var(--swal-bg);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  .nav-brand {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--swal-text);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+  .nav-links {
+    display: flex;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    flex: 1;
+    flex-wrap: wrap;
+  }
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem; /* WCAG 2.5.8: target >= 24px */
+    padding: 0 0.7rem;
+    border-radius: 6px;
+    color: var(--swal-text-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+  .nav-link:hover {
+    background: var(--swal-surface-hover);
+    color: var(--swal-text);
+  }
+  .nav-link.is-active {
+    background: var(--swal-accent-muted);
+    color: var(--swal-text);
+    font-weight: 600;
+  }
+  .nav-link:focus-visible,
+  .nav-lang:focus-visible,
+  .nav-brand:focus-visible {
+    outline: 2px solid var(--swal-accent);
+    outline-offset: 2px;
+  }
+  .nav-langs {
+    display: flex;
+    gap: 0.25rem;
+    margin-left: auto;
+  }
+  .nav-lang {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: var(--swal-text-muted);
+    text-decoration: none;
+  }
+  .nav-lang:hover {
+    background: var(--swal-surface-hover);
+    color: var(--swal-text);
+  }
+  .nav-lang.is-active {
+    background: var(--swal-accent);
+    color: var(--swal-accent-contrast, var(--swal-bg));
+    font-weight: 700;
+  }
+  /* Movil: la barra pasa a dos filas en vez de desbordar.
+   *
+   * `flex: 0 0 100%` y no solo `width: 100%`: en la regla de escritorio
+   * .nav-links tiene `flex: 1`, que fija flex-basis en 0%. El width no gana
+   * contra ese flex-basis, asi que la ul se quedaba en 120px y sus 5 enlaces
+   * se apilaban en 5 filas: la barra media 217px de alto en un viewport de
+   * 390, un tercio de la pantalla. Con flex: 0 0 100% la ul toma la fila
+   * entera y los enlaces fluyen en scroll horizontal, que es lo que cabe.
+   */
+  @media (max-width: 640px) {
+    .nav {
+      flex-wrap: wrap;
+      gap: 0.5rem 0.75rem;
+      padding: 0.6rem 0.9rem;
+    }
+    .nav-links {
+      order: 3;
+      flex: 0 0 100%;
+      width: 100%;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      -webkit-overflow-scrolling: touch;
+    }
+    .nav-langs {
+      margin-left: auto;
+    }
+  }
+</style>

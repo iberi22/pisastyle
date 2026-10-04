@@ -25,7 +25,7 @@ const dataMap = {
 const homeData = dataMap[locale as keyof typeof dataMap];
 ---
 
-<Layout title={homeData.hero.title} locale={routeLocale(locale)} alternates={buildAlternates({ path: '', locale, site: Astro.site })}>
+<Layout title={homeData.hero.title} locale={routeLocale(locale)} current="" alternates={buildAlternates({ path: '', locale, site: Astro.site })}>
   <div class="wrap">
     <div class="hero">
       <h1 class="title">{homeData.hero.title}</h1>

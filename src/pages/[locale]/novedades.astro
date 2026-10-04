@@ -25,7 +25,7 @@ export function getStaticPaths() {
 }
 
 ---
-<Layout title={t('site.title', currentLocale)} locale={routeLocale(locale)} alternates={buildAlternates({ path: 'novedades', locale, site: Astro.site })}>
+<Layout title={t('site.title', currentLocale)} locale={routeLocale(locale)} current="novedades" alternates={buildAlternates({ path: 'novedades', locale, site: Astro.site })}>
   <div class="wrap">
     <h1 class="title">Novedades</h1>
     <p class="sub">Últimas noticias</p>

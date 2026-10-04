@@ -57,7 +57,7 @@ const t = {
 }[locale as 'es' | 'en' | 'pt'];
 ---
 
-<Layout title={t.explore} locale={routeLocale(locale)} alternates={buildAlternates({ path: 'explorar', locale, site: Astro.site })}>
+<Layout title={t.explore} locale={routeLocale(locale)} current="explorar" alternates={buildAlternates({ path: 'explorar', locale, site: Astro.site })}>
   <div class="wrap">
     <h1 class="title">{t.explore}</h1>
 

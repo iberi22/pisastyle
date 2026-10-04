@@ -1,6 +1,7 @@
 ---
 import { Toaster } from '@swal/ui';
 import { PISASTYLE_DEFAULT_LOCALE, type PisaLocale } from '../lib/pisa-i18n';
+import SiteNav from '../components/SiteNav.astro';
 
 interface Props {
   title?: string;
@@ -11,12 +12,21 @@ interface Props {
   /** URLs alternas para hreflang. Sin esto Google no indexa las 3 locales
    *  como la misma pagina en distintos idiomas, sino 3 paginas duplicadas. */
   alternates?: Record<string, string>;
+  /** Ruta sin locale, para marcar el enlace activo del menu. */
+  current?: string;
+  /** Oculta la barra de navegacion (404/500, donde no hay destino util). */
+  hideNav?: boolean;
 }
 const {
   title = 'PISAStyle by SWAL — Preparación PISA',
   description = 'Matemáticas, Lectura, Ciencias y Mundo Digital. Contenido educativo no oficial, sin afiliación con la OECD.',
-  locale = Astro.locals.pisaLocale ?? PISASTYLE_DEFAULT_LOCALE,
+  // El `as PisaLocale` es necesario: Astro.locals.pisaLocale es `any` y sin
+  // el cast el default ensancha `locale` a string, que ya no es asignable
+  // al prop de SiteNav.
+  locale = (Astro.locals.pisaLocale ?? PISASTYLE_DEFAULT_LOCALE) as PisaLocale,
   alternates,
+  current = '',
+  hideNav = false,
 } = Astro.props;
 ---
 
@@ -34,6 +44,10 @@ const {
     <link rel="manifest" href="/manifest.json" /><meta name="theme-color" content="#121211" />
   </head>
   <body>
+    {/* Navegacion global. Va aqui y no en cada pagina para que las cuatro la
+        tengan sin repetir markup ni olvidarla: sin esto el usuario aterriza en
+        Explorar sin ninguna salida visible. */}
+    {hideNav ? null : <SiteNav locale={locale} current={current} />}
     <slot />
     <Toaster client:load />
 
