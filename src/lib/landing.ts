@@ -55,7 +55,7 @@ export function landingCtas(locale: PisaLocale): LandingCta[] {
  * grafico sin entender que ofrece la app.
  */
 export const LANDING_TAGLINE: Record<PisaLocale, string> = {
-  es: 'Diez preguntas para saber tu nivel de PISA y una unidad de estudio por dominio. Sin registro.',
-  en: 'Ten questions to find your PISA level and one study unit per domain. No sign-up.',
-  pt: 'Dez questões para saber seu nível PISA e uma unidade de estudo por domínio. Sem cadastro.',
+  es: 'Quince preguntas para saber tu nivel de PISA y una unidad de estudio por dominio. Sin registro.',
+  en: 'Fifteen questions to find your PISA level and one study unit per domain. No sign-up.',
+  pt: 'Quinze questões para saber seu nível PISA e uma unidade de estudo por domínio. Sem cadastro.',
 };
