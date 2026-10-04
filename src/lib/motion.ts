@@ -267,6 +267,24 @@ export function onReducedMotionChange(callback: (reduced: boolean) => void): () 
 }
 
 /**
+ * ¿El elemento esta ya dentro de la ventana? Solo tiene sentido en el navegador.
+ *
+ * Lee `getBoundingClientRect()`, que FUERZA reflow: por eso esta fuera de los
+ * helpers puros y su uso se limita a un `onMount` por elemento, nunca dentro de
+ * un bucle de scroll.
+ *
+ * Devuelve `true` sin navegador. Es el lado seguro: si no se puede medir, se
+ * asume "ya visible" y no se oculta nada. Con SSR o en un test sin DOM, este
+ * componente tiene que devolver lo que el servidor ya renderizo.
+ */
+export function isInViewport(el: Element | null | undefined): boolean {
+  if (!el || typeof el.getBoundingClientRect !== 'function') return true;
+  const r = el.getBoundingClientRect();
+  if (r.width === 0 && r.height === 0) return true; // no medible: no esconder
+  return r.bottom > 0 && r.top < (window.innerHeight || 0) && r.right > 0 && r.left < (window.innerWidth || 0);
+}
+
+/**
  * Decision final para animaciones dirigidas por JS (contadores, WAAPI): si el
  * usuario pidio menos movimiento, el valor final se pinta de golpe y no hay
  * ningun frame intermedio. Devuelve el valor final siempre, para que el estado

@@ -39,6 +39,7 @@
   import '../../styles/motion.css';
   import { onMount } from 'svelte';
   import {
+    isInViewport,
     motionClass,
     motionStyle,
     onReducedMotionChange,
@@ -60,8 +61,16 @@
     $props();
 
   let el = $state<HTMLElement | null>(null);
-  /** `true` hasta que el elemento entra en pantalla (o hasta que dejamos de esperar). */
-  let pending = $state(true);
+  /**
+   * `true` solo DESPUES de montar, y solo si el elemento esta fuera de pantalla.
+   *
+   * No puede empezar en `true`: el SSR emitiria `data-motion-pending="true"` y el
+   * CSS lo pondria en `opacity: 0` para siempre, con lo que sin JS — o si el
+   * bundle no carga — el contenido desapareceria. Este componente promete
+   * fallar hacia "visible", asi que arrancar oculto lo romperia en el caso mas
+   * probable. Por eso `armed` se decide en `onMount` y no en el render.
+   */
+  let armed = $state(false);
 
   const cls = $derived([motionClass(variant), extra].filter(Boolean).join(' '));
   const style = $derived(motionStyle({ variant }));
@@ -70,21 +79,22 @@
     const node = el;
     if (!node) return;
 
-    if (prefersReducedMotion()) {
-      pending = false;
-      return () => onReducedMotionChange(() => { pending = false; });
-    }
+    if (prefersReducedMotion()) return () => onReducedMotionChange(() => { armed = false; });
 
-    if (typeof IntersectionObserver !== 'function') {
-      pending = false;
-      return;
-    }
+    if (typeof IntersectionObserver !== 'function') return;
+
+    // Lo que ya esta en pantalla NO se oculta nunca: armarlo y esperar al observer
+    // provocaria un parpadeo de contenido visible -> invisible -> visible en
+    // cada elemento de la primera pantalla. El observer solo sirve para lo que
+    // esta de verdad por debajo del pliegue.
+    if (isInViewport(node)) return;
+    armed = true;
 
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
-          pending = false;
+          armed = false;
           observer.disconnect();
           return;
         }
@@ -96,11 +106,11 @@
     // Red de seguridad: si en 1.2s no ha entrado (observer que no dispara,
     // contenido en un arbol oculto), se muestra igual.
     const failsafe = setTimeout(() => {
-      pending = false;
+      armed = false;
       observer.disconnect();
     }, 1200);
 
-    const stop = onReducedMotionChange(() => { pending = false; });
+    const stop = onReducedMotionChange(() => { armed = false; });
 
     return () => {
       clearTimeout(failsafe);
@@ -115,7 +125,7 @@
   bind:this={el}
   class={cls}
   style={style || undefined}
-  data-motion-pending={pending ? 'true' : 'false'}
+  data-motion-pending={armed ? 'true' : 'false'}
 >
   {@render children()}
 </svelte:element>

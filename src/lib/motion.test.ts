@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import {
+  isInViewport,
   MOTION_DURATIONS,
   MOTION_VARIANTS,
   STANDARD_EASING,
@@ -107,6 +108,30 @@ describe('motion — sincronia con los tokens del core', () => {
       if (name === 'instant') continue;
       expect(ms, name).toBeLessThanOrEqual(500);
     }
+  });
+});
+
+describe('motion — SSR y jsdom sin navegador', () => {
+  it('isInViewport devuelve true sin elemento o si no se puede medir', () => {
+    // El lado seguro: si no se puede saber, se asume visible. Es lo que impide
+    // que un fallo de medicion deje el contenido en `opacity: 0`.
+    expect(isInViewport(null)).toBe(true);
+    expect(isInViewport(undefined)).toBe(true);
+    // jsdom no layoutea: un elemento normal sale con rect 0x0.
+    expect(isInViewport(document.createElement('div'))).toBe(true);
+  });
+
+  it('isInViewport detecta un rect fuera de la ventana', () => {
+    const el = document.createElement('div');
+    // Rectas tipicas: dentro (arriba del pliegue) y muy por debajo.
+    const inside = { bottom: 100, top: 10, right: 100, left: 10, width: 90, height: 90 };
+    const below = { bottom: 5000, top: 4900, right: 100, left: 10, width: 90, height: 90 };
+    (el as unknown as { getBoundingClientRect: () => typeof inside }).getBoundingClientRect =
+      () => inside;
+    expect(isInViewport(el)).toBe(true);
+    (el as unknown as { getBoundingClientRect: () => typeof below }).getBoundingClientRect =
+      () => below;
+    expect(isInViewport(el)).toBe(false);
   });
 });
 
