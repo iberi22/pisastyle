@@ -11,6 +11,13 @@ on:
       - "astro.config.mjs"
       - "wrangler.toml"
       - "package.json"
+      # Sin esto, un fix que solo toque pnpm-workspace.yaml NO dispara el
+      # deploy — que es justo lo que paso con el campo `packages`: se corrigio
+      # y el workflow nunca llego a ejecutarse, asi que nadie vio que seguia
+      # fallando. Los tres ficheros que gobiernan la instalacion en CI.
+      - "pnpm-workspace.yaml"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/**"
   workflow_dispatch:
 
 permissions:
