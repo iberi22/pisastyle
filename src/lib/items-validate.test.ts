@@ -35,6 +35,7 @@ import {
   MIN_EXPLANATION_CHARS,
   EXPECTED_PROTOCOL_VERSION,
   MAX_ANSWER_LETTER_SHARE,
+  MIN_ITEMS_FOR_LETTER_BIAS,
   type Finding,
 } from './items-validate';
 
@@ -317,6 +318,28 @@ describe('regla 5 · explanation', () => {
 });
 
 describe('regla 6 · answer-letter-bias', () => {
+  it('un bundle de un solo item NO se marca: 100% no es un sesgo medible', () => {
+    // Con un item la letra correcta es la unica que hay, asi que la regla
+    // disparaba siempre y el bundle mas pequeno posible no podia pasar nunca.
+    const report = validateItemSet([bundleFile({ body: item({ index: 1, correct: 'A' }) })]);
+    expect(report.items).toBe(1);
+    expect(rulesFor([bundleFile({ body: item({ index: 1, correct: 'A' }) })])).not.toContain(RULE.answerLetterBias);
+    expect(MIN_ITEMS_FOR_LETTER_BIAS).toBe(2);
+  });
+
+  it('con dos items, 1 de 2 (exactamente 50%) ya es medible', () => {
+    const body = [
+      item({ index: 1, correct: 'A' }),
+      item({
+        index: 2,
+        correct: 'B',
+        question: 'Una parcela de 360 m2 se divide en 4 filas. ¿Cuanto mide cada fila en m2?',
+        options: ['90', '144', '1.440', '60'],
+      }),
+    ].join('\n\n');
+    expect(rulesFor([bundleFile({ body })])).not.toContain(RULE.answerLetterBias);
+  });
+
   it('detecta que la misma letra gana mas del 50% de los items', () => {
     const body = [
       item({ index: 1, correct: 'A' }),

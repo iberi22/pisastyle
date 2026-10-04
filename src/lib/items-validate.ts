@@ -73,6 +73,8 @@ export const EXPECTED_PROTOCOL_VERSION = 'v1.1';
 export const MIN_EXPLANATION_CHARS = 80;
 export const MAX_ANSWER_LETTER_SHARE = 0.5;
 export const MIN_OPTIONS_PER_ITEM = 2;
+/** Por debajo de este numero de items el reparto de letras no es interpretable. */
+export const MIN_ITEMS_FOR_LETTER_BIAS = 2;
 
 /** Los 8 campos obligatorios por item (PISAStyle protocol v1.1, seccion 2). */
 export const REQUIRED_ITEM_FIELDS = [
@@ -700,7 +702,11 @@ function validateAcrossFiles(files: ItemFileInput[]): Finding[] {
       }
     }
   }
-  if (grandTotal > 0) {
+  // El sesgo solo es medible con al menos 2 items: con 1 solo item la letra
+  // correcta es SIEMPRE la unica que hay (share 100%), asi que la regla no
+  // tendria nada que senalar y solo marcaria en falso el bundle mas pequeno
+  // que puede existir. Con 2 items, en cambio, 1 de 2 ya es exactamente el 50%.
+  if (grandTotal > MIN_ITEMS_FOR_LETTER_BIAS) {
     for (const [letter, count] of [...totals].sort((a, b) => b[1] - a[1])) {
       const share = count / grandTotal;
       if (share > MAX_ANSWER_LETTER_SHARE) {
