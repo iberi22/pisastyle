@@ -53,11 +53,16 @@ describe('loadUnit', () => {
     expect(data!.stimulus.title.toLowerCase()).toContain('estufa');
   });
 
-  it('no inventa contenido: /es no tiene unidad y devuelve null', () => {
-    // El vault solo tiene sample-science-en.json y sample-unit.pt.json.
+  it('/es carga su unidad del vault (antes caia al fallback)', () => {
+    // sample-math-es.json se escribio en el vault precisamente para que /es
+    // dejara de mostrar "Unidad no disponible". La aritmetica del enunciado esta
+    // verificada: 24x40=960, 15 % de 960=144, 960-144=816, 18240/28800=0,63.
     const { data, origin } = loadUnit('es');
-    expect(data).toBeNull();
-    expect(origin).toBe('none');
+    expect(origin).toBe('vault');
+    expect(data!.stimulus.title).toContain('parque solar');
+    expect(data!.items).toHaveLength(5);
+    // niveles 1-5, igual que el resto de unidades
+    expect(data!.items.map((i) => i.level).sort()).toEqual(['1', '2', '3', '4', '5']);
   });
 
   it('el origen es coherente: datos implican origen real', () => {

@@ -33,7 +33,9 @@ const t = {
     items: "Ítems",
     faq: "Preguntas Frecuentes",
     no_unit: "Unidad no disponible en este idioma.",
-    vault_notice: "Unidad de demostración cargada desde el vault privado del laboratorio. No está en el repositorio.",
+    process: { interpret: "Interpretar", apply: "Aplicar", reason: "Razonar", explain: "Explicar", evaluate: "Evaluar" },
+    level: "Nivel",
+    vault_notice: "Contenido de Private Vault, el almacén privado del laboratorio. No forma parte del repositorio público.",
     minutes: "minutos",
     sources: "Fuentes: OECD PISA 2022 Results: COL 383/409/411 puesto 64/81, OCDE 472/476/485, SGP 575/543/561. Contenido ORIGINAL tipo PISA no oficial, sin afiliación OECD."
   },
@@ -44,7 +46,9 @@ const t = {
     items: "Items",
     faq: "FAQ",
     no_unit: "Unit not available in this language.",
-    vault_notice: "Demonstration unit loaded from the laboratory's private vault. It is not in the repository.",
+    process: { interpret: "Interpret", apply: "Apply", reason: "Reason", explain: "Explain", evaluate: "Evaluate" },
+    level: "Level",
+    vault_notice: "Content from Private Vault, the laboratory's private store. It is not part of the public repository.",
     minutes: "minutes",
     sources: "Sources: OECD PISA 2022 Results: COL 383/409/411 rank 64/81, OECD 472/476/485, SGP 575/543/561. ORIGINAL unofficial PISA-style content, no OECD affiliation."
   },
@@ -55,7 +59,9 @@ const t = {
     items: "Itens",
     faq: "Perguntas Frequentes",
     no_unit: "Unidade não disponível neste idioma.",
-    vault_notice: "Unidade de demonstração carregada do vault privado do laboratório. Não está no repositório.",
+    process: { interpret: "Interpretar", apply: "Aplicar", reason: "Raciocinar", explain: "Explicar", evaluate: "Avaliar" },
+    level: "Nível",
+    vault_notice: "Conteúdo do Private Vault, o repositório privado do laboratório. Não faz parte do repositório público.",
     minutes: "minutos",
     sources: "Fontes: Resultados OCDE PISA 2022: COL 383/409/411 posição 64/81, OCDE 472/476/485, SGP 575/543/561. Conteúdo ORIGINAL tipo PISA não oficial, sem afiliação à OCDE."
   }
@@ -87,8 +93,8 @@ const t = {
           <div class="items-list">
             {unitData.items.map((item: any) => (
               <div class="item">
-                <Badge variant="info">{item.process}</Badge>
-                <Badge variant="neutral">{item.level}</Badge>
+                <Badge variant="info">{t.process[item.process as keyof typeof t.process] ?? item.process}</Badge>
+                <Badge variant="neutral">{t.level} {item.level}</Badge>
                 <p><strong>{item.question}</strong></p>
                 {(item.options) ? (
                   <ul>
