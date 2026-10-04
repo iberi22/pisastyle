@@ -2,10 +2,37 @@
 import { Toaster } from '@swal/ui';
 import { PISASTYLE_DEFAULT_LOCALE, type PisaLocale } from '../lib/pisa-i18n';
 import SiteNav from '../components/SiteNav.astro';
+import {
+  buildJsonLd,
+  ogImageUrl,
+  ogLocale,
+  OG_IMAGE_HEIGHT,
+  OG_IMAGE_WIDTH,
+  routeMeta,
+  serializeJsonLd,
+  SEO_LOCALES,
+  type SeoLocale,
+} from '../lib/seo';
 
+/**
+ * Props that used to be the whole SEO surface. `title` and `description` are
+ * STILL honoured when a page passes them, because the copy lives in
+ * `src/data/*.json` and `src/lib/pisa-i18n.ts` — but only when the page does not
+ * resolve through the `route` catalog, which is the authoritative source.
+ *
+ * The two coexist on purpose: `current` is the only thing most pages need to
+ * change, so a new page gets correct, unique, translated metadata for free
+ * instead of a hardcoded Spanish title pasted into the English file.
+ */
 interface Props {
   title?: string;
   description?: string;
+  /**
+   * Route key for the SEO catalog. When it resolves, its per-locale title and
+   * description win over `title`/`description`, because the catalog is the only
+   * place where uniqueness across routes AND locales is guaranteed.
+   */
+  route?: string;
   /** Locale explicito de la ruta (/es|en|pt/...). Si no viene, se usa el que
    *  resolvio el middleware (Accept-Language, cookie, ?lang=). */
   locale?: PisaLocale;
@@ -17,9 +44,11 @@ interface Props {
   /** Oculta la barra de navegacion (404/500, donde no hay destino util). */
   hideNav?: boolean;
 }
+
 const {
-  title = 'PISAStyle by SWAL — Preparación PISA',
-  description = 'Matemáticas, Lectura, Ciencias y Mundo Digital. Contenido educativo no oficial, sin afiliación con la OECD.',
+  title,
+  description,
+  route,
   // El `as PisaLocale` es necesario: Astro.locals.pisaLocale es `any` y sin
   // el cast el default ensancha `locale` a string, que ya no es asignable
   // al prop de SiteNav.
@@ -28,26 +57,122 @@ const {
   current = '',
   hideNav = false,
 } = Astro.props;
+
+const seoLocale: SeoLocale = locale === 'es' || locale === 'pt' ? locale : 'en';
+const origin = (Astro.site ?? new URL('https://pisa.swal.network')).origin;
+
+// The catalog resolves `route` first; `current` is the fallback so a page only
+// has to declare its nav key. `''` is a legitimate catalog key (the home page),
+// so the fallback cannot be a truthiness test — that is what used to make every
+// page without an explicit route fall back to the default title.
+const meta = routeMeta(route ?? current ?? '');
+const catalogCopy = meta?.copy[seoLocale];
+
+const finalTitle = catalogCopy?.title ?? title ?? 'PISAStyle by SWAL — PISA Readiness';
+const finalDescription =
+  catalogCopy?.description ??
+  description ??
+  'Free PISA preparation: one study unit per domain, self-assessment and OECD-sourced reference data. Unofficial content, no OECD affiliation.';
+
+// The answer-first lead. This is the GEO lever, and it is why it is rendered
+// rather than hidden in a meta tag: an answer engine quotes a VISIBLE span, and
+// the span has to be the first thing on the page to survive extraction.
+//
+// `aria-hidden` is deliberately absent. The sentence is the page's opening
+// answer, and a screen reader skipping it would hand the user a page whose first
+// content is a CTA. It is a <p>, it is in the reading order, and it is short.
+const answerLead = catalogCopy?.answer ?? null;
+
+// Canonical: the locale route itself, derived from the path this page serves.
+// Trusting `alternates[locale]` when the page supplies it, and reconstructing it
+// otherwise, is what keeps canonical and hreflang pointing at the same bytes.
+const canonicalPath = meta ? `/${seoLocale}${meta.path ? `/${meta.path}` : ''}` : null;
+const canonical = canonicalPath ? new URL(canonicalPath, origin).href : null;
+
+// The two locales this page is NOT in. Declared in the order Open Graph wants
+// (es_ES, en_US, pt_BR), minus the current one.
+const ogLocaleAlternates = SEO_LOCALES.filter((l) => l !== seoLocale).map(ogLocale);
+
+// Open Graph image: one per locale, so a preview in WhatsApp or Slack carries
+// the visitor's language instead of always showing Spanish.
+const ogImage = ogImageUrl(seoLocale, origin);
+
+const pageUrl = canonical ?? new URL(`/${seoLocale}`, origin).href;
+
+const jsonLd = serializeJsonLd(
+  buildJsonLd({
+    locale: seoLocale,
+    path: meta?.path ?? '',
+    title: finalTitle,
+    description: finalDescription,
+    url: pageUrl,
+    origin,
+  }),
+);
 ---
 
 <!doctype html>
-<html lang={locale}>
+<html lang={seoLocale}>
   <head>
     <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
-    <meta name="description" content={description} />
+    <title>{finalTitle}</title>
+    <meta name="description" content={finalDescription} />
+    {canonical && <link rel="canonical" href={canonical} />}
     {alternates && Object.entries(alternates).map(([lang, href]) => (
       <link rel="alternate" hreflang={lang} href={href} />
     ))}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
     <link rel="manifest" href="/manifest.json" /><meta name="theme-color" content="#121211" />
+
+    {/* Open Graph. Was absent entirely (verified: the old Layout had no
+        `og:*` tag of any kind), so every share on WhatsApp, Slack, LinkedIn or
+        X rendered a bare link with no title, no image and no language. */}
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="PISAStyle by SWAL" />
+    <meta property="og:locale" content={ogLocale(seoLocale)} />
+    {ogLocaleAlternates.map((alt) => (
+      <meta property="og:locale:alternate" content={alt} />
+    ))}
+    <meta property="og:title" content={finalTitle} />
+    <meta property="og:description" content={finalDescription} />
+    <meta property="og:url" content={pageUrl} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content={String(OG_IMAGE_WIDTH)} />
+    <meta property="og:image:height" content={String(OG_IMAGE_HEIGHT)} />
+    <meta property="og:image:alt" content={finalTitle} />
+
+    {/* Twitter/X falls back to OG tags, but declares its own card type and does
+        not read og:image:alt, so the two are spelled out. */}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={finalTitle} />
+    <meta name="twitter:description" content={finalDescription} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content={finalTitle} />
+
+    {/* JSON-LD. `Organization` + `WebSite` + the page's own type in one graph,
+        as one script: a validator reads the site entities once instead of
+        18 times, and `serializeJsonLd` neutralises any `</script>` that would
+        close the tag early. */}
+    <script type="application/ld+json" is:inline set:html={jsonLd} />
   </head>
   <body>
     {/* Navegacion global. Va aqui y no en cada pagina para que las cuatro la
         tengan sin repetir markup ni olvidarla: sin esto el usuario aterriza en
         Explorar sin ninguna salida visible. */}
     {hideNav ? null : <SiteNav locale={locale} current={current} />}
+    {/* Answer-first band. Rendered BEFORE the slot so it is the first content on
+        the page and lands in the first ~80 visible characters — the window an
+        answer extractor reads. Without this, every page opened with a nav bar and
+        a CTA and the key fact sat below the fold.
+
+        Visually quiet on purpose: it reads as a lead sentence, not a banner. A
+        boxed "answer" would fight the page's own <h1> for the same job. */}
+    {answerLead && (
+      <div class="answer-band">
+        <p class="answer-lead">{answerLead}</p>
+      </div>
+    )}
     <slot />
     <Toaster client:load />
 
@@ -73,6 +198,29 @@ const {
       @import '../styles/pisa-tokens.css';
       html { background: var(--swal-bg); color: var(--swal-text); }
       body { margin: 0; font-family: var(--swal-font); -webkit-font-smoothing: antialiased; }
+
+      /* Answer-first band.
+         max-width matches the widest page container (.wrap is 1100px + 2rem
+         padding on /explorar), so the lead starts on the SAME left edge as the
+         page's own h1. The first attempt used 900px, which silently centred the
+         band at a different measure than the content below it — measured at
+         left=183px against the h1's left=67px. A lead that does not line up with
+         the page reads as a foreign widget bolted on top.
+         The `padding-left` on the lead (not the band) is what creates the rule's
+         inset, so the text, not the border, aligns with the content. */
+      .answer-band {
+        max-width: 1132px;
+        margin: 0 auto;
+        padding: 0.85rem 1rem 0;
+      }
+      .answer-lead {
+        margin: 0;
+        padding-left: 0.85rem;
+        border-left: 3px solid color-mix(in srgb, var(--swal-text) 28%, transparent);
+        color: var(--swal-text-secondary, var(--swal-text));
+        font-size: 1.05rem;
+        line-height: 1.55;
+      }
     </style>
   </body>
 </html>
