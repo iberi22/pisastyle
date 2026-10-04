@@ -97,7 +97,8 @@
     "submit": "Abrir la issue en GitHub",
     "download": "Descargar .md",
     "clear": "Borrar el borrador",
-    "restored": "Borrador restaurado de este navegador."
+    "restored": "Borrador restaurado de este navegador.",
+    "protocolComplete": "Los 8 campos del protocolo están completos."
   },
   "messages": {
     "required": "Este campo es obligatorio.",
@@ -110,6 +111,8 @@
     "urlTooLong": "La propuesta es demasiado larga para abrirla en un enlace. Descarga el .md y pégalo en una issue nueva.",
     "copied": "Copiado.",
     "copyFailed": "No se pudo copiar. Selecciona el texto y cópialo a mano.",
-    "repoLabel": "La issue se abrirá en"
+    "repoLabel": "La issue se abrirá en",
+    "downloaded": "Fichero .md descargado. Ábrelo, copia el contenido y pégalo en una issue nueva.",
+    "protocolComplete": "Los 8 campos del protocolo están completos."
   }
 }

@@ -97,7 +97,8 @@
     "submit": "Open the issue on GitHub",
     "download": "Download .md",
     "clear": "Clear the draft",
-    "restored": "Draft restored from this browser."
+    "restored": "Draft restored from this browser.",
+    "protocolComplete": "All 8 protocol fields are complete."
   },
   "messages": {
     "required": "This field is required.",
@@ -110,6 +111,8 @@
     "urlTooLong": "The proposal is too long to open in a link. Download the .md and paste it into a new issue.",
     "copied": "Copied.",
     "copyFailed": "Could not copy. Select the text and copy it manually.",
-    "repoLabel": "The issue will open in"
+    "repoLabel": "The issue will open in",
+    "downloaded": ".md file downloaded. Open it, copy the content and paste it into a new issue.",
+    "protocolComplete": "All 8 protocol fields are complete."
   }
 }

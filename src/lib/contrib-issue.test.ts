@@ -4,6 +4,7 @@ import {
   CONTRIB_REPO_NAME,
   MAX_ISSUE_URL_LENGTH,
   PROTOCOL_FIELDS,
+  countFilledProtocolFields,
   countMissingProtocolFields,
   downloadFilename,
   emptyDraft,
@@ -102,6 +103,18 @@ describe('validateDraft', () => {
     expect(countMissingProtocolFields(fullDraft())).toBe(0);
     expect(countMissingProtocolFields(fullDraft({ level: '', anchor: '  ' }))).toBe(2);
     expect(countMissingProtocolFields(emptyDraft())).toBe(8);
+  });
+
+  it('cuenta los campos de protocolo rellenos, y son los dos lados de la moneda', () => {
+    // El contador de la interfaz pinto el numero de carencias como si fuera el
+    // de avance: "8 / 8" con los ocho campos vacios. Este test fija que las dos
+    // cuentas suman 8 y que un draft vacio NO esta completo.
+    expect(countFilledProtocolFields(emptyDraft())).toBe(0);
+    expect(countFilledProtocolFields(fullDraft())).toBe(8);
+    expect(countFilledProtocolFields(fullDraft({ level: '', anchor: '  ' }))).toBe(6);
+    for (const draft of [emptyDraft(), fullDraft({ domain: '' })]) {
+      expect(countFilledProtocolFields(draft) + countMissingProtocolFields(draft)).toBe(8);
+    }
   });
 
   it('exige al menos 2 opciones si el formato es opcion multiple', () => {
@@ -265,6 +278,21 @@ describe('downloadFilename / markdownDocument', () => {
   it('un dominio con simbolos raros no rompe el nombre', () => {
     const name = downloadFilename(fullDraft({ domain: 'LDW / digital!!' }));
     expect(name).toMatch(/^pisastyle-nuevo-item-[a-z0-9-]*\.md$/);
+  });
+
+  it('los acentos no se parten: "Matemáticas" es matematicas, no matem-ticas', () => {
+    // Medido en navegador: el fichero se descargaba como "matem-ticas.md", que
+    // parece corrupto y no lo encuentra nadie.
+    expect(downloadFilename(fullDraft({ domain: 'Matemáticas' }))).toBe(
+      'pisastyle-nuevo-item-matematicas.md',
+    );
+    expect(downloadFilename(fullDraft({ domain: 'Ciências' }))).toBe(
+      'pisastyle-nuevo-item-ciencias.md',
+    );
+  });
+
+  it('un dominio solo con simbolos cae a pisa en vez de dejar el nombre vacio', () => {
+    expect(downloadFilename(fullDraft({ domain: '///' }))).toBe('pisastyle-nuevo-item-pisa.md');
   });
 
   it('el .md lleva el titulo como encabezado y el body completo', () => {

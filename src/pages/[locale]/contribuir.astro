@@ -184,6 +184,12 @@ const ISSUE_LABELS = {
   .privacy { font-size: 0.82rem; color: var(--swal-text-muted); margin-top: 0.5rem; line-height: 1.5; max-width: 62ch; }
   .flow { border-top: 1px solid var(--swal-border); padding-top: 1.5rem; }
   .flow h2 { font-size: 1.15rem; font-weight: 700; color: var(--swal-text); margin-bottom: 1rem; }
+  /* El <ol> se mantiene porque aporta la semantica de lista ordenada a un
+     lector de pantalla, que es justo lo que unos "div con numeros" no darian,
+     pero su marcador decimal se oculta: cada paso lleva ya su circulo numerado
+     y sin esto se leia "1. 1" en cada linea (medido en navegador).
+     `.flow` va como ancestro, no como clase del propio <ol>: el <ol> no la
+     tiene, y por eso esta regla no aplicaba durante un tiempo. */
   .flow ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1rem; }
   .flow li { display: flex; gap: 0.85rem; align-items: flex-start; }
   .step-num {

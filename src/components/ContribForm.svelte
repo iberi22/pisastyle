@@ -16,7 +16,7 @@
 <script lang="ts">
   import {
     PROTOCOL_FIELDS,
-    countMissingProtocolFields,
+    countFilledProtocolFields,
     downloadFilename,
     emptyDraft,
     firstInvalidField,
@@ -34,6 +34,7 @@
   } from '../lib/contrib-issue';
 
   interface Messages {
+    downloaded: string;
     required: string;
     optionsMin: string;
     optionsUnexpected: string;
@@ -70,6 +71,7 @@
     notePlaceholder: string;
     protocolLegend: string;
     protocolHelp: string;
+    protocolComplete: string;
     fields: Record<ProtocolField, { label: string; hint: string; placeholder: string }>;
     required: string;
     optional: string;
@@ -100,7 +102,11 @@
   let restored = $state(false);
   let submitted = $state(false);
 
-  const missingCount = $derived(countMissingProtocolFields(draft));
+  // Contador de AVANCE, no de carencias: "3 / 8" con los 8 campos vacios tiene
+  // que decir 0. Se muestra el relleno porque es lo que el visitante quiere
+  // ver progresar; `countMissingProtocolFields` sigue siendo el que decide si
+  // el formulario es enviable.
+  const filledCount = $derived(countFilledProtocolFields(draft));
   const title = $derived(issueTitle(draft, issueLabels.types));
   const body = $derived(issueBody(draft, issueLabels));
   const url = $derived(issueUrl(title, body));
@@ -114,17 +120,34 @@
    * y la pagina debe seguir funcionando sin borrador (no sin formulario). */
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
   $effect(() => {
-    // Serializa para que el efecto dependa del VALOR del draft, no de su
-    // identidad: mutar draft.options[0] no re-despacha si no se lee en/json.
-    const payload = draft;
-    if (submitted || restored) return;
+    // Hay que SERIALIZAR DENTRO del efecto. `const payload = draft` solo lee la
+    // REFERENCIA, y una referencia no cambia cuando se muta una propiedad: el
+    // efecto se ejecutaba una vez al montar y nunca mas, asi que el borrador no
+    // se guardaba nunca. Medido en navegador contra el build de produccion: tras
+    // escribir en el enunciado, `localStorage` seguia vacio.
+    //
+    // `JSON.stringify(draft)` lee cada campo, asi que el efecto queda
+    // subscribed al valor y se re-ejecuta en cada pulsacion. Es lo que hace
+    // falta para que el debounce tenga de que reiniciar.
+    const payload = JSON.stringify(draft);
+    // `restored` bloquea el guardado SOLO mientras el borrador siga siendo el
+    // que se acaba de recuperar, para que el efecto no reescriba lo mismo que
+    // acaba de leer. En cuanto el visitante edita, `set()` lo pone a false y el
+    // guardado vuelve a estar activo.
+    //
+    // Medido en navegador: sin este reset, un borrador recuperado se quedaba
+    // congelado — todo lo que se escribiera despues se perdia al recargar.
+    //
+    // Lo que NO debe persistir es el borrador YA ENTREGADO, y para eso
+    // `handleSubmit` borra la clave solo cuando la propuesta llega a GitHub.
+    if (restored) return;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
       try {
         // Nada escrito = nada que guardar. Sin esto, cada visita deja un
         // borrador vacio en el localStorage del visitante.
-        if (isBlank(payload)) return;
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
+        if (isBlank(draft)) return;
+        localStorage.setItem(DRAFT_KEY, payload);
       } catch {
         /* sin persistencia: no es motivo para romper el formulario */
       }
@@ -174,10 +197,13 @@
 
   function set(field: keyof ContribDraft, value: string) {
     draft[field] = value;
+    // Editar un borrador recuperado reactiva el guardado (ver $effect).
+    restored = false;
   }
 
   function setOption(index: number, value: string) {
     draft.options[index] = value;
+    restored = false;
   }
 
   /** Ancla los ids: el error se anuncia con aria-describedby y role="alert". */
@@ -199,18 +225,24 @@
     }
 
     notice = null;
-    try {
-      localStorage.removeItem(DRAFT_KEY);
-    } catch {
-      /* nada que limpiar, el formulario ya esta completo */
-    }
 
     if (!urlOk) {
       // Un enlace de 12 KB lo rejectan el navegador o el propio GitHub. Decirlo
       // es honesto; fingir que el enlace funciono dejaria al visitante con un
       // boton que no hace nada.
+      //
+      // El borrador NO se borra aqui: todavia tiene que descargar el .md y
+      // pegarlo, y si se limpia antes de que pueda hacerlo pierde el texto.
       notice = { tone: 'warn', text: messages.urlTooLong };
       return;
+    }
+
+    // Solo cuando la propuesta llega a GitHub. Antes de este punto el borrador
+    // sigue vivo a proposito.
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      /* nada que limpiar, el formulario ya esta completo */
     }
 
     window.open(url, '_blank', 'noopener,noreferrer');
@@ -230,7 +262,10 @@
     // revoke inmediato con un tick de margen: en Safari, revocar en el mismo
     // tick cancela la descarga antes de que arranque.
     setTimeout(() => URL.revokeObjectURL(href), 1000);
-    notice = { tone: 'info', text: messages.tooLong };
+    // NO se reutiliza `tooLong` aqui: descargar el .md es el camino NORMAL y
+    // decir "es demasiado larga" cuando no lo es hace pensar al visitante que
+    // su propuesta ha sido rechazada.
+    notice = { tone: 'info', text: messages.downloaded };
   }
 
   function clearDraft() {
@@ -398,7 +433,7 @@
       {/each}
     </div>
     <p class="counter" aria-live="polite">
-      {missingCount === 0 ? copy.protocolHelp : `${missingCount} / 8`}
+      {filledCount === 8 ? copy.protocolComplete : `${filledCount} / 8`}
     </p>
   </fieldset>
 
@@ -433,9 +468,18 @@
   legend { font-weight: 700; color: var(--swal-text); padding: 0 0.35rem; }
   .field { display: flex; flex-direction: column; gap: 0.3rem; }
   label { font-weight: 600; color: var(--swal-text); font-size: 0.9rem; }
-  .req { font-weight: 500; font-size: 0.75rem; color: var(--swal-text-secondary); }
+  /* "Obligatorio" repetido 12 veces compite con el texto de ayuda y se lee como
+     mas texto gris. El asterisco da la señal de un vistazo y la palabra queda
+     para quien no distingue el simbolo; ambos en el color de texto real, no en
+     el gris apagado de los hints (medido en revision visual: los obligatorios
+     no se distinguian de las descripciones). */
+  .req { font-weight: 600; font-size: 0.75rem; color: var(--swal-text); white-space: nowrap; }
+  .req::before { content: '*'; color: var(--pisa-incorrect, #D55E00); margin-right: 0.15rem; }
   .opt { font-weight: 500; font-size: 0.75rem; color: var(--swal-text-muted); }
-  .hint { font-size: 0.8rem; color: var(--swal-text-secondary); margin: 0; line-height: 1.45; }
+  /* El gris de `--swal-text-secondary` sobre el panel dejaba las descripciones
+     por debajo de AA en el tema claro (revision visual). `--swal-text` con
+     0.86rem mantiene la jerarquia sin perder legibilidad. */
+  .hint { font-size: 0.86rem; color: var(--swal-text); opacity: 0.78; margin: 0; line-height: 1.45; }
   input[type='text'], textarea {
     width: 100%;
     padding: 0.55rem 0.7rem;
@@ -447,6 +491,9 @@
     font-size: 0.95rem;
   }
   textarea { resize: vertical; }
+  /* El placeholder es un EJEMPLO, no una instruccion: se perdia al escribir.
+     Por eso los hints de arriba llevan el formato; aqui basta con que se lea. */
+  input[type='text']::placeholder, textarea::placeholder { color: var(--swal-text); opacity: 0.5; }
   /* Foco visible en TODO control: el foco por defecto se pierde sobre el
      fondo oscuro y el sitio entero navega con teclado. */
   input:focus-visible, textarea:focus-visible, button:focus-visible, .summary:focus-visible, a:focus-visible {
@@ -457,7 +504,9 @@
   .error { color: var(--swal-text); font-size: 0.82rem; margin: 0.1rem 0 0; font-weight: 600; }
   /* El icono no es decorativo: WCAG 1.4.1 forbids color as the only cue. */
   .error::before { content: '⚠ '; color: var(--pisa-incorrect, #D55E00); }
-  .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  /* `gap: 1rem 1.25rem` y no `1rem`: en tres columnas los bordes de los inputs
+     de al lado se tocaban y parecian un unico control con dos campos. */
+  .grid { display: grid; gap: 1rem 1.25rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
   .choices { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
   .choice { display: flex; gap: 0.6rem; align-items: flex-start; font-weight: 400; cursor: pointer; padding: 0.5rem; border-radius: 6px; }
   .choice:hover { background: var(--swal-surface-hover); }

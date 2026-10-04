@@ -106,9 +106,21 @@ export function emptyDraft(locale = 'en'): ContribDraft {
   };
 }
 
-/** Cuantos campos de protocolo quedan sin rellenar (0 = completo). */
+/**
+ * Cuantos campos de protocolo QUEDAN POR RELLENAR (0 = completo).
+ *
+ * El nombre es explicito porque este numero se pinto al reves en la interfaz y
+ * llego a la pantalla como "8 / 8" con los ocho campos VACIOS: un contador que
+ * dice "completo" cuando no hay nada escrito hace que el visitante pulse
+ * enviar sin entender que todavia falta casi todo.
+ */
 export function countMissingProtocolFields(draft: ContribDraft): number {
   return PROTOCOL_FIELDS.filter((f) => !draft[f].trim()).length;
+}
+
+/** Cuantos campos de protocolo LLEVAN valor (8 = completo). */
+export function countFilledProtocolFields(draft: ContribDraft): number {
+  return PROTOCOL_FIELDS.length - countMissingProtocolFields(draft);
 }
 
 export type ContribField = ProtocolField | 'unit' | 'stem' | 'options' | 'explanation';
@@ -286,11 +298,27 @@ export function issueUrlFits(url: string, max = MAX_ISSUE_URL_LENGTH): boolean {
   return url.length <= max;
 }
 
-/** `contribucion-item-domain.md` — nombre estable, sin datos personales. */
+/**
+ * `pisastyle-nuevo-item-matematicas.md` — nombre estable, sin datos personales.
+ *
+ * Los acentos se quitan ANTES de filtrar: "Matemáticas" con un slug ingenuo sale
+ * "matem-ticas", que parece un fichero corrupto. `NFD` separa la tilde del
+ * caracter base y el resto de marcas se descarta.
+ */
 export function downloadFilename(draft: ContribDraft): string {
-  const scope = (draft.domain.trim() || 'pisa').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const scope = slug(draft.domain) || 'pisa';
   const kind = draft.type === 'correction' ? 'correccion' : 'nuevo-item';
-  return `pisastyle-${kind}-${scope || 'pisa'}.md`;
+  return `pisastyle-${kind}-${scope}.md`;
+}
+
+/** ASCII en minusculas y con guiones; sin acentos ni simbolos. */
+export function slug(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 /** El .md que se descarga y que el visitante pega en la issue a mano. */
