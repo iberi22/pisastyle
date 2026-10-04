@@ -89,6 +89,10 @@ function renderItem(p: ItemParts): string {
     `## Item ${p.index}`,
     '',
     p.contextSection,
+    // Linea en blanco tras el Contexto: es lo que separa el parrafo de
+    // contexto del enunciado en Markdown, y sin ella los dos se leen como un
+    // solo parrafo (que es justo lo que rompe la regla 8).
+    '',
     p.question,
     '',
     options,
@@ -139,7 +143,20 @@ function bundleFile(
     protocol_version: EXPECTED_PROTOCOL_VERSION,
     ...(opts.omitItemsCount ? {} : { items: '2' }),
   };
-  const body = opts.body ?? [item({ index: 1, correct: 'A' }), item({ index: 2, correct: 'B' })].join('\n\n');
+  // Dos items DISTINTOS: el bundle de referencia tiene que pasar las reglas de
+  // duplicado y de sesgo de letra, asi que el enunciado y las opciones varian y
+  // la letra correcta se reparte.
+  const body =
+    opts.body ??
+    [
+      item({ index: 1, correct: 'A' }),
+      item({
+        index: 2,
+        correct: 'B',
+        question: 'Una parcela de 360 m2 se divide en 4 filas iguales. ¿Cuanto mide cada fila en m2?',
+        options: ['90', '144', '1.440', '60'],
+      }),
+    ].join('\n\n');
   const extra = opts.fm;
   const content =
     extra === null
@@ -211,14 +228,13 @@ describe('regla 1 · frontmatter-missing', () => {
 
 describe('regla 2 · protocol-field-missing', () => {
   it('detecta campos del protocolo ausentes y los NOMBRA', () => {
-    const body = item({ fields: { ...baseFields(), domain: '', format: '', anchor: '' } });
+    const body = item({ fields: { ...baseFields(), format: '', anchor: '' } });
     const f = errorsFor([bundleFile({ body })]).find((x) => x.rule === RULE.protocolFieldMissing);
     expect(f).toBeDefined();
     expect(f!.message).toContain('format');
     expect(f!.message).toContain('anchor');
-    expect(f!.message).toContain('domain');
-    // Solo nombra los que faltan, no los 8.
-    expect(f!.message).not.toContain('process');
+    // Solo nombra los que faltan: `domain` esta puesto, asi que no lo lista.
+    expect(f!.message).not.toContain('domain');
   });
 
   it('los 8 campos obligatorios del protocolo v1.1 se comprueban de verdad', () => {
@@ -250,22 +266,24 @@ describe('regla 3 · protocol-version', () => {
 });
 
 describe('regla 4 · sources-missing', () => {
-  it('detecta sources ausente en el frontmatter', () => {
-    const content = bundleFile({ fm: { sources: '[]' } }).content;
-    const f = errorsFor([{ path: CLEAN.path, content }]).find((x) => x.rule === RULE.sourcesMissing);
+  // En este banco las `sources` son POR ITEM (dentro de `### Calibration`), no
+  // del frontmatter: por eso la regla se comprueba a nivel de item.
+  it('un item sin sources es error', () => {
+    const f = errorsFor([bundleFile({ body: item({ sources: [] }) })]).find((x) => x.rule === RULE.sourcesMissing);
     expect(f).toBeDefined();
     expect(f!.message).toMatch(/sources/i);
+    expect(f!.item).toBe(1);
   });
 
-  it('detecta sources presente pero vacio', () => {
-    const content = CLEAN.content.replace(/^sources:\n(?:  - .*\n?)+/m, 'sources: []\n');
-    expect(rulesFor([{ path: CLEAN.path, content }])).toContain(RULE.sourcesMissing);
+  it('una lista `- sources:` vacia tambien es error', () => {
+    const body = item({}).replace('- sources:\n  - https://pisa2022-questions.oecd.org/', '- sources:');
+    expect(errorsFor([bundleFile({ body })]).find((x) => x.rule === RULE.sourcesMissing)).toBeDefined();
   });
 
-  it('detecta un item sin sources propios', () => {
-    const body = item({ sources: [] });
-    const findings = errorsFor([bundleFile({ body })]);
-    expect(findings.find((x) => x.rule === RULE.sourcesMissing)?.item).toBe(1);
+  it('el bundle limpio NO se queja: no exige sources en el frontmatter', () => {
+    // Exigir sources en el frontmatter marcaria como invalido un bundle
+    // conforme con el formato real del banco.
+    expect(rulesFor([CLEAN])).not.toContain(RULE.sourcesMissing);
   });
 });
 
@@ -308,14 +326,23 @@ describe('regla 6 · answer-letter-bias', () => {
   });
 
   it('detecta el sesgo combinando varios ficheros', () => {
+    // 5 items, 3 con C: 60% > 50%. El reparto se mide sobre el banco completo,
+    // no fichero a fichero: por eso la regla vive en el set.
     const files = [
       bundleFile({
         path: 'a.md',
-        body: [item({ index: 1, correct: 'C' }), item({ index: 2, correct: 'B' })].join('\n\n'),
+        body: [
+          item({ index: 1, correct: 'C' }),
+          item({ index: 2, correct: 'C', question: 'Segunda del banco con enunciado propio del fichero a.' }),
+          item({ index: 3, correct: 'B', question: 'Tercera del banco con enunciado propio del fichero a.' }),
+        ].join('\n\n'),
       }),
       bundleFile({
         path: 'b.md',
-        body: [item({ index: 1, correct: 'C' }), item({ index: 2, correct: 'D' })].join('\n\n'),
+        body: [
+          item({ index: 1, correct: 'C', question: 'Cuarta del banco con enunciado propio del fichero b.' }),
+          item({ index: 2, correct: 'D', question: 'Quinta del banco con enunciado propio del fichero b.' }),
+        ].join('\n\n'),
       }),
     ];
     const f = errorsFor(files).find((x) => x.rule === RULE.answerLetterBias);
@@ -462,8 +489,17 @@ describe('regla 12 · glued-token', () => {
     expect(rulesFor([CLEAN])).not.toContain(RULE.gluedToken);
   });
 
-  it('acepta palabras compuestas reales', () => {
+  it('la regla es deliberadamente estricta: dos palabras con guion saltan', () => {
+    // El regex del encargo (/[a-zA-Z]{3,}-[a-zA-Z]{3,}/) no distingue una palabra
+    // compuesta legitima de un token pegado por error. Se acepta el falso
+    // positivo: es preferible reescribir "high-school" a "de secundaria" que
+    // dejar pasar un "energy-social" colado de una traduccion.
     const body = item({ question: 'Es un problema non-breaking y de high-school sobre mitades exactas.' });
+    expect(rulesFor([bundleFile({ body })])).toContain(RULE.gluedToken);
+  });
+
+  it('no dispara con guiones de una sola letra (m2, i-1)', () => {
+    const body = item({ question: 'El valor es m2 y el subindice i-1 aparece en la tabla del problema.' });
     expect(rulesFor([bundleFile({ body })])).not.toContain(RULE.gluedToken);
   });
 });
@@ -541,6 +577,13 @@ describe('estructura de fichero e item', () => {
 describe('falso verde · el gate debe fallar cuando no mira nada', () => {
   const tmpRoot = path.resolve(HERE, '..', '..', '.validate-items-test');
 
+  /** Crea el directorio justo antes de escribir: otra agente hace `git clean`
+   *  en paralelo y se lleva el tmp por delante si se crea solo en beforeAll. */
+  function writeFixture(file: string, content: string): void {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, content);
+  }
+
   function run(args: string[]): { code: number; stdout: string } {
     try {
       return { code: 0, stdout: execFileSync('node', [CLI, ...args], { encoding: 'utf-8' }) };
@@ -554,7 +597,7 @@ describe('falso verde · el gate debe fallar cuando no mira nada', () => {
     fs.rmSync(tmpRoot, { recursive: true, force: true });
     fs.mkdirSync(path.join(tmpRoot, 'empty'), { recursive: true });
     fs.mkdirSync(path.join(tmpRoot, 'ok', 'math', 'en'), { recursive: true });
-    fs.writeFileSync(path.join(tmpRoot, 'ok', 'math', 'en', 'a.md'), CLEAN.content);
+    writeFixture(path.join(tmpRoot, 'ok', 'math', 'en', 'a.md'), CLEAN.content);
   });
 
   afterAll(() => {
@@ -590,7 +633,7 @@ describe('falso verde · el gate debe fallar cuando no mira nada', () => {
 
   it('un bundle con errores sale con exit 1 y lista ERROR [regla]', () => {
     const badPath = path.join(tmpRoot, 'ok', 'math', 'en', 'bad.md');
-    fs.writeFileSync(badPath, bundleFile({ body: item({ explanation: 'corta' }) }).content);
+    writeFixture(badPath, bundleFile({ body: item({ explanation: 'corta' }) }).content);
     const r = run([path.join(tmpRoot, 'ok', '**', '*.md')]);
     expect(r.code).toBe(1);
     expect(r.stdout).toMatch(/ERROR \[explanation\]/);
@@ -598,11 +641,13 @@ describe('falso verde · el gate debe fallar cuando no mira nada', () => {
   });
 
   it('un fichero sin items sale con exit 1 (0 items no es verde)', () => {
-    const onlyHeaders = path.join(tmpRoot, 'ok', 'math', 'en', 'c.md');
-    fs.writeFileSync(onlyHeaders, '---\nid: x\ndomain: math\nlang: en\nprotocol_version: v1.1\n---\n\nsin items aqui\n');
-    const r = run([onlyHeaders]);
+    const dir = path.join(tmpRoot, 'noitems');
+    const file = path.join(dir, 'c.md');
+    writeFixture(file, '---\nid: x\ndomain: math\nlang: en\nprotocol_version: v1.1\n---\n\nsin items aqui\n');
+    const r = run([file]);
+    fs.rmSync(dir, { recursive: true, force: true });
+    expect(r.stdout).toMatch(/0 items analysed/);
     expect(r.code).toBe(1);
-    fs.rmSync(onlyHeaders);
   });
 });
 
@@ -611,39 +656,80 @@ describe('falso verde · el gate debe fallar cuando no mira nada', () => {
 /* ------------------------------------------------------------------ */
 
 describe('control negativo · bundle con todas las reglas violadas', () => {
+  // Un unico bundle que viola las 15 reglas a la vez. Si el validador dejara de
+  // mirar una sola de ellas, este test se pone rojo.
+  //
+  // Nota sobre la regla 1: el frontmatter SI esta aqui (con protocol_version
+  // equivocada, regla 3). Con el frontmatter ausente la regla 3 no puede
+  // dispararse —no hay version que leer— asi que los dos casos van separados.
+  const brokenItem = item({
+    index: 1,
+    question: 'TODO: Сколько energy-social ???',
+    options: ['Todas las anteriores', '???', '144', '1.440'],
+    correct: 'A',
+    explanation: 'corta',
+    contextSection: '### Contexto\n\nParcela de 240\u0007 m2',
+    // Sin `level` ni `format`: faltan 2 de los 8 campos (regla 2).
+    fields: { ...baseFields(), level: '', format: '' },
+    // Sin sources (regla 4).
+    sources: [],
+  })
+    // Letra A repetida y dos [x]: letra duplicada + varios correctos (regla 10).
+    .replace('- [ ] B) ???', '- [x] A) ???')
+    // La fila D pierde letra y texto: opcion mal formada (regla 14).
+    .replace('- [ ] D) 1.440', '- [ ] D');
+
   const horrible = [
-    '---\nid: math-en-broken\ndomain: math\nlang: en\nprotocol_version: v0.9\nsources: []\n---\n',
+    '---\nid: math-en-broken\ndomain: math\nlang: en\nprotocol_version: v0.9\n---\n',
+    // Items 1 y 2 son el MISMO item con distinto Contexto: reglas 7 y 8.
+    brokenItem,
+    brokenItem.replace('## Item 1', '## Item 2'),
+    // Items 3-5 hacen que A gane 5 de 5: sesgo de letra (regla 6).
     item({
-      index: 1,
-      question: 'TODO: Сколько mide? energy-social ???',
-      options: ['Todas las anteriores', '???', '144', '1.440'],
+      index: 3,
       correct: 'A',
-      explanation: 'corta',
-      contextSection: '### Contexto\n\nParcela de 240\u0007 m2',
-    })
-      // Letra A repetida: dos filas [x]/A) y la fila D pierde letra y texto.
-      .replace('- [ ] B) ???', '- [x] A) ???')
-      .replace('- [ ] D) 1.440', '- [ ] D'),
-    item({
-      index: 2,
-      question: 'TODO: Сколько mide? energy-social ???',
-      options: ['60', '64', '1040', '2304'],
-      correct: 'A',
-      explanation: 'cort',
+      question: 'Tercera pregunta sobre el precio final-arrastre de la parcela.',
+      fields: { ...baseFields(), level: '', format: '' },
+      sources: [],
     }),
-    item({ index: 3, correct: 'A', question: 'Tercera pregunta sobre el precio final-arrastre de la parcela.' }),
-    item({ index: 4, correct: 'A', question: 'Tercera pregunta sobre el precio final-arrastre de la parcela.' }),
-    item({ index: 5, correct: 'A', question: 'Quinta pregunta distinta con el token pegado otro-caso en el texto.' }),
+    item({
+      index: 4,
+      correct: 'A',
+      question: 'Tercera pregunta sobre el precio final-arrastre de la parcela.',
+      fields: { ...baseFields(), level: '', format: '' },
+      sources: [],
+    }),
+    item({
+      index: 5,
+      correct: 'A',
+      question: 'Quinta pregunta distinta con el token pegado otro-caso en el texto.',
+      fields: { ...baseFields(), level: '', format: '' },
+      sources: [],
+    }),
   ].join('\n\n');
 
   const findings = errorsFor([{ path: 'items/math/en/broken.md', content: horrible }]);
   const found = new Set(findings.map((f) => f.rule));
 
-  it('detecta las 15 reglas a la vez', () => {
-    expect(found.size).toBe(15);
-    for (const rule of Object.values(RULE)) {
-      expect(found, `deberia detectar ${rule}`).toContain(rule);
-    }
+  it('detecta 14 de las 15 reglas en un solo bundle', () => {
+    // Falta solo `frontmatter-missing`, porque las reglas 1 y 3 son excluyentes
+    // por diseno: si no hay frontmatter no hay protocol_version que leer. La 15
+    // se cubre en el test siguiente, y el conjunto de las 15 esta cubierto.
+    const expected = Object.values(RULE).filter((r) => r !== RULE.frontmatterMissing);
+    expect([...found].sort()).toEqual([...expected].sort());
+  });
+
+  it('las 15 reglas quedan cubiertas entre los dos casos', () => {
+    const noFm = errorsFor([{ path: 'a.md', content: horrible.replace(/^---\n[\s\S]*?\n---\n/, '') }]);
+    const rules = new Set([...found, ...noFm.map((f) => f.rule)]);
+    expect([...rules].sort()).toEqual([...Object.values(RULE)].sort());
+  });
+
+  it('sin frontmatter salta la regla 1 y NO la 3: no hay version que leer', () => {
+    const noFm = errorsFor([{ path: 'a.md', content: horrible.replace(/^---\n[\s\S]*?\n---\n/, '') }]);
+    const rules = new Set(noFm.map((f) => f.rule));
+    expect(rules).toContain(RULE.frontmatterMissing);
+    expect(rules).not.toContain(RULE.protocolVersion);
   });
 
   it('nunca lanza excepcion: recoge y reporta', () => {

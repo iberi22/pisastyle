@@ -174,17 +174,30 @@ function splitItems(body: string): { index: number; block: string }[] {
   return out;
 }
 
-/** Seccion `### Contexto` (o variantes) del bloque de un item. */
+/**
+ * Seccion `### Contexto` (o variantes) del bloque de un item.
+ *
+ * El contexto es un parrafo, y hay que quitarlo DEL ENUNCIADO: si se queda, dos
+ * items que solo difieren en el Contexto no coinciden nunca y la regla 8 no
+ * puede disparar. Y no se extiende hasta el proximo `###` a secas, porque en el
+ * formato real `### Contexto` va seguido del enunciado y de las opciones ANTES
+ * de `### Explicacion Pedagogica`.
+ */
 function extractContext(block: string): { context: string; without: string } {
-  const re = /^###\s+(?:Contexto|Context)\b[^\n]*\n([\s\S]*?)(?=^###\s|\Z)/im;
+  const re = /^###\s+(?:Contexto|Context)\b[^\n]*\n(?:\n*((?:(?!^###\s|^\s*$)[^\n]*\n)*))?/im;
   const m = block.match(re);
   if (!m) return { context: '', without: block };
-  return { context: m[1].trim(), without: block.replace(re, '') };
+  return { context: (m[1] ?? '').trim(), without: block.replace(re, '') };
 }
 
 /** Texto de una seccion `### <heading>` (tolerando lo que venga hasta el final). */
 function extractSection(block: string, heading: RegExp): string {
-  const re = new RegExp(`^###\\s+(?:${heading.source})[^\\n]*\\n([\\s\\S]*?)(?=^#{1,3}\\s|\\Z)`, 'im');
+  // El bloque termina en la siguiente cabecera `###`, o al final del item.
+  // Ojo: en JS el fin de cadena no es `\Z` (eso es Python); es `(?![\\s\\S])`.
+  const re = new RegExp(
+    `^###\\s+(?:${heading.source})[^\\n]*\\n([\\s\\S]*?)(?=^#{1,3}\\s|(?![\\s\\S]))`,
+    'im',
+  );
   const m = block.match(re);
   return m ? m[1].trim() : '';
 }
@@ -369,11 +382,15 @@ function validateOne(file: ItemFileInput): Finding[] {
 
   const { frontmatter, items } = parsed;
 
-  // Regla 1 · frontmatter ausente.
+  // Regla 1 · frontmatter ausente. Regla 3 · protocol_version (seccion 9 del
+  // protocolo: "cada unidad declara su protocol_version").
+  // Regla 4 NO se comprueba aqui a proposito: en el formato del banco las
+  // `sources` son por item (dentro de `### Calibration`), no del frontmatter,
+  // asi que exigirlas en el frontmatter marcaria como invalido un bundle
+  // perfectamente conforme.
   if (frontmatter === null) {
     add(RULE.frontmatterMissing, 'ERROR', 0, 'el fichero no empieza con un bloque YAML ---');
   } else {
-    // Regla 3 · protocol_version.
     const version = (frontmatter['protocol_version'] ?? [])[0] ?? '';
     if (version !== EXPECTED_PROTOCOL_VERSION) {
       add(
@@ -382,10 +399,6 @@ function validateOne(file: ItemFileInput): Finding[] {
         0,
         `protocol_version debe ser ${EXPECTED_PROTOCOL_VERSION} y es "${version || '(ausente)'}"`,
       );
-    }
-    // Regla 4 a nivel de fichero · sources.
-    if ((frontmatter['sources'] ?? []).length === 0) {
-      add(RULE.sourcesMissing, 'ERROR', 0, 'sources ausente o vacio en el frontmatter (protocolo v1.1 lo exige)');
     }
   }
 
