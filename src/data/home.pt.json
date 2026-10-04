@@ -51,12 +51,12 @@
   "ctas": [
     {
       "label": "Começar a Estudar",
-      "url": "/pt/study",
+      "url": "/pt/explorar",
       "variant": "primary"
     },
     {
-      "label": "Ver Rankings",
-      "url": "/pt/rankings",
+      "label": "Avalie seu nível",
+      "url": "/pt/evaluar",
       "variant": "ghost"
     }
   ]
