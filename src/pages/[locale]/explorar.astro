@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import { Card, Badge } from '@swal/ui';
 import { buildAlternates, routeLocale } from '../../lib/alternates';
+import RankingBars from '../../components/RankingBars.astro';
 import { loadUnit } from '../../lib/units';
 
 export function getStaticPaths() {
@@ -15,6 +16,14 @@ export function getStaticPaths() {
 const { locale } = Astro.params;
 
 const faqModules = import.meta.glob('../../data/faq.*.json', { eager: true });
+const homeModules = import.meta.glob('../../data/home.*.json', { eager: true });
+
+/* La infografia ranking-bars va AQUI y no en [locale]/index.astro: el
+   middleware redirige `/` y `/{locale}` a `/{locale}/explorar`
+   (src/middleware.ts:68), asi que index.astro es inalcanzable — montado ahi el
+   grafico no se veria nunca. Verificado con 302 en / y /es. */
+const homeRaw = homeModules[`../../data/home.${locale}.json`] as { default: any } | undefined;
+const stats = homeRaw?.default?.stats ?? null;
 
 // Las unidades no se leen con un glob sobre src/data/: no existen ahi (LICENSE.md
 // punto 2 las declara privadas y viven en el vault). Ese glob vacio era la causa
@@ -110,6 +119,19 @@ const t = {
       </div>
     ) : (
       <p>{t.no_unit}</p>
+    )}
+
+    {stats && (
+      <section class="rank-section">
+        <RankingBars
+          colombia={{ math: stats.colombia.math, reading: stats.colombia.reading, science: stats.colombia.science }}
+          oecd={stats.oecd}
+          singapore={stats.singapore}
+          labels={stats.labels}
+          regionLabels={stats.labels}
+          locale={routeLocale(locale)}
+        />
+      </section>
     )}
 
     <div class="faq-section">

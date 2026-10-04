@@ -1,0 +1,205 @@
+---
+/**
+ * Ranking-bars — Colombia frente al promedio OCDE y Singapur, por dominio.
+ *
+ * Infografía SVG estatica. `.astro` y no Svelte porque no hay interaccion: la
+ * tabla alternativa va en `<details>` nativo, sin JS.
+ *
+ * Reglas de la skill `pisastyle-infographics` que cumple:
+ *  - Eje desde CERO. Las barras son `value / RANKING_MAX`; el maximo real es 575
+ *    y el eje llega a 600 para que la barra mas alta no toque el marco.
+ *  - Contraste WCAG AA verificado con `scripts/verify-swallow-tokens.py`, no a ojo.
+ *  - Color nunca como unico canal: cada barra lleva su etiqueta de valor y las
+ *    de Colombia llevan ademas la marca de "bajo el promedio OCDE".
+ *  - `<details>` con la tabla de datos para lectores de pantalla e impresion.
+ *  - Fuente citada al pie.
+ */
+import { rankingRows, rankingScale, REGIONS, type RankingRow } from '../lib/ranking';
+
+interface Props {
+  colombia: Record<string, number>;
+  oecd: Record<string, number>;
+  singapore: Record<string, number>;
+  labels: Record<string, string>;
+  regionLabels: Record<string, string>;
+  locale: 'es' | 'en' | 'pt';
+}
+const { colombia, oecd, singapore, labels, regionLabels, locale } = Astro.props;
+
+const rows = rankingRows({ colombia, oecd, singapore, labels, regionLabels });
+const max = rankingScale(rows);
+
+// Geometria. El ancho total incluye la etiqueta (130) + barra + margen (24).
+const W = 760;
+const LABEL = 190;
+const PAD_R = 24;
+const BAR_H = 30;
+const GAP = 20;
+const TOP = 54;
+const H = TOP + rows.length * (BAR_H + GAP) + 24;
+
+const T = {
+  es: {
+    title: 'Colombia frente a la OCDE y Singapur en PISA 2022',
+    desc: 'Barras horizontales de puntajes PISA 2022 en matemáticas, lectura y ciencias. Colombia queda por debajo del promedio OCDE en los tres dominios; Singapur, muy por encima.',
+    domain: 'Dominio',
+    score: 'Puntaje',
+    below: 'bajo el promedio OCDE',
+    dataTitle: 'Ver los datos en tabla',
+    tableCaption: 'Puntajes PISA 2022 por dominio',
+    source: 'Fuente: OECD PISA 2022 Results (COL 383/409/411, puesto 64/81; OCDE 472/476/485; SGP 575/543/561). Contenido original tipo PISA, no oficial, sin afiliación con la OCDE.',
+  },
+  en: {
+    title: 'Colombia versus the OECD and Singapore in PISA 2022',
+    desc: 'Horizontal bars of PISA 2022 scores in mathematics, reading and science. Colombia is below the OECD average in all three domains; Singapore is well above it.',
+    domain: 'Domain',
+    score: 'Score',
+    below: 'below the OECD average',
+    dataTitle: 'View the data as a table',
+    tableCaption: 'PISA 2022 scores by domain',
+    source: 'Source: OECD PISA 2022 Results (COL 383/409/411, rank 64/81; OECD 472/476/485; SGP 575/543/561). Original PISA-style content, unofficial, with no OECD affiliation.',
+  },
+  pt: {
+    title: 'Colômbia frente à OCDE e Singapura no PISA 2022',
+    desc: 'Barras horizontais de pontuações PISA 2022 em matemática, leitura e ciências. Colômbia fica abaixo da média OCDE nos três domínios; Singapura, bem acima.',
+    domain: 'Domínio',
+    score: 'Pontuação',
+    below: 'abaixo da média OCDE',
+    dataTitle: 'Ver os dados em tabela',
+    tableCaption: 'Pontuações PISA 2022 por domínio',
+    source: 'Fonte: OECD PISA 2022 Results (COL 383/409/411, posição 64/81; OCDE 472/476/485; SGP 575/543/561). Conteúdo original tipo PISA, não oficial, sem afiliação com a OCDE.',
+  },
+}[locale];
+
+const titleId = 'rb-title';
+const descId = 'rb-desc';
+const plotW = W - LABEL - PAD_R;
+
+const byDomain = (d: string) => rows.filter((r: RankingRow) => r.domain === d);
+const domains = [...new Set(rows.map((r) => r.domain))];
+---
+
+<figure class="rb">
+  <h3 class="rb-heading">{T.title}</h3>
+  <svg
+    viewBox={`0 0 ${W} ${H}`}
+    role="img"
+    aria-labelledby={`${titleId} ${descId}`}
+    class="rb-svg"
+  >
+    <title id={titleId}>{T.title}</title>
+    <desc id={descId}>{T.desc}</desc>
+
+    {/* Eje desde cero, marcado explicitamente: es la regla que la skill exige
+        y lo que un lector de grafico necesita para no leer una exageracion. */}
+    <line x1={LABEL} y1={TOP - 8} x2={LABEL} y2={H - 30} class="rb-axis" />
+    <text x={LABEL} y={TOP - 14} class="rb-tick rb-tick--zero">0</text>
+    <text x={W - PAD_R} y={TOP - 14} class="rb-tick" text-anchor="end">{max}</text>
+
+    {rows.map((r, i) => {
+      const y = TOP + i * (BAR_H + GAP);
+      const w = Math.max(2, r.width * plotW);
+      const clases = [
+        'rb-bar',
+        r.region === 'colombia' ? 'rb-bar--co' : r.region === 'oecd' ? 'rb-bar--oecd' : 'rb-bar--sgp',
+      ];
+      return (
+        <>
+          <text x={LABEL - 10} y={y + BAR_H * 0.72} class="rb-label" text-anchor="end">
+            {r.domainLabel}
+          </text>
+          <rect x={LABEL} y={y} width={w} height={BAR_H} rx="3" class={clases.join(' ')} />
+          <text x={LABEL + w + 6} y={y + BAR_H * 0.72} class="rb-value">
+            {r.value}
+          </text>
+          {r.region === 'colombia' && r.belowOecd && (
+            /* La anotacion va DEBAJO de su barra, no a la derecha: con el texto
+               a 17px no cabe junto a la barra de Colombia (383 es la mas
+               corta) dentro del viewBox. Abajo hay sitio de sobra y se lee sin
+               ampliar. */
+            <text x={LABEL} y={y + BAR_H + 15} class="rb-flag">
+              ▼ {T.below}
+            </text>
+          )}
+        </>
+      );
+    })}
+  </svg>
+
+  <ul class="rb-legend">
+    {REGIONS.map((r) => (
+      <li>
+        <span class={`rb-swatch rb-swatch--${r}`} aria-hidden="true" />
+        {regionLabels[r]}
+      </li>
+    ))}
+  </ul>
+
+  <figcaption class="rb-source">{T.source}</figcaption>
+
+  <details class="rb-data">
+    <summary>{T.dataTitle}</summary>
+    <table>
+      <caption>{T.tableCaption}</caption>
+      <thead>
+        <tr>
+          <th scope="col">{T.domain}</th>
+          {REGIONS.map((r) => <th scope="col">{regionLabels[r]}</th>)}
+        </tr>
+      </thead>
+      <tbody>
+        {domains.map((d) => (
+          <tr>
+            <th scope="row">{labels[d]}</th>
+            {REGIONS.map((reg) => {
+              const fila = byDomain(d).find((x: RankingRow) => x.region === reg);
+              return <td>{fila ? fila.value : '—'}</td>;
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </details>
+</figure>
+
+<style>
+  .rb { margin: 0; display: grid; gap: 0.75rem; }
+  .rb-heading {
+    margin: 0; font-size: 1rem; font-weight: 700;
+    color: var(--swal-text); letter-spacing: -0.01em;
+  }
+  .rb-svg { width: 100%; height: auto; display: block; }
+  .rb-axis { stroke: var(--swal-border); stroke-width: 1; }
+  .rb-tick { fill: var(--swal-text-muted); font-size: 19px; }
+  .rb-tick--zero { fill: var(--swal-text-secondary); font-weight: 700; }
+  .rb-label { fill: var(--swal-text); font-size: 21px; font-weight: 600; }
+  .rb-value { fill: var(--swal-text-secondary); font-size: 21px; font-variant-numeric: tabular-nums; }
+  .rb-flag { fill: var(--swal-text-secondary); font-size: 17px; }
+  .rb-bar--co { fill: var(--swal-accent); }
+  .rb-bar--oecd { fill: var(--swal-text-muted); }
+  .rb-bar--sgp { fill: var(--swal-success, var(--swal-accent)); }
+  .rb-legend {
+    display: flex; flex-wrap: wrap; gap: 0.35rem 1rem; margin: 0; padding: 0;
+    list-style: none; font-size: 0.8rem; color: var(--swal-text-secondary);
+  }
+  .rb-legend li { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .rb-swatch { width: 0.85rem; height: 0.85rem; border-radius: 3px; flex: none; }
+  .rb-swatch--oecd { background: var(--swal-text-muted); }
+  .rb-swatch--colombia { background: var(--swal-accent); }
+  .rb-swatch--singapore { background: var(--swal-success, var(--swal-accent)); }
+  .rb-source { font-size: 0.78rem; color: var(--swal-text-muted); line-height: 1.5; }
+  .rb-data { font-size: 0.85rem; }
+  .rb-data summary { cursor: pointer; color: var(--swal-text-secondary); min-height: 2.25rem; display: inline-flex; align-items: center; }
+  .rb-data table { border-collapse: collapse; margin-top: 0.5rem; width: 100%; }
+  .rb-data caption { text-align: left; color: var(--swal-text-secondary); padding-bottom: 0.35rem; }
+  .rb-data th, .rb-data td { border: 1px solid var(--swal-border); padding: 0.35rem 0.6rem; text-align: right; }
+  .rb-data th[scope='row'], .rb-data thead th:first-child { text-align: left; }
+  /* Impresion: la tabla se lee en blanco y negro, sin depender del tema.
+     Los bordes van al token de texto y no a #000 porque el verificador de
+     tokens rechaza literales de color, y en impresion lo que importa es que
+     haya contraste, no que sea negro puro. */
+  @media print {
+    .rb-data { display: block; }
+    .rb-data th, .rb-data td { border-color: var(--swal-text); }
+  }
+</style>
