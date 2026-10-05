@@ -37,8 +37,13 @@ import { join } from 'node:path';
  * página no puedan divergir: si mañana alguien saca el banco a un .ts, este test
  * sigue leyendo lo que la página realmente sirve.
  */
-const EVALUAR = join(process.cwd(), 'src/pages/[locale]/evaluar.astro');
-const fuente = readFileSync(EVALUAR, 'utf-8');
+// Las preguntas se movieron de evaluar.astro a src/lib/exam-items.ts. Este test
+// sigue vigilando la CORRECTITUD (aritmetica real y ausencia de ambiguedad),
+// no la forma: de esa se encarga exam-items.test.ts.
+const fuente = readFileSync(
+  join(process.cwd(), 'src/lib/exam-items.ts'),
+  'utf-8',
+);
 
 const DOMINIOS = ['math', 'reading', 'science'] as const;
 const LOCALES = ['es', 'en', 'pt'] as const;
@@ -50,25 +55,37 @@ interface Item {
   clave: number;
 }
 
+// Las preguntas ya no viven en evaluar.astro: viven en src/lib/exam-items.ts,
+// que es la fuente unica y la que la pagina consume. Este test sigue
+// verificando lo mismo (aritmetica real y ausencia de ambiguedad), pero
+// sobre el modulo. Ver exam-items.test.ts para el contrato de forma.
 function bloqueDe(locale: Locale): string {
-  const i = fuente.indexOf(`\n  ${locale}: {\n`);
-  // Cada locale va hasta la línea `  },` de dos espacios que cierra su objeto.
-  const fin = fuente.indexOf('\n  },\n', i);
+  const i = fuente.indexOf(`  ${locale}: [`);
   expect(i, `no se encuentra el bloque ${locale}`).toBeGreaterThan(-1);
+  const fin = fuente.indexOf('\n  ],', i);
   return fuente.slice(i, fin);
 }
 
+// Cada item es un objeto `ExamItem` en exam-items.ts, no una tupla. Se
+// trocean por `id: "<dominio>-<n>"` y de cada trozo se leen stem, options y
+// correctIndex. Nada de regex sobre una sola linea: los enunciados ocupan
+// varias y un item con acentos rompe el patron.
 function itemsDe(bloque: string, dominio: string): Item[] {
-  const m = bloque.match(new RegExp(`${dominio}: \\[([\\s\\S]*?)\\n      \\],`));
-  expect(m, `no se encuentra el dominio ${dominio}`).not.toBeNull();
   const out: Item[] = [];
-  for (const linea of m![1].split('\n')) {
-    const t = linea.trim();
-    if (!t.startsWith('[')) continue;
-    const mm = t.match(/^\[\s*'(.*)'\s*,\s*\[(.*)\]\s*,\s*(\d)\s*\],?$/);
-    expect(mm, `línea de ítem no parseada: ${t.slice(0, 80)}`).not.toBeNull();
-    const opciones = [...mm![2].matchAll(/'([^']*)'/g)].map((o) => o[1]);
-    out.push({ enunciado: mm![1], opciones, clave: Number(mm![3]) });
+  const trozos = bloque.split(/\n  \{\n/).slice(1);
+  expect(trozos.length, `no se encuentra el dominio ${dominio}`).toBeGreaterThan(0);
+  for (const trozo of trozos) {
+    const id = trozo.match(/id:\s*"([^"]+)"/)?.[1] ?? '';
+    if (!id.startsWith(`${dominio}-`)) continue;
+    const enunciado = trozo.match(/stem:\s*"((?:[^"\\]|\\.)*)"/)?.[1];
+    const opciones = [...(trozo.match(/options:\s*\[([^\]]*)\]/)?.[1] ?? '').matchAll(/"((?:[^"\\]|\\.)*)"/g)].map(
+      (o) => o[1],
+    );
+    const clave = Number(trozo.match(/correctIndex:\s*(\d+)/)?.[1]);
+    expect(enunciado, `ítem ${id} sin stem`).toBeDefined();
+    expect(opciones.length, `ítem ${id} sin opciones`).toBeGreaterThan(0);
+    expect(Number.isFinite(clave), `ítem ${id} sin correctIndex`).toBe(true);
+    out.push({ enunciado: enunciado!, opciones, clave });
   }
   return out;
 }

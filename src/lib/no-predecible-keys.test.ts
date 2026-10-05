@@ -74,33 +74,20 @@ describe('las claves no pueden ser predecibles', () => {
 
 describe('el mismo contenido no puede tener la misma clave en las tres locales', () => {
   it('las tres locales de /evaluar no comparten la misma secuencia', () => {
-    const evaluar = readFileSync(
-      join(process.cwd(), 'src/pages/[locale]/evaluar.astro'),
-      'utf-8',
-    );
-    const KEY = /(?<!\[),\s*(\d)\](,?)\s*$/;
-    const lineas = evaluar.split('\n');
-
-    // Se separa por la marca de cada locale: las tres respuestas van tras
-    // `es: {`, `en: {`, `pt: {` dentro de COPY.
+    // La secuencia de claves ahora vive en src/lib/exam-items.ts, no en la
+    // pagina: la pagina consume el modulo. Se lee de ahi, que es la fuente.
+    const mod = readFileSync(join(process.cwd(), 'src/lib/exam-items.ts'), 'utf-8');
     const seqs: Record<string, string> = {};
-    let actual = '';
-    for (const L of lineas) {
-      // Los marcadores de locale van a 2 espacios ("  es: {"), no a 4.
-      const m = L.match(/^\s*(es|en|pt):\s*\{\s*$/);
-      if (m) {
-        actual = m[1];
-        seqs[actual] = '';
-        continue;
-      }
-      if (actual && KEY.test(L) && L.includes("['")) {
-        seqs[actual] += L.match(KEY)![1];
-      }
+    for (const loc of ['es', 'en', 'pt']) {
+      const i = mod.indexOf(`  ${loc}: [`);
+      expect(i, `no se encuentra ${loc}`).toBeGreaterThan(-1);
+      const bloque = mod.slice(i, mod.indexOf('\n  ],', i));
+      seqs[loc] = [...bloque.matchAll(/correctIndex:\s*(\d+)/g)].map((m) => m[1]).join('');
     }
     const conDatos = Object.entries(seqs).filter(([, s]) => s.length >= 8);
     expect(conDatos.length, 'no se leyeron las tres locales').toBe(3);
-    // Que dos locales no compartan la secuencia entera: si la comparten, el
-    // mismo alumno que resuelve en español tiene la respuesta en las otras.
+    // Que dos locales no compartan la serie entera: si la comparten, el mismo
+    // alumno que resuelve en español tiene la respuesta en las otras.
     const [a, b] = conDatos;
     expect(a[1]).not.toBe(b[1]);
   });

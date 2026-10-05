@@ -23,6 +23,7 @@ import Layout from '../../layouts/Layout.astro';
 
 import { buildAlternates, routeLocale } from '../../lib/alternates';
 import { isPisaLocale } from '../../lib/pisa-i18n';
+import { EXAM_ITEMS, examByDomain, type ExamItem } from '../../lib/exam-items';
 
 export function getStaticPaths() {
   return [
@@ -76,7 +77,6 @@ interface Copy {
   prevNotice: string;
   resultHeading: string;
   resultNote: string;
-  questions: Record<DomainKey, Question[]>;
 }
 
 const COPY: Record<'es' | 'en' | 'pt', Copy> = {
@@ -97,29 +97,6 @@ const COPY: Record<'es' | 'en' | 'pt', Copy> = {
       'Escala orientativa propia: los cortes numéricos del Protocolo PISAStyle ' +
       'v1.1 §3 (233-607) están en escala PISA y no aplican a 5 preguntas. ' +
       'Una estimación no sustituye una evaluación oficial.',
-    questions: {
-      math: [
-        ['Si 3 paneles cubren 12 m de cerca, ¿cuántos metros cubren 8 paneles?', ['28 m', '32 m', '24 m', '36 m'], 1],
-        ['Una fracción simplifica a 3/4. Multiplicando numerador y denominador por 5, ¿qué fracción obtienes?', ['15/4', '15/20', '12/20', '3/20'], 1],
-        ['Una piscina tarda 4 h en llenarse con una manguera. ¿Con dos mangueras iguales?', ['2 h', '8 h', '3 h', '4 h'], 0],
-        ['En un mapa 1 cm representa 50 km. ¿Qué distancia real son 7 cm?', ['500 km', '150 km', '700 km', '350 km'], 3],
-        ['Una clase de 30 tiene 18 niñas. ¿Qué porcentaje son niñas?', ['70 %', '60 %', '50 %', '80 %'], 1],
-      ],
-      reading: [
-        ['Lee: "El informe señala que la ciudad creció un 12 % en dos años." ¿Qué se sigue?', ['La ciudad perdió 12 %', 'No se puede saber', 'La ciudad creció 12 % en dos años', 'Creció 100 %'], 2],
-        ['El texto dice "a pesar de la lluvia, la feria prosiguió". La palabra que marca el contraste es:', ['feria', 'la lluvia', 'a pesar de', 'prosiguió'], 2],
-        ['Un texto afirma que el parque "es un lugar importante". Con solo eso, ¿puedes afirmar su tamaño?', ['Solo con un mapa', 'Sí, es pequeño', 'Sí, es grande', 'No, no se sabe'], 3],
-        ['En un texto, "el autor propone" indica que:', ['Es una cita textual', 'Es un dato comprobado', 'Es una opinión o sugerencia', 'Es una conclusión automática'], 2],
-        ['Lee: "A pesar del aumento del precio, la demanda bajó." Esto es:', ['Una coincidencia', 'Una cita', 'Una relación esperada', 'Una descripción'], 2],
-      ],
-      science: [
-        ['¿Qué describe mejor el efecto de la sal sobre el hielo?', ['Lo calienta', 'Baja su punto de congelación y lo derrite', 'Lo seca', 'Lo endurece'], 1],
-        ['Una planta crece hacia la luz. Ese comportamiento se llama:', ['Fototropismo', 'Hidrotropismo', 'Quimiotropismo', 'Geotropismo'], 0],
-        ['Al sumergir un cuerpo en agua, los objetos más densos se hunden porque:', ['Son más grandes', 'Son siempre más pesados', 'Tienen más masa', 'Su peso supera el empuje'], 3],
-        ['La energía que mueve un molino de viento es:', ['Energía nuclear', 'Energía química', 'Energía cinética', 'Energía eléctrica'], 2],
-        ['Un ejemplo de cambio físico es:', ['La comida digiriéndose', 'El hierro oxidándose', 'El hielo derritiéndose', 'La madera ardiendo'], 2],
-      ],
-    },
   },
   en: {
     title: 'Check your PISA level',
@@ -138,29 +115,6 @@ const COPY: Record<'es' | 'en' | 'pt', Copy> = {
       'Own orientative scale: the numeric cuts in PISAStyle Protocol v1.1 §3 ' +
       '(233-607) are on the PISA scale and do not apply to 5 questions. An ' +
       'estimate does not replace an official assessment.',
-    questions: {
-      math: [
-        ['If 3 fence panels cover 12 m, how many metres do 8 panels cover?', ['32 m', '28 m', '24 m', '36 m'], 0],
-        ['A fraction reduces to 3/4. Multiplying numerator and denominator by 5 gives:', ['3/20', '15/4', '15/20', '12/20'], 2],
-        ['A pool takes 4 h to fill with one hose. How long with two identical hoses?', ['4 h', '2 h', '3 h', '8 h'], 1],
-        ['On a map 1 cm represents 50 km. What real distance is 7 cm?', ['350 km', '700 km', '150 km', '500 km'], 0],
-        ['A class of 30 has 18 girls. What percentage are girls?', ['60 %', '50 %', '70 %', '80 %'], 0],
-      ],
-      reading: [
-        ['Read: "The report notes the city grew 12 % in two years." Which statement follows?', ['The city grew 12 % in two years', 'Cannot be known', 'The city lost 12 %', 'It grew 100 %'], 0],
-        ['The text says "despite the rain, the fair went ahead". The word marking the contrast is:', ['despite', 'went ahead', 'fair', 'the rain'], 0],
-        ['A text says the park "is an important landmark". Can you tell its size from that alone?', ['Yes, it is large', 'Yes, it is small', 'No, unknown', 'Only with a map'], 2],
-        ['In a text, "the author proposes" means:', ['An opinion or suggestion', 'A verified fact', 'An automatic conclusion', 'A quotation'], 0],
-        ['Read: "Despite the price rise, demand fell." This is:', ['A quote', 'An expected relationship', 'A coincidence', 'A description'], 1],
-      ],
-      science: [
-        ['Which statement best describes the effect of salt on ice?', ['It warms it', 'It dries it', 'It lowers the freezing point, melting ice', 'It hardens it'], 2],
-        ['A plant grows toward light. This behaviour is called:', ['Chemotropism', 'Hydrotropism', 'Geotropism', 'Phototropism'], 3],
-        ['In water, denser objects sink because they:', ['Their weight exceeds the buoyant force', 'Are larger', 'Are always heavier', 'Have more mass'], 0],
-        ['The energy that drives a windmill is:', ['Nuclear energy', 'Chemical energy', 'Kinetic energy', 'Electrical energy'], 2],
-        ['An example of a physical change is:', ['Iron rusting', 'Food digesting', 'Wood burning', 'Ice melting'], 3],
-      ],
-    },
   },
   pt: {
     title: 'Avalie seu nível PISA',
@@ -179,37 +133,21 @@ const COPY: Record<'es' | 'en' | 'pt', Copy> = {
       'Escala orientativa própria: os cortes numéricos do Protocolo PISAStyle ' +
       'v1.1 §3 (233-607) estão na escala PISA e não se aplicam a 5 questões. ' +
       'Uma estimativa não substitui uma avaliação oficial.',
-    questions: {
-      math: [
-        ['Se 3 painéis cobrem 12 m de cerca, quantos metros cobrem 8 painéis?', ['36 m', '28 m', '24 m', '32 m'], 3],
-        ['Uma fração simplifica para 3/4. Multiplicando numerador e denominador por 5:', ['3/20', '15/20', '12/20', '15/4'], 1],
-        ['Uma piscina leva 4 h para encher com uma mangueira. Com duas iguais?', ['8 h', '3 h', '4 h', '2 h'], 3],
-        ['No mapa 1 cm representa 50 km. Que distância real são 7 cm?', ['500 km', '350 km', '700 km', '150 km'], 1],
-        ['Uma turma de 30 tem 18 meninas. Que percentual são meninas?', ['50 %', '80 %', '70 %', '60 %'], 3],
-      ],
-      reading: [
-        ['Leia: "O relatório aponta que a cidade cresceu 12 % em dois anos." Qual afirmação decorre?', ['A cidade perdeu 12 %', 'A cidade cresceu 12 % em dois anos', 'Cresceu 100 %', 'Não é possível saber'], 1],
-        ['O texto diz "apesar da chuva, a feira prosseguiu". A palavra que marca o contraste é:', ['prosseguiu', 'feira', 'apesar', 'da chuva'], 2],
-        ['Um texto diz que o parque "é um lugar importante". Só com isso, pode afirmar o tamanho?', ['Não, não se sabe', 'Só com um mapa', 'Sim, é grande', 'Sim, é pequeno'], 0],
-        ['Num texto, "o autor propõe" indica que:', ['É uma citação', 'É uma opinião ou sugestão', 'É uma conclusão automática', 'É um dado comprovado'], 1],
-        ['Leia: "Apesar da alta do preço, a demanda caiu." Isto é:', ['Uma citação', 'Uma relação esperada', 'Uma descrição', 'Uma coincidência'], 1],
-      ],
-      science: [
-        ['Qual afirmação descreve melhor o efeito do sal no gelo?', ['Baixa o ponto de congelamento e o derrete', 'Endurece', 'Seca', 'Aquece'], 0],
-        ['Uma planta cresce em direção à luz. Esse comportamento chama-se:', ['Hidrotropismo', 'Quimiotropismo', 'Fototropismo', 'Geotropismo'], 2],
-        ['Ao submergir um corpo em água, os objetos mais densos afundam porque:', ['Têm mais massa', 'São sempre mais pesados', 'O peso supera o empuxo', 'São maiores'], 2],
-        ['A energia que move um moinho de vento é:', ['Energia cinética', 'Energia química', 'Energia nuclear', 'Energia elétrica'], 0],
-        ['Exemplo de mudança física é:', ['O gelo derretendo', 'O ferro enferrujando', 'A comida digerindo', 'A madeira queimando'], 0],
-      ],
-    },
   },
 };
 
 const L = COPY[loc];
-const GROUPS: { key: DomainKey; qs: Question[] }[] = [
-  { key: 'math', qs: L.questions.math },
-  { key: 'reading', qs: L.questions.reading },
-  { key: 'science', qs: L.questions.science },
+// Las preguntas viven en src/lib/exam-items.ts, no en esta pagina. La pagina
+// solo aporta el copy por locale; los datos son una fuente unica y estan
+// verificados por calculo real en evaluar-items.test.ts y por fingerprint en
+// exam-items.test.ts.
+const ITEMS = EXAM_ITEMS[loc as 'es' | 'en' | 'pt'] ?? EXAM_ITEMS.en;
+const BY_DOMAIN = examByDomain(ITEMS);
+
+const GROUPS: { key: DomainKey; qs: ExamItem[] }[] = [
+  { key: 'math', qs: BY_DOMAIN.math },
+  { key: 'reading', qs: BY_DOMAIN.reading },
+  { key: 'science', qs: BY_DOMAIN.science },
 ];
 
 // Envío por GET: sin estado, compartible por URL y funciona sin JS.
@@ -222,11 +160,11 @@ if (submitted) {
   for (const g of GROUPS) {
     let correct = 0;
     g.qs.forEach((q, i) => {
-      // q = [enunciado, opciones, indiceCorrecta]. Se compara el indice: por
-      // texto fallaria si una opcion coincidiera con el valor de otra, y obliga
-      // a que la baraja sea la unica fuente de verdad.
+      // Se compara el INDICE, no el texto: por texto fallaria si una opcion
+      // coincidiera con el valor de otra, y obliga a que la baraja de
+      // src/lib/exam-items.ts sea la unica fuente de verdad.
       const elegido = Astro.url.searchParams.get(`${g.key}${i}`);
-      if (elegido !== null && Number(elegido) === q[2]) correct += 1;
+      if (elegido !== null && Number(elegido) === q.correctIndex) correct += 1;
     });
     // El numero de aciertos (0..5) es a la vez la clave de LEVEL_BY_SCORE y de
     // TONE_BY_SCORE: no hace falta una segunda conversion.
@@ -277,9 +215,9 @@ if (submitted) {
           <legend>{L.domains[g.key]}</legend>
           {g.qs.map((q, i) => (
             <div class="q">
-              <p class="q-text">{q[0]}</p>
-              <div class="options" role="group" aria-label={q[0]}>
-                {q[1].map((opt, oi) => (
+              <p class="q-text">{q.stem}</p>
+              <div class="options" role="group" aria-label={q.stem}>
+                {q.options.map((opt: string, oi: number) => (
                   <label class="option">
                     <input type="radio" name={`${g.key}${i}`} value={oi} required />
                     <span>{opt}</span>
