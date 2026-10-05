@@ -101,12 +101,6 @@ export const TONE_BY_SCORE = ['low', 'low', 'mid', 'mid', 'good', 'top'] as cons
 /** Highest index of LEVEL_BY_SCORE: any bundle scores 0..5 points per domain. */
 const MAX_LEVEL_SLOT = LEVEL_BY_SCORE.length - 1;
 
-/**
- * The expected number of items per domain. Used only to keep the level lookup
- * inside its table when a bundle has more than 5 items per domain.
- */
-const LEVEL_TABLE_SIZE = LEVEL_BY_SCORE.length;
-
 /* ————————————————————————————————— immutability helpers ————————————————————————— */
 
 /** True for plain, non-null objects (not arrays, not null, not class instances). */
@@ -305,23 +299,30 @@ export function scoreByDomain(
   }
   for (const entry of Object.values(scores)) {
     if (entry.total === 0) continue;
-    const slot = Math.min(Math.max(entry.correct, 0), LEVEL_TABLE_SIZE - 1, MAX_LEVEL_SLOT);
-    entry.level = LEVEL_BY_SCORE[slot];
-    entry.tone = TONE_BY_SCORE[slot];
+    entry.level = levelForScore(entry.correct);
+    entry.tone = toneForScore(entry.correct);
   }
   return scores;
 }
 
+/**
+ * Index into the level tables for a raw number of correct answers. Out-of-range
+ * and fractional input is cropped, so a domain with more items than the table
+ * cannot overflow it.
+ */
+function levelSlot(correct: number): number {
+  if (typeof correct !== 'number' || Number.isNaN(correct)) return 0;
+  return Math.min(Math.max(Math.trunc(correct), 0), MAX_LEVEL_SLOT);
+}
+
 /** Level for a raw number of correct answers. Out-of-range input is cropped. */
 export function levelForScore(correct: number): Level {
-  const slot = Math.min(Math.max(Math.trunc(correct), 0), MAX_LEVEL_SLOT);
-  return LEVEL_BY_SCORE[slot];
+  return LEVEL_BY_SCORE[levelSlot(correct)];
 }
 
 /** Tone for a raw number of correct answers. Indexes aligned with the level. */
 export function toneForScore(correct: number): Tone {
-  const slot = Math.min(Math.max(Math.trunc(correct), 0), MAX_LEVEL_SLOT);
-  return TONE_BY_SCORE[slot];
+  return TONE_BY_SCORE[levelSlot(correct)];
 }
 
 /* ————————————————————————————————— persistence ——————————————————————————————— */
