@@ -22,12 +22,18 @@ import {
  * `['32 m', '28 m'], 1` still compiles when `1` should be `0`.
  *
  * The repo has audited these keys against real arithmetic, so the tests below
- * are a FROZEN SNAPSHOT of that state (commit 071eac0), not a re-statement of
- * what the module happens to say. FINGERPRINTS_TEST hashes come from the
- * literals as they were in evaluar.astro BEFORE the extraction; SNAPSHOT_* below
- * is the same data recorded as human-readable structure. If an item is edited,
- * reordered or lost, one of these fails and the change has to be argued for
- * out loud instead of slipping through.
+ * are a FROZEN SNAPSHOT of that state, not a re-statement of what the module
+ * happens to say. FINGERPRINTS_TEST hashes come from the literals as they were
+ * in evaluar.astro; SNAPSHOT_* below is the same data recorded as
+ * human-readable structure. If an item is edited, reordered or lost, one of
+ * these fails and the change has to be argued for out loud instead of slipping
+ * through.
+ *
+ * BASELINE: 09f7437, the commit that holds evaluar.astro when this module was
+ * last synced. It is a MOVING baseline on purpose: the page it mirrors is still
+ * the source of truth, so a content fix landing upstream (09f7437 replaced the
+ * duplicate-looking distractor "3/4" with "15/4" and fixed two Spanish stems)
+ * has to be re-fingerprinted on purpose rather than silently absorbed.
  */
 
 /** sha256 over [stem, options, correctIndex] — the whole answer key of an item. */
@@ -47,17 +53,17 @@ const keyFingerprint = (text: string): string =>
  */
 const FINGERPRINTS_TEST: Record<ExamLocale, Record<string, string[]>> = {
   es: {
-    math: ['7b936403a6b7a61c', '3df8e6ea570167a8', '3ad008fbc54a3fb7', '64e669d77d1b9ffe', '4665f77a43da13c3'],
+    math: ['7b936403a6b7a61c', '1f27edbdc88b41b9', 'ebdb87e6d073de3b', '64e669d77d1b9ffe', '4665f77a43da13c3'],
     reading: ['a5e8823b284f6ad3', '3e8bfab9e49a4269', 'e372b5bd24cd2d4e', '0d2d2744d37c673d', 'f8cee519e9edd73e'],
     science: ['8fc219562f9d2f11', 'd47162f64c87b1a3', '1d6cb77e891b64d4', '80033ddabf61f776', 'a1bac45311a679fe'],
   },
   en: {
-    math: ['92cf0cf3c45079bd', '80e3e9f3715a0325', '53a7a9575b01c2a7', 'af5f0ee3a326613a', '88bebe486df4eeb9'],
+    math: ['92cf0cf3c45079bd', '554230b2f75cc384', '53a7a9575b01c2a7', 'af5f0ee3a326613a', '88bebe486df4eeb9'],
     reading: ['5c054603e0cea1bf', 'b943c0ce4106dbb8', 'f0c40a222ac3382a', 'ffaf1ef82b459d33', 'cd55d25d154f2e97'],
     science: ['6c2e08d495402111', '018c8ef6832ab412', 'de9d4b17a4b35282', '76a8c4b47cb7b2a2', 'e980e7c596c3a951'],
   },
   pt: {
-    math: ['cc5a4437246f4fb0', '219b7d7ba4bea92b', '8ea6cf7ea596ad22', '3772bee4e47f88f2', 'eccb5102381831b7'],
+    math: ['cc5a4437246f4fb0', '59b6c748062ea1ca', '8ea6cf7ea596ad22', '3772bee4e47f88f2', 'eccb5102381831b7'],
     reading: ['477960fc04709b83', '77cd7e9a1a390560', '31a1b835a973a5d8', '6810baab65cdd3c8', '601ebc148b468353'],
     science: ['8f6f31af0503545f', 'dd942d0aa4b0d02a', 'd930040666e64b9d', 'f5d43ed21c2ae0a2', '2e1a187129e1c6f0'],
   },
@@ -65,9 +71,9 @@ const FINGERPRINTS_TEST: Record<ExamLocale, Record<string, string[]>> = {
 
 /** sha256 over the whole flat [stem, options, correctIndex] list per locale. */
 const LOCALE_DIGEST_TEST: Record<ExamLocale, string> = {
-  es: '3af4bc5b4e2c3886a143621d7cd107bba666d6089091b79bc410b68f8c1e88d5',
-  en: '4b1e154df7865e14ed8c5fca0363a25a8255b0f740bbcde666931ac8861a12f5',
-  pt: 'c3562618791d43d1dabd3cc98a9e7b543d7db5f2c6b760a39ee86254f2667ab2',
+  es: 'c7657d838c56b7144cc9926842991b01a3d949ef956bf330a873b0c404941965',
+  en: '2f4f46d953a931f699c161d920f0d23eb2e59db640cd9fad87831af28cad572b',
+  pt: '67785ac4cd8bffe535a40f0964d03e9aa203a2933efdefc050cd11b1b6bfcade',
 };
 
 /**
