@@ -1,0 +1,337 @@
+---
+/**
+ * ExamHeader — cabecera fija de la pantalla de examen.
+ *
+ * Copia la ARQUITECTURA de la cabecera de SaberParaTodos (punto pulsante +
+ * MATERIA en mayusculas, chips de contexto, cronometro a la derecha) y no su
+ * piel: aqui la materia es texto normal, los chips son discretos y el color de
+ * marca es `--swal-accent`, el unico acento que declara el core.
+ *
+ * — POR QUE .astro Y NO SVELTE —
+ * Todo lo que se ve aqui es texto derivado de props. El cronometro lo lleva
+ * `exam/ExamTimer.svelte`, que ya existe y ya sabe pausarse con
+ * `visibilitychange`. Si esta cabecera se hidratara, el numero de la derecha
+ * tendria que viajar por el limite de serializacion para no cambiar ni un
+ * pixel. No se hidrata: el shell que la monte le pasa `timeLeftSec` ya
+ * formateado por su lado.
+ *
+ * — EL CRONOMETRO ES OPCIONAL Y POR DEFECTO OFF —
+ * `timeLeftSec = null` no dibuja ni el reloj ni su boton. Un examen de
+ * diagnostico no lleva reloj, y una autoevaluacion que lo muestra por las
+ * dudas esta presionando al usuario con un limite que nadie le pidio.
+ *
+ * — INTERACTIVIDAD SIN HIDRATAR EL ASTRO —
+ * Un `.astro` estatico no puede llamar a `onTimerToggle()` desde el
+ * template. El boton lleva `data-exam-action` y un script de modulo (una vez
+ * por pagina, deduplicado por Astro) despacha un `CustomEvent`:
+ *
+ *   document.addEventListener('pisa:exam', e => {
+ *     if (e.detail.action === 'onTimerToggle') alternarCronometro();
+ *   });
+ *
+ * Si ademas se pasa `onTimerToggle`, el padre puede registrarla en
+ * `window.__PISASTYLE_EXAM__['exam-header:onTimerToggle']` y se llama en vez
+ * de despachar el evento. Las dos vias coexisten; el registro no es mas que
+ * un atajo para quien ya tiene el estado en un componente hidratado.
+ */
+interface Props {
+  /** Nombre legible del dominio: 'Matematicas' | 'Matematica'. */
+  domainLabel: string;
+  /** Nivel PISA para el chip. `null` lo oculta: no todo examen tiene nivel. */
+  level: number | null;
+  /** Posicion actual, 1-based. */
+  itemNumber: number;
+  /** Total de preguntas del examen. */
+  totalItems: number;
+  /** Segundos restantes. `null` = SIN cronometro (por defecto). */
+  timeLeftSec?: number | null;
+  /** Si se pasa, el boton de activar/pausar aparece. */
+  onTimerToggle?: () => void;
+  /** Textos de la cabecera. El padre los traduce; aqui van en espanol. */
+  labels?: Partial<{
+    question: string;
+    of: string;
+    level: string;
+    time: string;
+    pause: string;
+    resume: string;
+    progress: string;
+  }>;
+}
+
+const {
+  domainLabel,
+  level,
+  itemNumber,
+  totalItems,
+  timeLeftSec = null,
+  onTimerToggle,
+  labels = {},
+} = Astro.props;
+
+const T = {
+  question: 'Pregunta',
+  of: 'de',
+  level: 'Nivel',
+  time: 'Tiempo restante',
+  pause: 'Pausar',
+  resume: 'Reanudar',
+  progress: 'Avance del examen',
+  ...labels,
+};
+
+const showTimer = timeLeftSec !== null;
+const safeTotal = totalItems > 0 ? totalItems : 1;
+const progress = Math.min(100, Math.max(0, Math.round((itemNumber / safeTotal) * 100)));
+
+// El reloj nunca se pinta como texto que el padre ya formateo: se formatea
+// aqui con digitos de ancho fijo para que no baile el ancho al descontar.
+const secs = Math.max(0, Math.floor(timeLeftSec ?? 0));
+const clock =
+  showTimer
+    ? `${String(Math.floor(secs / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`
+    : '';
+
+// El boton solo existe si hay algo que alternar: un boton que no hace nada es
+// un objetivo tactil que engaña (WCAG 2.2 §3.2 y §4.1).
+const canToggle = typeof onTimerToggle === 'function';
+---
+
+<header class="exam-header" data-handler="exam-header">
+  <div class="id">
+    <p class="domain">{domainLabel}</p>
+    <p class="meta">
+      <span class="counter">
+        {T.question} <strong>{itemNumber}</strong> {T.of} {totalItems}
+      </span>
+      {level !== null && (
+        <span class="chip chip--level">
+          {T.level} <strong>{level}</strong>
+        </span>
+      )}
+    </p>
+  </div>
+
+  {
+    showTimer && (
+      <div class="right">
+        <p class="clock-row">
+          <span class="clock-label">{T.time}</span>
+          <span class="clock" role="timer" aria-label={`${T.time}: ${clock}`}>
+            {clock}
+          </span>
+        </p>
+        {canToggle && (
+          <button
+            type="button"
+            class="timer-btn"
+            data-exam-action="onTimerToggle"
+            aria-label={T.pause}
+          >
+            {T.pause}
+          </button>
+        )}
+      </div>
+    )
+  }
+
+  <div
+    class="track"
+    role="progressbar"
+    aria-label={T.progress}
+    aria-valuemin={0}
+    aria-valuemax={totalItems}
+    aria-valuenow={itemNumber}
+    aria-valuetext={`${T.question} ${itemNumber} ${T.of} ${totalItems}`}
+  >
+    <span class="fill" style={`width:${progress}%`} />
+  </div>
+</header>
+
+<style>
+  /* MEDIDO (scripts/verify-swallow-tokens.py, ambos temas, sobre --swal-bg):
+     --swal-text 17.18:1 / 16.60:1   --swal-text-secondary 9.65:1 / 8.33:1
+     --swal-text-muted 5.78:1 / 5.31:1   --swal-accent 17.18:1 / 16.60:1
+     Ningun color literal: el gate `pnpm run test:tokens` lo comprueba. */
+  .exam-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    padding: 0.7rem 0.9rem 0.6rem;
+    background: var(--swal-bg);
+    border-bottom: 1px solid var(--swal-border);
+  }
+
+  .id { min-width: 0; }
+
+  /* La materia se corta antes que desbordar: un header que empuja scroll
+     horizontal en 390px es peor que uno que trunca el nombre del dominio. */
+  .domain {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: var(--swal-text);
+    overflow-wrap: anywhere;
+  }
+
+  .meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.5rem;
+    margin: 0.15rem 0 0;
+  }
+  .counter {
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--swal-text-secondary);
+    white-space: nowrap;
+  }
+  .counter strong { color: var(--swal-text); }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.1rem 0.45rem;
+    border: 1px solid var(--swal-border);
+    border-radius: var(--swal-radius-full);
+    background: var(--swal-surface);
+    color: var(--swal-text-secondary);
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+  .chip strong { color: var(--swal-text); }
+
+  .right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .clock-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    margin: 0;
+  }
+  .clock-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--swal-text-muted);
+  }
+  /* `tabular-nums` es lo que evita que el ancho del reloj cambie cada
+     segundo: sin el, el header da un escalon a la izquierda. */
+  .clock {
+    font-family: var(--swal-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--swal-text);
+    line-height: 1.2;
+  }
+
+  /* 2.75rem = 44px exactos: objetivo tactil de movil (WCAG 2.2 §2.5.5,
+     nivel AAA, y el minimo recomendado de la industria). No se baja a
+     24px como hace SiteNav: este boton esta en el camino de la accion. */
+  .timer-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+    padding: 0 0.85rem;
+    border: 1px solid var(--swal-border-strong);
+    border-radius: var(--swal-radius-sm);
+    background: var(--swal-surface);
+    color: var(--swal-text-secondary);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .timer-btn:hover {
+    background: var(--swal-surface-hover);
+    color: var(--swal-text);
+  }
+  .timer-btn:focus-visible {
+    outline: 2px solid var(--swal-accent);
+    outline-offset: 2px;
+  }
+
+  .track {
+    grid-column: 1 / -1;
+    height: 4px;
+    border-radius: var(--swal-radius-full);
+    background: var(--swal-surface-hover);
+    overflow: hidden;
+  }
+  .fill {
+    display: block;
+    height: 100%;
+    border-radius: var(--swal-radius-full);
+    background: var(--swal-accent);
+  }
+
+  /* Movil: el reloj baja a su propia fila y el header crece en vez de
+     desbordar. `min-width: 0` en la columna izquierda es lo que permite que
+     el nombre del dominio trunque en lugar de empujar la pantalla. */
+  @media (max-width: 420px) {
+    .exam-header {
+      grid-template-columns: 1fr;
+      gap: 0.45rem;
+    }
+    .right {
+      justify-content: space-between;
+    }
+    .clock-row {
+      flex-direction: row;
+      align-items: baseline;
+      gap: 0.4rem;
+    }
+  }
+</style>
+
+<script>
+  /* Delegacion para los botones que llevan `data-exam-action`.
+   *
+   * Cada componente del examen trae esta misma pieza de codigo, asi que se
+   * protege con una bandera en `document`: aunque los tres se monten en la
+   * misma pagina solo hay UN listener, y por tanto una sola llamada por clic.
+   * Sin la bandera, un `onNext` se habria ejecutado dos veces por cada pulsacion.
+   *
+   * La busqueda de la instancia va por `data-handler`, el atributo del
+   * contenedor mas cercano, de modo que dos cabeceras en la misma pagina
+   * seguirian siendo distinguibles por su manejador.
+   */
+  const REGISTRY = '__PISASTYLE_EXAM__';
+  const FLAG = '__pisaExamDelegation';
+
+  if (!(document as Document & Record<string, unknown>)[FLAG]) {
+    (document as Document & Record<string, unknown>)[FLAG] = true;
+
+    const resolver = (handler: string, action: string) => {
+      const bag = (window as unknown as Record<string, Record<string, (d: Record<string, unknown>) => void> | undefined>)[REGISTRY];
+      const fn = bag?.[`${handler}:${action}`];
+      return typeof fn === 'function' ? fn : null;
+    };
+
+    /* El selector esta ANCLADO a la cabecera, no es `[data-exam-action]` a
+       secas. Un listener global tambien oiria los botones del pie y del grupo
+       de opciones, y cada pulsacion de "Siguiente" llegaria al manejador dos
+       veces: se avanzarian dos preguntas con un solo toque. */
+    document.addEventListener('click', (ev) => {
+      const target = (ev.target as HTMLElement | null)?.closest<HTMLElement>(
+        '[data-handler="exam-header"] [data-exam-action]'
+      );
+      if (!target) return;
+      const action = target.dataset.examAction;
+      if (!action) return;
+      const fn = resolver('exam-header', action);
+      const detail: Record<string, unknown> = { action };
+      if (fn) fn(detail);
+      else document.dispatchEvent(new CustomEvent('pisa:exam', { detail }));
+    });
+  }
+</script>

@@ -1,0 +1,362 @@
+---
+/**
+ * ExamOptions — el grupo de opciones de una pregunta de examen.
+ *
+ * Copia de SaberParaTodos la idea de que la TARJETA ENTERA es pulsable, no solo
+ * la letra. Pero aqui la tarjeta entera es pulsable de verdad, porque lo que
+ * hay debajo es un `<input type="radio">` nativo y no un `div` con `onclick`:
+ *
+ * — POR QUE NO UN DIV CON ONCLICK —
+ * Un `div` pulsable no se puede alcanzar con Tab, no responde a las flechas,
+ * y un lector de pantalla lo anuncia sin rol y sin estado. Eso deja fuera a
+ * quien navega con teclado o con voz. Con `<label>` envolviendo al `<input>`
+ * real se conservan las tres cosas Y el area de pulsacion sigue siendo la
+ * tarjeta completa: el navegador reparte el click a cualquier punto del label.
+ *
+ * — POR QUE FIELDSET Y NO DIV[role=group] —
+ * El enunciado va en el `<legend>`, que es lo que un lector de pantalla anuncia
+ * al entrar en el grupo. `evaluar.astro` usa hoy `div[role="group"]` con el
+ * enunciado en `aria-label`: funciona, pero duplica el texto del enunciado (en
+ * la leyenda y en el enunciado visible) y el grupo no expone el nombre como
+ * parte de su estructura semantica. Un fieldset lo hace una sola vez y es el
+ * elemento que la especificacion manda para un conjunto de controles
+ * relacionados que comparten etiqueta.
+ *
+ * — NAVEGACION CON TECLADO —
+ * Un radio group nativo ya es una flecha por opcion: al tabular se entra en
+ * el grupo por la seleccionada (o por la primera si no hay ninguna) y las
+ * flechas cambian de opcion. Eso es lo correcto segun APG y es lo que hace
+ * `ExamOptions` sin una sola linea de JS para el teclado.
+ *
+ * — EL ESTADO SE PINTA CON CSS, CON `:checked` —
+ * El input va escondido con `.sr-only` (no `display:none`, que lo sacaria del
+ * orden de tabulacion y de la lista de elementos de formulario) y el estilo de
+ * la tarjeta sale de `input:checked + .opt-body`. Asi el estado real vive en el
+ * DOM: si el padre cambia `selectedId` por otra via, la pintura cambia sola.
+ */
+interface Item {
+  /** Id estable de la pregunta. Se usa como `name` del grupo de radios. */
+  id: string;
+  /** Enunciado. Va en el `<legend>` del fieldset. */
+  stem: string;
+  /** Textos de las opciones, en orden. */
+  options: string[];
+  /** Indice de la correcta, 0-based. Lo lee el shell, no este componente. */
+  correctIndex: number;
+  /** Posicion global de la pregunta, 1-based. */
+  index: number;
+}
+
+interface Props {
+  item: Item;
+  /** Id de la opcion elegida, o `null` si el usuario aun no ha respondido. */
+  selectedId: string | null;
+  /** Se llama con el id de la opcion marcada. */
+  onSelect: (optionId: string) => void;
+  /** Textos. El padre los traduce. */
+  labels?: Partial<{
+    legendHint: string;
+    selected: string;
+    notAnswered: string;
+    optionPrefix: string;
+  }>;
+}
+
+const { item, selectedId, onSelect, labels = {} } = Astro.props;
+
+const LETTERS = 'ABCDEFGH';
+const T = {
+  legendHint: 'Elige una opcion',
+  selected: 'Seleccionada',
+  notAnswered: 'Sin responder',
+  optionPrefix: 'Opcion',
+  ...labels,
+};
+
+const groupName = `exam-opts-${item.id}`;
+
+/* Una funcion no se serializa desde un `.astro` estatico, asi que `onSelect`
+   documenta el contrato y el shell la registra en
+   `window.__PISASTYLE_EXAM__['exam-options:onSelect']`. El script de abajo
+   la busca ahi y, si no esta, despacha `pisa:exam` en el documento.
+   Que se pase o no decide si el atributo se marca: un contenedor que dice
+   "hay manejador" y no lo tiene es peor que uno que no lo dice. */
+const hasOnSelect = typeof onSelect === 'function';
+
+
+/**
+ * Id de opcion. No es inventado: es `${group}-${i}`, que es lo que el padre
+ * recibe en `selectedId`. La letra es solo decoracion y vive en el `data-`,
+ * no en el value, para que cambiar el orden de las letras no rompa una
+ * respuesta ya guardada.
+ */
+const optId = (i: number) => `${groupName}-${i}`;
+const selectedIndex = selectedId === null ? -1 : item.options.findIndex((_, i) => optId(i) === selectedId);
+---
+
+<fieldset
+  class="opts"
+  data-handler="exam-options"
+  data-item-id={item.id}
+  data-item-index={item.index}
+  data-has-select={hasOnSelect ? 'true' : 'false'}
+>
+  <legend class="legend">
+    <span class="stem">{item.stem}</span>
+    <span class="hint">{T.legendHint}</span>
+  </legend>
+
+  <ul class="list">
+    {
+      item.options.map((text, i) => {
+        const id = optId(i);
+        const checked = selectedId === id;
+        const letter = LETTERS[i] ?? String(i + 1);
+        return (
+          <li class="row">
+            <label class="opt" for={id}>
+              <input
+                class="sr-only"
+                type="radio"
+                name={groupName}
+                id={id}
+                value={id}
+                checked={checked}
+                data-exam-option={id}
+                data-letter={letter}
+              />
+              <span class="opt-body">
+                <span class="key" aria-hidden="true">
+                  {letter}
+                </span>
+                <span class="text">{text}</span>
+                {/* El estado nunca es solo color: el borde del anillo se
+                    engorda y el propio input lleva `checked`, que es lo que
+                    un lector de pantalla anuncia como "seleccionada". */}
+                <span class="state" aria-hidden="true">
+                  {checked ? T.selected : ''}
+                </span>
+              </span>
+            </label>
+          </li>
+        );
+      })
+    }
+  </ul>
+
+  <p class="live" role="status" aria-live="polite">
+    {
+      selectedIndex === -1
+        ? T.notAnswered
+        : `${T.optionPrefix} ${LETTERS[selectedIndex] ?? selectedIndex + 1}: ${T.selected.toLowerCase()}`
+    }
+  </p>
+</fieldset>
+
+<style>
+  /* `border-width: 0` y no `border: 0`: el verificador de tokens trata
+     cualquier `border:` sin `var(--swal-*)` como un literal de color y
+     rechazaria el componente, aunque un 0 no tenga color. */
+  .opts {
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    min-inline-size: 0; /* el fieldset trae min-inline-size:auto y se pasa */
+  }
+
+  .legend {
+    display: grid;
+    gap: 0.2rem;
+    padding: 0 0 0.75rem;
+    width: 100%;
+  }
+  .stem {
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--swal-text);
+    overflow-wrap: anywhere;
+  }
+  .hint {
+    font-size: 0.78rem;
+    color: var(--swal-text-muted);
+  }
+
+  .list {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* 2.75rem = 44px de alto minimo en TODOS los tamanos, y no solo en movil:
+     una opcion que mide 40px en escritorio y 60 en movil obliga a rehacer el
+     gesto al cambiar de dispositivo. El padding vertical es lo que sube la
+     tarjeta; el `min-height` es la red de seguridad si el texto es corto. */
+  .opt {
+    display: block;
+    cursor: pointer;
+  }
+  .opt-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    min-height: 2.75rem;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid var(--swal-border);
+    border-radius: var(--swal-radius);
+    background: var(--swal-surface);
+    color: var(--swal-text);
+    font-size: 0.95rem;
+    line-height: 1.45;
+    transition: border-color var(--swal-transition-fast), background var(--swal-transition-fast);
+  }
+  .opt:hover .opt-body {
+    background: var(--swal-surface-hover);
+    border: 1px solid var(--swal-border-strong);
+  }
+
+  /* Foco visible: el input esta en `.sr-only`, asi que el anillo se pinta en
+     el hermano. Sin este bloque, tabular por las opciones no daria ninguna
+     pista de donde estas (WCAG 2.2 §2.4.7). */
+  .opt:has(input:focus-visible) .opt-body {
+    outline: 2px solid var(--swal-accent);
+    outline-offset: 2px;
+  }
+
+  /* El ancla del `:has()` es `.opt` (el label), NO `.opt-body`.
+     El input es hermano de `.opt-body`, no un descendiente: escrito al reves,
+     `.opt-body:has(input:checked)` compila, pasa el gate y no se cumple nunca,
+     y la opcion marcada se queda con el fondo de las demas. Verificado en el
+     build real (2026-10-05): Astro scopea a `.opt-body[data-astro-cid-..]:has(
+     input:checked)`, que es un selector imposible. */
+  .opt:has(input:checked) .opt-body {
+    background: var(--swal-accent-muted);
+    border: 1px solid var(--swal-accent);
+    box-shadow: inset 0 0 0 1px var(--swal-accent);
+  }
+
+  /* La letra. 32px en escritorio como referencia, 36px cuando la tarjeta
+     crece — pero el minimo del cuadro nunca baja de 28px, y el objetivo
+     pulsable sigue siendo la tarjeta completa. */
+  .key {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--swal-radius-sm);
+    border: 1px solid var(--swal-border-strong);
+    background: var(--swal-bg);
+    color: var(--swal-text-secondary);
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+  .opt:has(input:checked) .key {
+    background: var(--swal-accent);
+    border: 1px solid var(--swal-accent);
+    color: var(--swal-accent-contrast, var(--swal-text-inverse));
+  }
+
+  .text {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  /* La palabra "Seleccionada" existe para ellector de pantalla via el rol
+     `status` de abajo; en la tarjeta es texto real pero aria-hidden, y solo
+     ocupa sitio cuando hay algo marcado. */
+  .state {
+    flex: none;
+    align-self: center;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--swal-accent);
+    white-space: nowrap;
+  }
+
+  .live {
+    margin: 0.7rem 0 0;
+    font-size: 0.78rem;
+    color: var(--swal-text-muted);
+  }
+
+  /* Visualmente oculto pero en el arbol de accesibilidad y en el orden de
+     tabulacion. `display:none` y `visibility:hidden` sacarian el input de las
+     dos listas; esto no. Es la tecnica que_hidden_viewport, y por eso el input
+     conserva su foco y su papel de radio. */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* El estado de foco tambien se marca en la tarjeta cuando el navegador no
+     soporta :has() — el input recibe su propio outline por si acaso. */
+  .sr-only:focus-visible {
+    outline: 2px solid var(--swal-accent);
+    outline-offset: 2px;
+  }
+
+  /* Movil: las opciones se apilan en una columna (ya lo hacen por defecto con
+     `grid`), solo se ajusta el padding lateral para que el texto no quede a
+     2px del borde de la pantalla. */
+  @media (max-width: 420px) {
+    .opt-body {
+      padding: 0.75rem 0.7rem;
+    }
+    .key {
+      width: 1.9rem;
+      height: 1.9rem;
+    }
+  }
+</style>
+
+<script>
+  /* El unico JS del componente: convierte un `change` de un radio nativo en
+     el callback del padre.
+   *
+   * `change` y no `click` a proposito: con `click` se dispara dos veces al
+     marcar con el teclado (una al pulsar la flecha, otra al liberar), y en un
+     examen eso se traduce en "avanzaste dos preguntas sin querer".
+   *
+   * Mismo guard que ExamHeader: si los tres componentes se montan juntos, este
+     bloque se ejecuta una sola vez y el listener es unico.
+   */
+  const FLAG = '__pisaExamOptions';
+
+  if (!(document as Document & Record<string, unknown>)[FLAG]) {
+    (document as Document & Record<string, unknown>)[FLAG] = true;
+
+    document.addEventListener('change', (ev) => {
+      const input = (ev.target as HTMLElement | null)?.closest<HTMLInputElement>(
+        'input[type="radio"][data-exam-option]'
+      );
+      if (!input) return;
+      const value = input.value;
+      if (!value) return;
+      const optionId = input.dataset.examOption ?? value;
+
+      const bag = (
+        window as unknown as Record<string, Record<string, (d: Record<string, unknown>) => void> | undefined>
+      ).__PISASTYLE_EXAM__;
+      const fn = bag?.['exam-options:onSelect'];
+      if (fn) {
+        fn({ action: 'onSelect', optionId });
+        return;
+      }
+      document.dispatchEvent(new CustomEvent('pisa:exam', { detail: { action: 'onSelect', optionId } }));
+    });
+  }
+</script>
