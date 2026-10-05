@@ -90,8 +90,9 @@ const t = LABELS[locale];
 
 <style>
   .nav {
-    /* 2.75rem = 44px con la raiz de 16px. Declarado aqui y no como literal
-     * repetido en tres reglas para que el objetivo tactil sea un solo numero. */
+    /* Objetivo tactil (WCAG 2.5.5 AAA; el minimo AA 2.5.8 ya se cumplia con
+     * 24px). 2.75rem = 44px. Un solo numero para brand, enlaces e idiomas: el
+     * area pulsable crece con min-height y padding, nunca con la fuente. */
     --nav-tap: 2.75rem;
     display: flex;
     align-items: center;
@@ -103,11 +104,9 @@ const t = LABELS[locale];
     top: 0;
     z-index: 20;
   }
-  /* Objetivo tactil 44x44 (WCAG 2.5.5 nivel AAA / 2.5.8 minimo 24px que ya
-   * cumpliamos). El area pulsable crece con `padding` + `min-height`, nunca
-   * con la fuente: el texto sigue a 1rem / 0.9rem / 0.75rem como estaba.
-   * `inline-flex` + `align-items: center` para que el padding reparta el alto
-   * en vez de separar el texto de su fondo. */
+  /* El brand era texto suelto (19px, la altura de la linea): sin caja, sin
+     * area pulsable. inline-flex + align-items para que el min-height reparta el
+     * aire en vez de separar el texto de su fondo. */
   .nav-brand {
     display: inline-flex;
     align-items: center;
