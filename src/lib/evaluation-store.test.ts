@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { readResult, writeResult, clearResult, type StoredResult } from './evaluation-store';
+import { readResult, writeResult, clearResult, levelForCorrectCount, countCorrect, type StoredResult } from './evaluation-store';
 
 /**
  * La evaluacion es SSR con GET: sin persistencia, recargar pierde el resultado.
@@ -99,5 +99,23 @@ describe('evaluation-store', () => {
     writeResult('es', { levels: { math: '5' }, scores: { math: 5 } });
     expect(readResult('es')?.levels.math).toBe('5');
     expect(Object.keys(JSON.parse(store().getItem('pisastyle:evaluacion')!))).toEqual(['es']);
+  });
+  it('levelForCorrectCount(0) is 1c, (2) is 2, (5) is 5', () => {
+    expect(levelForCorrectCount(0)).toBe('1c');
+    expect(levelForCorrectCount(2)).toBe('2');
+    expect(levelForCorrectCount(5)).toBe('5');
+  });
+
+  it('levelForCorrectCount throws for 6 and 1.5', () => {
+    expect(() => levelForCorrectCount(6)).toThrow(RangeError);
+    expect(() => levelForCorrectCount(1.5)).toThrow(RangeError);
+    expect(() => levelForCorrectCount(-1)).toThrow(RangeError);
+  });
+
+  it('countCorrect counts correct responses correctly', () => {
+    expect(countCorrect([1, 0], [1, 2])).toBe(1);
+    expect(countCorrect([1], [null])).toBe(0);
+    expect(countCorrect([0, 1, 2], [0, 1, 2])).toBe(3);
+    expect(countCorrect([1, 0], [0, 1])).toBe(0);
   });
 });

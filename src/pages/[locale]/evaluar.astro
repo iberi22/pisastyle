@@ -24,6 +24,7 @@ import Layout from '../../layouts/Layout.astro';
 import { buildAlternates, routeLocale } from '../../lib/alternates';
 import { isPisaLocale } from '../../lib/pisa-i18n';
 import { EXAM_ITEMS, examByDomain, type ExamItem } from '../../lib/exam-items';
+import { levelForCorrectCount } from '../../lib/evaluation-store';
 
 export function getStaticPaths() {
   return [
@@ -55,7 +56,6 @@ const loc = routeLocale(locale);
  * Mapeo directo y no interpolación: 6 resultados posibles y 6 niveles es
  * exactamente lo que cabe sin fingir precisión.
  */
-const LEVEL_BY_SCORE = ['1c', '1b', '2', '3', '4', '5'] as const;
 
 /** Tono del chip por número de aciertos. Índices alineados con LEVEL_BY_SCORE. */
 const TONE_BY_SCORE = ['low', 'low', 'mid', 'mid', 'good', 'top'] as const;
@@ -172,7 +172,7 @@ if (submitted) {
       key: g.key,
       label: L.domains[g.key],
       correct,
-      level: LEVEL_BY_SCORE[correct],
+      level: levelForCorrectCount(correct),
       tone: TONE_BY_SCORE[correct],
     });
   }
@@ -214,7 +214,7 @@ if (submitted) {
         <fieldset class="domain">
           <legend>{L.domains[g.key]}</legend>
           {g.qs.map((q, i) => (
-            <div class="q">
+            <div class="q" data-domain={g.key} data-correct={q.correctIndex}>
               <p class="q-text">{q.stem}</p>
               <div class="options" role="group" aria-label={q.stem}>
                 {q.options.map((opt: string, oi: number) => (
@@ -338,6 +338,66 @@ if (submitted) {
       }
     }
   })();
+</script>
+<script>
+  import { writeResult, levelForCorrectCount, countCorrect, type DomainKey } from '../../lib/evaluation-store';
+  import type { PisaLocale } from '../../lib/pisa-i18n';
+
+  const form = document.querySelector('form.quiz') as HTMLFormElement;
+  const mainWrap = document.querySelector('main.wrap') as HTMLElement;
+  const configEl = document.getElementById('eval-config') as HTMLElement;
+
+  if (form && mainWrap && configEl) {
+    const loc = configEl.getAttribute('data-loc') as PisaLocale;
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const levels: Partial<Record<DomainKey, string>> = {};
+      const scores: Partial<Record<DomainKey, number>> = {};
+      const domains: DomainKey[] = ['math', 'reading', 'science'];
+
+      const formData = new FormData(form);
+
+      domains.forEach(d => {
+        const qs = Array.from(form.querySelectorAll(`.q[data-domain="${d}"]`));
+        if (!qs.length) return;
+
+        const correctIndexes = qs.map(q => Number(q.getAttribute('data-correct')));
+        const chosen = qs.map((_, i) => {
+          const val = formData.get(`${d}${i}`);
+          return val !== null ? Number(val) : null;
+        });
+
+        const correct = countCorrect(correctIndexes, chosen);
+        scores[d] = correct;
+        levels[d] = levelForCorrectCount(correct);
+      });
+
+      writeResult(loc, { levels, scores });
+
+      let res = document.querySelector('section.results');
+      if (!res) {
+        res = document.createElement('section');
+        res.className = 'results';
+        res.innerHTML = '<ul class="result-list"></ul>';
+        form.parentNode?.insertBefore(res, form);
+      }
+      const ul = res.querySelector('.result-list');
+      if (ul) {
+        ul.innerHTML = '';
+        domains.forEach(d => {
+          if (scores[d] !== undefined) {
+            ul.insertAdjacentHTML('beforeend', `<li class="result" data-domain="${d}">
+              <span class="result-domain">${d}</span>
+              <span class="result-score">${scores[d]}/5</span>
+              <span class="level-chip tone-mid">Nivel <strong>${levels[d]}</strong></span>
+            </li>`);
+          }
+        });
+      }
+      res.scrollIntoView({ behavior: 'smooth' });
+    });
+  }
 </script>
 </Layout>
 

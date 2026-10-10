@@ -33,6 +33,27 @@ const KEY = 'pisastyle:evaluacion';
 export type DomainKey = 'math' | 'reading' | 'science';
 
 /** Lo que se guarda por locale. Sin respuestas, sin enunciados. */
+export const LEVEL_BY_SCORE = ['1c', '1b', '2', '3', '4', '5'] as const;
+
+export function levelForCorrectCount(correct: number): string {
+  if (!Number.isInteger(correct) || correct < 0 || correct > 5) {
+    throw new RangeError('correct must be an integer 0..5');
+  }
+  return LEVEL_BY_SCORE[correct];
+}
+
+export function countCorrect(
+  correctIndexes: readonly number[],
+  chosen: readonly (number | null)[],
+): number {
+  let n = 0;
+  const len = Math.min(correctIndexes.length, chosen.length);
+  for (let i = 0; i < len; i++) {
+    if (chosen[i] !== null && chosen[i] === correctIndexes[i]) n += 1;
+  }
+  return n;
+}
+
 export interface StoredResult {
   /** Nivel estimado por dominio: { math: '2', reading: '1b', science: '3' }. */
   levels: Partial<Record<DomainKey, string>>;
