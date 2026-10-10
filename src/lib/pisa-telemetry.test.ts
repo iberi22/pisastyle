@@ -3,6 +3,7 @@ import {
   buildEvent,
   trackEvent,
   setOptIn,
+  hydrateOptIn,
   getOptIn,
   allowlist,
   getTelemetryBuffer,
@@ -101,5 +102,33 @@ describe('pisa-telemetry', () => {
     expect(buffer.some(e => e.name === 'old_event')).toBe(false);
     expect(buffer.some(e => e.name === 'recent_event')).toBe(true);
     expect(buffer.some(e => e.name === 'new_event')).toBe(true);
+  });
+
+  it('setOptIn(false) clears the telemetry buffer', () => {
+    setOptIn(true);
+    trackEvent('kept');
+    expect(getTelemetryBuffer().length).toBe(1);
+
+    setOptIn(false);
+    expect(getTelemetryBuffer().length).toBe(0);
+    expect(getOptIn()).toBe(false);
+  });
+
+  it('hydrateOptIn respects stored pisa-consent-v1 value', () => {
+    setOptIn(true);
+    expect(localStorage.getItem('pisa-consent-v1')).toBe('true');
+
+    // Simulate initial state reset
+    setOptIn(false);
+    expect(getOptIn()).toBe(false);
+
+    localStorage.setItem('pisa-consent-v1', 'true');
+    expect(hydrateOptIn()).toBe(true);
+    expect(getOptIn()).toBe(true);
+
+    localStorage.removeItem('pisa-consent-v1');
+    setOptIn(false);
+    expect(hydrateOptIn()).toBe(false); // Does not write
+    expect(localStorage.getItem('pisa-consent-v1')).toBeNull();
   });
 });
