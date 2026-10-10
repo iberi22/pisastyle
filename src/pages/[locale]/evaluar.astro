@@ -62,9 +62,6 @@ const TONE_BY_SCORE = ['low', 'low', 'mid', 'mid', 'good', 'top'] as const;
 
 
 type DomainKey = 'math' | 'reading' | 'science';
-type Option = string;
-/** enunciado, 4 opciones barajadas, indice de la correcta dentro de ellas. */
-type Question = readonly [string, Option[], number];
 
 interface Copy {
   title: string;
@@ -384,47 +381,25 @@ if (submitted) {
 
       writeResult(loc, { levels, scores });
 
-      const heading = configEl.getAttribute('data-result-heading') || '';
-      const noteTxt = configEl.getAttribute('data-result-note') || '';
-      const resetTxt = configEl.getAttribute('data-reset') || '';
-      const scoreLbl = configEl.getAttribute('data-score-label') || '';
-      const scaleLbl = configEl.getAttribute('data-scale-label') || '';
-      const tones = (configEl.getAttribute('data-tones') || '').split(',');
-
-      const domainLabels: Record<string, string> = {
-        math: configEl.getAttribute('data-math-label') || 'math',
-        reading: configEl.getAttribute('data-reading-label') || 'reading',
-        science: configEl.getAttribute('data-science-label') || 'science',
+      const attr = (n: string) => configEl.getAttribute(n) || '';
+      const tones = attr('data-tones').split(',');
+      const domainLabels: Record<DomainKey, string> = {
+        math: attr('data-math-label') || 'math', reading: attr('data-reading-label') || 'reading', science: attr('data-science-label') || 'science',
       };
-
       let res = document.querySelector('section.results');
       if (!res) {
         res = document.createElement('section');
         res.className = 'results';
         res.setAttribute('aria-live', 'polite');
-        res.innerHTML = `
-          <h2>${heading}</h2>
-          <ul class="result-list"></ul>
-          <p class="note">${noteTxt}</p>
-          <a class="reset" href="${window.location.pathname}">${resetTxt}</a>
-        `;
+        res.innerHTML = `<h2>${attr('data-result-heading')}</h2><ul class="result-list"></ul><p class="note">${attr('data-result-note')}</p><a class="reset" href="${window.location.pathname}">${attr('data-reset')}</a>`;
         form.parentNode?.insertBefore(res, form);
       }
-
       const ul = res.querySelector('.result-list');
-      if (ul) {
-        ul.innerHTML = '';
-        domains.forEach(d => {
-          const s = scores[d];
-          if (s !== undefined) {
-            const tone = tones[s] || 'mid';
-            ul.insertAdjacentHTML('beforeend', `<li class="result" data-domain="${d}">
-              <span class="result-domain">${domainLabels[d]}</span>
-              <span class="result-score">${s}/5 ${scoreLbl}</span>
-              <span class="level-chip tone-${tone}">${scaleLbl} <strong>${levels[d]}</strong></span>
-            </li>`);
-          }
-        });
+      ul?.replaceChildren();
+      for (const d of domains) {
+        const s = scores[d];
+        if (s === undefined) continue;
+        ul?.insertAdjacentHTML('beforeend', `<li class="result" data-domain="${d}"><span class="result-domain">${domainLabels[d]}</span><span class="result-score">${s}/5 ${attr('data-score-label')}</span><span class="level-chip tone-${tones[s] || 'mid'}">${attr('data-scale-label')} <strong>${levels[d]}</strong></span></li>`);
       }
       res.scrollIntoView({ behavior: 'smooth' });
     });
@@ -456,7 +431,7 @@ if (submitted) {
   }
   .submit:hover { background: var(--swal-accent-hover); }
   :global(.results) { background: var(--swal-surface); border: 1px solid var(--swal-border); border-radius: 10px; padding: 1rem 1.1rem; }
-  :global(.results) h2 { margin: 0 0 0.6rem; font-size: 1.15rem; color: var(--swal-text); }
+  :global(.results h2) { margin: 0 0 0.6rem; font-size: 1.15rem; color: var(--swal-text); }
   /* El aviso lo CREA el script en runtime, asi que el elemento no lleva el
      data-astro-cid que Astro añade a los estaticos: un selector normal
      (.prev-result) se compila a .prev-result[data-astro-cid-...] y no casaba
@@ -482,7 +457,7 @@ if (submitted) {
   :global(.tone-mid)  { background: var(--swal-warning-muted, rgba(245,158,11,.12)); color: var(--swal-warning); border-color: var(--swal-warning-border, rgba(245,158,11,.25)); }
   :global(.tone-good) { background: var(--swal-info-muted,    rgba(6,182,212,.12));  color: var(--swal-info);    border-color: var(--swal-info-border,    rgba(6,182,212,.25)); }
   :global(.tone-top)  { background: var(--swal-success-muted, rgba(16,185,129,.12)); color: var(--swal-success); border-color: var(--swal-success-border, rgba(16,185,129,.25)); }
-  :global(.level-chip) strong { font-weight: 800; }
+  :global(.level-chip strong) { font-weight: 800; }
   :global(.note) { font-size: 0.8rem; color: var(--swal-text-muted); line-height: 1.5; margin: 0.75rem 0 0; }
   :global(.reset) { display: inline-flex; align-items: center; min-height: 2.25rem; margin-top: 0.6rem; font-size: 0.85rem; color: var(--swal-text-secondary); }
   :global(.reset):hover { color: var(--swal-text); }
