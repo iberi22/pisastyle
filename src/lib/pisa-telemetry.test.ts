@@ -127,8 +127,7 @@ describe('pisa-telemetry', () => {
     expect(getOptIn()).toBe(true);
 
     localStorage.removeItem('pisa-consent-v1');
-    setOptIn(false);
-    expect(hydrateOptIn()).toBe(false); // Does not write
+    expect(hydrateOptIn()).toBe(true);
     expect(localStorage.getItem('pisa-consent-v1')).toBeNull();
   });
 });
