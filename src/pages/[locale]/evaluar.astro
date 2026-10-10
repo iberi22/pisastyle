@@ -251,6 +251,15 @@ if (submitted) {
   data-key="pisastyle:evaluacion"
   data-loc={routeLocale(locale)}
   data-notice={L.prevNotice}
+  data-score-label={L.scoreLabel}
+  data-scale-label={L.scaleLabel}
+  data-result-heading={L.resultHeading}
+  data-result-note={L.resultNote}
+  data-reset={L.reset}
+  data-math-label={L.domains.math}
+  data-reading-label={L.domains.reading}
+  data-science-label={L.domains.science}
+  data-tones={TONE_BY_SCORE.join(',')}
 />
 <script is:inline>
   (function () {
@@ -375,22 +384,44 @@ if (submitted) {
 
       writeResult(loc, { levels, scores });
 
+      const heading = configEl.getAttribute('data-result-heading') || '';
+      const noteTxt = configEl.getAttribute('data-result-note') || '';
+      const resetTxt = configEl.getAttribute('data-reset') || '';
+      const scoreLbl = configEl.getAttribute('data-score-label') || '';
+      const scaleLbl = configEl.getAttribute('data-scale-label') || '';
+      const tones = (configEl.getAttribute('data-tones') || '').split(',');
+
+      const domainLabels: Record<string, string> = {
+        math: configEl.getAttribute('data-math-label') || 'math',
+        reading: configEl.getAttribute('data-reading-label') || 'reading',
+        science: configEl.getAttribute('data-science-label') || 'science',
+      };
+
       let res = document.querySelector('section.results');
       if (!res) {
         res = document.createElement('section');
         res.className = 'results';
-        res.innerHTML = '<ul class="result-list"></ul>';
+        res.setAttribute('aria-live', 'polite');
+        res.innerHTML = `
+          <h2>${heading}</h2>
+          <ul class="result-list"></ul>
+          <p class="note">${noteTxt}</p>
+          <a class="reset" href="${window.location.pathname}">${resetTxt}</a>
+        `;
         form.parentNode?.insertBefore(res, form);
       }
+
       const ul = res.querySelector('.result-list');
       if (ul) {
         ul.innerHTML = '';
         domains.forEach(d => {
-          if (scores[d] !== undefined) {
+          const s = scores[d];
+          if (s !== undefined) {
+            const tone = tones[s] || 'mid';
             ul.insertAdjacentHTML('beforeend', `<li class="result" data-domain="${d}">
-              <span class="result-domain">${d}</span>
-              <span class="result-score">${scores[d]}/5</span>
-              <span class="level-chip tone-mid">Nivel <strong>${levels[d]}</strong></span>
+              <span class="result-domain">${domainLabels[d]}</span>
+              <span class="result-score">${s}/5 ${scoreLbl}</span>
+              <span class="level-chip tone-${tone}">${scaleLbl} <strong>${levels[d]}</strong></span>
             </li>`);
           }
         });
@@ -424,8 +455,8 @@ if (submitted) {
     font-weight: 600; font-size: 0.95rem; cursor: pointer;
   }
   .submit:hover { background: var(--swal-accent-hover); }
-  .results { background: var(--swal-surface); border: 1px solid var(--swal-border); border-radius: 10px; padding: 1rem 1.1rem; }
-  .results h2 { margin: 0 0 0.6rem; font-size: 1.15rem; color: var(--swal-text); }
+  :global(.results) { background: var(--swal-surface); border: 1px solid var(--swal-border); border-radius: 10px; padding: 1rem 1.1rem; }
+  :global(.results) h2 { margin: 0 0 0.6rem; font-size: 1.15rem; color: var(--swal-text); }
   /* El aviso lo CREA el script en runtime, asi que el elemento no lleva el
      data-astro-cid que Astro añade a los estaticos: un selector normal
      (.prev-result) se compila a .prev-result[data-astro-cid-...] y no casaba
@@ -437,26 +468,26 @@ if (submitted) {
     border: 1px solid var(--swal-border); border-left: 3px solid var(--swal-accent);
     border-radius: 8px;
   }
-  .result-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
-  .result { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
-  .result-domain { font-weight: 600; color: var(--swal-text); min-width: 7rem; }
-  .result-score { color: var(--swal-text-secondary); font-size: 0.85rem; }
-  .level-chip {
+  :global(.result-list) { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+  :global(.result) { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+  :global(.result-domain) { font-weight: 600; color: var(--swal-text); min-width: 7rem; }
+  :global(.result-score) { color: var(--swal-text-secondary); font-size: 0.85rem; }
+  :global(.level-chip) {
     display: inline-flex; align-items: center; gap: 0.35rem;
     padding: 0.2rem 0.6rem; border-radius: 9999px;
     font-size: 0.78rem; font-weight: 600;
     border: 1px solid transparent; white-space: nowrap;
   }
-  .tone-low  { background: var(--swal-danger-muted,  rgba(239,68,68,.12));  color: var(--swal-danger);  border-color: var(--swal-danger-border,  rgba(239,68,68,.25)); }
-  .tone-mid  { background: var(--swal-warning-muted, rgba(245,158,11,.12)); color: var(--swal-warning); border-color: var(--swal-warning-border, rgba(245,158,11,.25)); }
-  .tone-good { background: var(--swal-info-muted,    rgba(6,182,212,.12));  color: var(--swal-info);    border-color: var(--swal-info-border,    rgba(6,182,212,.25)); }
-  .tone-top  { background: var(--swal-success-muted, rgba(16,185,129,.12)); color: var(--swal-success); border-color: var(--swal-success-border, rgba(16,185,129,.25)); }
-  .level-chip strong { font-weight: 800; }
-  .note { font-size: 0.8rem; color: var(--swal-text-muted); line-height: 1.5; margin: 0.75rem 0 0; }
-  .reset { display: inline-flex; align-items: center; min-height: 2.25rem; margin-top: 0.6rem; font-size: 0.85rem; color: var(--swal-text-secondary); }
-  .reset:hover { color: var(--swal-text); }
+  :global(.tone-low)  { background: var(--swal-danger-muted,  rgba(239,68,68,.12));  color: var(--swal-danger);  border-color: var(--swal-danger-border,  rgba(239,68,68,.25)); }
+  :global(.tone-mid)  { background: var(--swal-warning-muted, rgba(245,158,11,.12)); color: var(--swal-warning); border-color: var(--swal-warning-border, rgba(245,158,11,.25)); }
+  :global(.tone-good) { background: var(--swal-info-muted,    rgba(6,182,212,.12));  color: var(--swal-info);    border-color: var(--swal-info-border,    rgba(6,182,212,.25)); }
+  :global(.tone-top)  { background: var(--swal-success-muted, rgba(16,185,129,.12)); color: var(--swal-success); border-color: var(--swal-success-border, rgba(16,185,129,.25)); }
+  :global(.level-chip) strong { font-weight: 800; }
+  :global(.note) { font-size: 0.8rem; color: var(--swal-text-muted); line-height: 1.5; margin: 0.75rem 0 0; }
+  :global(.reset) { display: inline-flex; align-items: center; min-height: 2.25rem; margin-top: 0.6rem; font-size: 0.85rem; color: var(--swal-text-secondary); }
+  :global(.reset):hover { color: var(--swal-text); }
   @media (max-width: 640px) {
-    .result { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
-    .result-domain { min-width: 0; }
+    :global(.result) { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+    :global(.result-domain) { min-width: 0; }
   }
 </style>
