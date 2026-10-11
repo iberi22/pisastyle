@@ -23,15 +23,6 @@ binding = "SWAL_D1"
 database_name = "swal-billing"
 database_id = "REPLACE-ME-billing"
 
-[[d1_databases]]
-binding = "SWAL_DOMAIN_D1"
-database_name = "swal-pisastyle-domain"
-database_id = "REPLACE-ME-domain"
-
-[[kv_namespaces]]
-binding = "SESSION"
-id = "REPLACE-ME-session-kv"
-
 [[kv_namespaces]]
 binding = "SWAL_KV"
 id = "REPLACE-ME-swal-kv"

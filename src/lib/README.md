@@ -52,7 +52,6 @@ if (env.PUBLIC_WANT_CLOUD === '1' && env.PUBLIC_EDGE_HIVE_URL) {
 ```
 [[r2_buckets]] binding="SWAL_R2" bucket_name="swal-{appId}-vault"
 [[d1_databases]] binding="SWAL_D1" database_name="swal-billing" (compartido)
-[[d1_databases]] binding="SWAL_DOMAIN_D1" database_name="swal-{appId}-domain"
 [[kv_namespaces]] binding="SWAL_KV" id="..."
 [ai] binding="AI"
 ```
