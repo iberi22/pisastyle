@@ -1,0 +1,113 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { buildAlternates, routeLocale } from '../../lib/alternates';
+import { isPisaLocale } from '../../lib/pisa-i18n';
+import ExamHeader from '../../components/exam/ExamHeader.astro';
+import ExamOptions from '../../components/exam/ExamOptions.astro';
+import ExamFooter from '../../components/exam/ExamFooter.astro';
+import ExamTimer from '../../components/exam/ExamTimer.svelte';
+import StudyRenderer from '../../components/study/StudyRenderer.svelte';
+
+export function getStaticPaths() {
+  return [
+    { params: { locale: 'es' } },
+    { params: { locale: 'en' } },
+    { params: { locale: 'pt' } },
+  ];
+}
+
+const { locale } = Astro.params;
+
+if (!isPisaLocale(locale)) {
+  return Astro.redirect('/404');
+}
+const loc = routeLocale(locale);
+
+const domainLabels = {
+  es: 'Matemáticas',
+  en: 'Mathematics',
+  pt: 'Matemática'
+};
+
+const domainLabel = domainLabels[loc] || 'Mathematics';
+
+const titles = {
+  es: 'Examen de prueba',
+  en: 'Test exam',
+  pt: 'Exame de teste'
+};
+const title = titles[loc] || 'Test exam';
+
+const shellStem = {
+  es: 'Esto es una pregunta de demostración para probar el componente.',
+  en: 'This is a demo question to test the component shell.',
+  pt: 'Esta é uma pergunta de demonstração para testar o componente.'
+};
+
+const demoItem = {
+  id: 'shell-demo',
+  stem: shellStem[loc] || 'Demo item',
+  options: ['Opción A', 'Opción B', 'Opción C', 'Opción D'],
+  correctIndex: 0,
+  index: 1
+};
+---
+
+<Layout
+  locale={loc}
+  title={title}
+  alternates={buildAlternates({ path: 'examen', locale, site: Astro.site })}
+>
+  <div class="exam-shell">
+    <ExamHeader
+      domainLabel={domainLabel}
+      level={2}
+      itemNumber={1}
+      totalItems={15}
+      timeLeftSec={null}
+    />
+
+    <div class="exam-content" style="max-width: 800px; margin: 0 auto; padding: 2rem;">
+      <ExamOptions
+        item={demoItem}
+        selectedId={null}
+        onSelect={() => {}}
+      />
+
+      <div style="margin-top: 2rem;">
+        <ExamTimer client:load durationMs={900000} />
+      </div>
+
+      <div style="margin-top: 2rem;">
+        <StudyRenderer
+          client:load
+          worked={[]}
+          pitfalls={[]}
+          sources={[]}
+          sections={[{ title: 'Nota', content: 'Esto es un shell de demostración, no una unidad puntuada.' }]}
+          labels={{
+            title,
+            sections: 'Sections',
+            worked: 'Worked Examples',
+            pitfalls: 'Common Pitfalls',
+            sources: 'Sources',
+            sourceAuthor: 'Author',
+            sourceYear: 'Year',
+            sourceTitle: 'Title',
+            sourceUrl: 'URL'
+          }}
+        />
+      </div>
+    </div>
+
+    <ExamFooter
+      itemNumber={1}
+      totalItems={15}
+      canGoPrev={false}
+      isLast={false}
+      onPrev={() => {}}
+      onNext={() => {}}
+      onReport={() => {}}
+    />
+  </div>
+</Layout>
