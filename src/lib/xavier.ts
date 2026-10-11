@@ -1,7 +1,7 @@
 // xavier.ts — memoria agentica SWAL
 // Namespace: app/{appId}/instance/{instanceId} (GOAL #3)
 // Reusa patron cores/swal-agent-runner/src/services/memory/xavier-memory-node.ts
-// HTTP :8006 cuando hay conexion, IndexedDB fallback offline.
+// HTTP stub; failed search returns { memories: [] }; failed add returns null; this file does not open a local database and does not load a WebAssembly module.
 
 import { domainConfig } from './domain.config';
 
@@ -39,8 +39,7 @@ export async function xavierAdd(content: string, kind = 'episodic', instanceId?:
     if (!res.ok) throw new Error(`xavier ${res.status}`);
     return await res.json();
   } catch (e) {
-    console.warn('[xavier] add queued offline', e);
-    // TODO: queue to IndexedDB + sync on reconnect (ver edge-mesh sync 04.02)
+    console.warn('[xavier] add failed, this module does not queue it (see xavierSync.ts)', e);
     return null;
   }
 }
