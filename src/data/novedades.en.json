@@ -9,29 +9,29 @@
   {
     "id": 2,
     "titulo": "OECD Average",
-    "fecha": "2023-12-06",
+    "fecha": "2023-12-05",
     "contenido": "The average for OECD countries stood at 472, 476, and 485 points. This mean serves as a global benchmark for evaluating the development of fundamental skills in students.",
     "fuente": "OECD PISA Database"
   },
   {
     "id": 3,
     "titulo": "Singapore's Leadership",
-    "fecha": "2023-12-07",
+    "fecha": "2023-12-05",
     "contenido": "Singapore leads global measurements with outstanding scores of 575, 543, and 561. Its pedagogical approach remains a model of excellence and innovation.",
     "fuente": "OECD PISA Database"
   },
   {
     "id": 4,
     "titulo": "Challenges in Latin America",
-    "fecha": "2023-12-08",
-    "contenido": "The region faces significant challenges in closing learning gaps. Investment in teacher training is crucial to improving long-term indicators.",
-    "fuente": "Education Insights"
+    "fecha": "no publication date",
+    "contenido": "This is not an OECD measurement. The region faces significant challenges in closing learning gaps. Investment in teacher training is crucial to improving long-term indicators.",
+    "fuente": "Laboratory note (not an OECD source)"
   },
   {
     "id": 5,
     "titulo": "Future Policies and Perspectives",
-    "fecha": "2023-12-09",
-    "contenido": "To move forward, it is essential to integrate technology into the classroom and foster critical thinking, adapting the curriculum to 21st-century demands.",
-    "fuente": "Global Education Forum"
+    "fecha": "no publication date",
+    "contenido": "This is not an OECD measurement. To move forward, it is essential to integrate technology into the classroom and foster critical thinking, adapting the curriculum to 21st-century demands.",
+    "fuente": "Laboratory note (not an OECD source)"
   }
 ]
