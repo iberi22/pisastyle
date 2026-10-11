@@ -15,6 +15,32 @@ let isOptedIn = false;
 
 export function setOptIn(value: boolean): void {
   isOptedIn = value;
+
+  if (!value) {
+    clearTelemetryBuffer();
+  }
+
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    localStorage.setItem('pisa-consent-v1', value ? 'true' : 'false');
+  } catch (error) {
+    // Ignore storage errors
+  }
+}
+
+export function hydrateOptIn(): boolean {
+  if (typeof window === 'undefined' || !window.localStorage) return getOptIn();
+  try {
+    const consent = localStorage.getItem('pisa-consent-v1');
+    if (consent === 'true') {
+      isOptedIn = true;
+    } else if (consent === 'false') {
+      isOptedIn = false;
+    }
+  } catch (error) {
+    // Ignore storage errors
+  }
+  return getOptIn();
 }
 
 export function getOptIn(): boolean {

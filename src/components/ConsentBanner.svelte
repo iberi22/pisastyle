@@ -6,6 +6,7 @@
 -->
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { setOptIn, hydrateOptIn } from '../lib/pisa-telemetry';
 
   interface Props {
     title: string;
@@ -25,12 +26,14 @@
         visible = true;
       }
     }
+    hydrateOptIn();
   });
 
   function handleAccept() {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('pisa-consent-v1', 'true');
     }
+    setOptIn(true);
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('pisa_consent', { detail: { accepted: true } }));
     }
@@ -41,6 +44,7 @@
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('pisa-consent-v1', 'false');
     }
+    setOptIn(false);
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('pisa_consent', { detail: { accepted: false } }));
     }
