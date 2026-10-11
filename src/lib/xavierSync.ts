@@ -1,6 +1,6 @@
 // xavierSync.ts — heartbeat 60s + queue offline (04.02)
 // Patron: cores/swal-agent-runner/src/services/memory/edge-mesh-sync.ts + xavier-memory-node.ts
-// Queue IndexedDB: xavier-queue (idb), sync cuando vuelve online, heartbeat cada 60s.
+// Queue localStorage: xavier-queue, sync cuando vuelve online, heartbeat cada 60s.
 
 import { domainConfig } from './domain.config';
 import { xavierAdd, xavierSearch } from './xavier';
