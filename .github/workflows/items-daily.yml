@@ -49,10 +49,16 @@ jobs:
         with: { node-version: 22, cache: pnpm }
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          pnpm install --frozen-lockfile || \
+          (sleep 10 && pnpm install --frozen-lockfile) || \
+          (sleep 10 && pnpm install --frozen-lockfile)
 
       - name: Validate items
         run: node scripts/validate-items.mjs items/
+
+      - name: Verify item counts
+        run: node scripts/verify-item-count.mjs
 
   # Job 2: generation. `needs: validate` is the whole safety story — a red
   # validate job means this job is skipped, never "generate anyway".
@@ -70,7 +76,10 @@ jobs:
         with: { node-version: 22, cache: pnpm }
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          for i in 1 2 3; do
+            pnpm install --frozen-lockfile && break || sleep 10
+          done
 
       # ITEMS_DATE keys the item id on the UTC date, so re-running a day that
       # failed finds the file already there and writes nothing: no duplicates.
@@ -86,7 +95,7 @@ jobs:
           echo "ITEMS_DATE=$ITEMS_DATE"
           node scripts/items-generate.mjs \
             --domain "${{ inputs.domain || 'math' }}" \
-            --lang "${{ inputs.lang || 'es' }}"
+            --lang "${{ inputs.lang || 'es' }}" || { echo "::error::failed to generate item for date $ITEMS_DATE"; exit 1; }
 
       # The generator only ever writes a valid item, or nothing at all. An empty
       # diff therefore means "nothing to do today", which is a SUCCESS — not a
