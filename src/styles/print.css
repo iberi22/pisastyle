@@ -2,15 +2,22 @@
   size: A4;
 }
 
-figure {
-  break-inside: avoid;
-}
+@media print {
+  html, body {
+    background: #fff !important;
+    color: #111 !important;
+  }
 
-* {
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
+  figure {
+    break-inside: avoid;
+  }
 
-nav {
-  display: none !important;
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  nav {
+    display: none !important;
+  }
 }
