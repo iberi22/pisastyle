@@ -50,9 +50,10 @@ jobs:
 
       - name: Install dependencies
         run: |
+          # retry up to 3x on transient network errors
           pnpm install --frozen-lockfile || \
           (sleep 10 && pnpm install --frozen-lockfile) || \
-          (sleep 10 && pnpm install --frozen-lockfile)
+          (sleep 10 && pnpm install --frozen-lockfile) || exit 1
 
       - name: Validate items
         run: node scripts/validate-items.mjs items/
@@ -77,9 +78,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          for i in 1 2 3; do
-            pnpm install --frozen-lockfile && break || sleep 10
-          done
+          # retry up to 3x on transient network errors
+          pnpm install --frozen-lockfile || \
+          (sleep 10 && pnpm install --frozen-lockfile) || \
+          (sleep 10 && pnpm install --frozen-lockfile) || exit 1
 
       # ITEMS_DATE keys the item id on the UTC date, so re-running a day that
       # failed finds the file already there and writes nothing: no duplicates.
