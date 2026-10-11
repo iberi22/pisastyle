@@ -121,7 +121,19 @@ function main(argv) {
 
   const report = validateItemSet(inputs);
   console.log(formatReport(report));
-  for (const u of unreadable) console.log(`ERROR [unreadable-file] ${u}`);
+  console.log(`validated ${report.items} items, ${report.errors} errors`);
+
+  for (const f of report.findings) {
+    if (f.severity === 'ERROR') {
+      console.log(`::error file=${f.file}::[${f.rule}] item${f.item} - ${f.message}`);
+    }
+  }
+
+  for (const u of unreadable) {
+    const file = u.split(':')[0];
+    console.log(`::error file=${file}::${u}`);
+    console.log(`ERROR [unreadable-file] ${u}`);
+  }
 
   // Cinturon y tirantes: 0 items con 0 errores tambien es fallo, porque
   // significa que los ficheros se leyeron pero no se parsearon como bundles.

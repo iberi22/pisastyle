@@ -94,8 +94,8 @@ function* ficheros(dir) {
 function main() {
   const real = countRealItems();
   if (!real) {
-    console.error('verify-item-count: no se pudo contar los items de evaluar.astro');
-    console.error('  No se toca nada: es preferible no comprobar a dar un falso verde.');
+    console.error('::error::verify-item-count: could not count items in evaluar.astro');
+    console.error('  Cannot proceed without reliable item count (failing to avoid false positive).');
     return 2;
   }
 

@@ -323,6 +323,19 @@ function main(argv) {
     return 1;
   }
 
+  if (args.domain && !DOMAINS.includes(args.domain)) {
+    console.error(`items:generate: unknown domain "${args.domain}"`);
+    return 2;
+  }
+  if (args.lang && !LANGS.includes(args.lang)) {
+    console.error(`items:generate: unknown lang "${args.lang}"`);
+    return 2;
+  }
+  if (process.env.ITEMS_DATE && !/^\d{4}-\d{2}-\d{2}$/.test(process.env.ITEMS_DATE)) {
+    console.error(`items:generate: invalid date format "${process.env.ITEMS_DATE}"`);
+    return 2;
+  }
+
   const date = process.env.ITEMS_DATE ?? new Date().toISOString().slice(0, 10);
   // Pinned seed => the same item forever (idempotent re-runs). Unpinned => the
   // seed is derived from the date, so the bank grows instead of regenerating the
