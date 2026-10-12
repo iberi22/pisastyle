@@ -12,9 +12,20 @@ import { loadUnit } from './units';
  * si el vault está montado y estos tests pasan, la cadena glob→parse→render está
  * probada de verdad. El primer test falla si el glob no trae nada, en vez de
  * pasar en silencio — un `if (!data) return` hides justo el bug que buscamos.
+ *
+ * Sin vault (CI, fresh clone, otra máquina) el glob no matchea nada por diseño
+ * y el describe entero se skipea: fallar aquí sería exigir el vault privado en
+ * CI, donde no existe ni debe existir. Con el vault montado corren y siguen
+ * fallando en voz alta si la cadena se rompe.
  */
 
-describe('loadUnit', () => {
+const vaultGlob = import.meta.glob(
+  '../../../../.private/pisastyle/src/data/sample-*.json',
+  { eager: true },
+);
+const VAULT_MOUNTED = Object.keys(vaultGlob).length > 0;
+
+describe.skipIf(!VAULT_MOUNTED)('loadUnit', () => {
   it('el glob del vault trae contenido (si el vault esta montado)', () => {
     const { data, origin } = loadUnit('en');
     // Si esto falla, el glob no resolvio y todo lo demas seria verde por inercia.
