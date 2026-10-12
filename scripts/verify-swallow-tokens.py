@@ -23,7 +23,12 @@ from pathlib import Path
 
 APP = Path(__file__).resolve().parent.parent
 COMPONENTS = APP / 'src/components'
-CORE_THEME = APP.parent.parent / 'cores/swal-ui/src/tokens/theme.css'
+# El tema vive en el paquete npm (@swal/ui ^0.2.0 lo incluye en
+# src/tokens/theme.css); el path a cores/ queda como fallback para checkouts
+# del monorepo donde el paquete aun es file:. En un fresh clone no hay cores/.
+_NPM_THEME = APP / 'node_modules/@swal/ui/src/tokens/theme.css'
+_LEGACY_THEME = APP.parent.parent / 'cores/swal-ui/src/tokens/theme.css'
+CORE_THEME = _NPM_THEME if _NPM_THEME.is_file() else _LEGACY_THEME
 
 # Superficie por defecto: la de una tarjeta/panel del core, o sea el fondo real
 # de un elemento que no declara el suyo.

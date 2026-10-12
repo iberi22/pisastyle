@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import {
@@ -25,7 +25,8 @@ import {
  * core cambia una duracion y la app se queda con una copia vieja:
  *
  *  1. SINCRONIA CON EL CORE. `MOTION_DURATIONS` esta duplicando en TypeScript
- *     los milisegundos que viven en `cores/swal-ui/src/tokens/theme.css`. Esa
+ *     los milisegundos que viven en el theme de `@swal/ui` (npm desde 0.2.0;
+ *     antes `cores/swal-ui/src/tokens/theme.css`). Esa
  *     duplicacion es necesaria para poder calcular un retardo en JS, pero solo
  *     es segura si los dos lados dicen lo mismo: por eso el primer test LEE el
  *     theme.css real y falla si divergen. Sin el, nadie se entera en meses.
@@ -39,7 +40,17 @@ import {
  */
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const THEME_CSS = resolve(HERE, '../../../../cores/swal-ui/src/tokens/theme.css');
+// El tema vive en el paquete npm; el path a cores/ queda como fallback para
+// checkouts del monorepo donde el paquete aun es file:. En un fresh clone no
+// hay cores/, asi que sin el primer candidato este test rompia con ENOENT.
+const THEME_CANDIDATES = [
+  resolve(HERE, '../../node_modules/@swal/ui/src/tokens/theme.css'),
+  resolve(HERE, '../../../../cores/swal-ui/src/tokens/theme.css'),
+];
+const THEME_CSS = THEME_CANDIDATES.find((p) => existsSync(p));
+if (!THEME_CSS) {
+  throw new Error(`theme.css no encontrado; probado: ${THEME_CANDIDATES.join(', ')}`);
+}
 const themeCss = readFileSync(THEME_CSS, 'utf8');
 
 /** Cuerpo de cada bloque `@media (prefers-reduced-motion: reduce)` del fichero.
