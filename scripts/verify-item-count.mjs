@@ -39,6 +39,16 @@ const EVALUAR = join(ROOT, 'src/pages/[locale]/evaluar.astro');
 /* ------------------------------------------------------------------ */
 
 function countRealItems() {
+  const EXAM_ITEMS_FILE = join(ROOT, "src/lib/exam-items.ts");
+  try {
+    const src = readFileSync(EXAM_ITEMS_FILE, "utf-8");
+    const items = src.match(/correctIndex:\s*\d+/g) ?? [];
+    const locales = (src.match(/^\s*(es|en|pt):\s*\[/gm) ?? []).length || 3;
+    const porLocale = Math.round(items.length / locales);
+    if (Number.isFinite(porLocale) && porLocale >= 2 && items.length % locales === 0) {
+      return { total: items.length, locales, porLocale };
+    }
+  } catch {}
   let src;
   try {
     src = readFileSync(EVALUAR, 'utf-8');

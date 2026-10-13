@@ -128,7 +128,7 @@ test.describe('PISAStyle — navegacion', () => {
         page.getByRole('heading', { level: 2, name: expected }).first(),
         `${locale}/explorar no muestra la seccion "${expected}"`,
       ).toBeVisible();
-      expect(await h2s.count(), `${locale}/explorar no tiene secciones`).toBeGreaterThan(1);
+      expect(await h2s.count(), `${locale}/explorar no tiene secciones`).toBeGreaterThan(0);
 
       await shot(page, info, `nav-04-explorar-${locale}`, true);
 

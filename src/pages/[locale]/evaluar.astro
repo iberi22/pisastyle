@@ -62,9 +62,7 @@ const TONE_BY_SCORE = ['low', 'low', 'mid', 'mid', 'good', 'top'] as const;
 
 
 type DomainKey = 'math' | 'reading' | 'science';
-type Option = string;
 /** enunciado, 4 opciones barajadas, indice de la correcta dentro de ellas. */
-type Question = readonly [string, Option[], number];
 
 interface Copy {
   title: string;

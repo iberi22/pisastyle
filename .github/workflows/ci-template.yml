@@ -2,30 +2,36 @@ name: ci-template
 
 on:
   push:
-    paths:
-      - "cores/swal-app-template/**"
-      - ".github/workflows/ci-template.yml"
+    branches: [main, develop]
   pull_request:
     paths:
-      - "cores/swal-app-template/**"
+      - "src/**"
+      - "public/**"
+      - "workers/**"
+      - "migrations/**"
+      - "tests/**"
+      - "scripts/**"
+      - "astro.config.mjs"
+      - "wrangler.toml"
+      - "package.json"
+      - "pnpm-workspace.yaml"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/**"
   workflow_dispatch:
 
 jobs:
   check-build-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
         with: { version: 9 }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }
-      - run: pnpm --filter @swal/app-template install
-        working-directory: cores/swal-app-template
-      - run: pnpm --filter @swal/app-template run check
-        working-directory: cores/swal-app-template
-      - run: pnpm --filter @swal/app-template run build
-        working-directory: cores/swal-app-template
-      - run: pnpm --filter @swal/app-template test
-        working-directory: cores/swal-app-template
-      - run: pnpm --filter @swal/app-template exec playwright test
-        working-directory: cores/swal-app-template
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check
+      - run: pnpm run build
+      - run: pnpm test
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm exec playwright test

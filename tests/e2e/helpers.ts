@@ -44,22 +44,22 @@ export type Route = {
 /** Los `<h1>`/`<h2>` se midieron contra el HTML renderizado (ver nota de arriba). */
 const COPY: Record<Locale, Record<string, { h1: string | null; h2: string | null }>> = {
   es: {
-    explorar: { h1: 'Explorar Unidad PISA', h2: 'Estímulo' },
-    metodo: { h1: null, h2: 'Ciclo PISA' },
+    explorar: { h1: 'Explorar Unidad PISA', h2: 'Preguntas Frecuentes' },
+    metodo: { h1: null, h2: 'El método PISAStyle v1.1' },
     novedades: { h1: 'Novedades', h2: 'Desempeño de Colombia en PISA' },
     evaluar: { h1: 'Evalúa tu nivel de PISA', h2: null },
     contribuir: { h1: 'Contribuir', h2: 'Cómo funciona' },
   },
   en: {
-    explorar: { h1: 'Explore PISA Unit', h2: 'Stimulus' },
-    metodo: { h1: null, h2: 'PISA Cycle' },
+    explorar: { h1: 'Explore PISA Unit', h2: 'FAQ' },
+    metodo: { h1: null, h2: 'The PISAStyle v1.1 method' },
     novedades: { h1: 'Novedades', h2: "Colombia's PISA Performance" },
     evaluar: { h1: 'Check your PISA level', h2: null },
     contribuir: { h1: 'Contribute', h2: 'How it works' },
   },
   pt: {
-    explorar: { h1: 'Explorar Unidade PISA', h2: 'Estímulo' },
-    metodo: { h1: null, h2: 'Ciclo PISA' },
+    explorar: { h1: 'Explorar Unidade PISA', h2: 'Perguntas Frequentes' },
+    metodo: { h1: null, h2: 'O método PISAStyle v1.1' },
     novedades: { h1: 'Novedades', h2: 'Desempenho da Colômbia no PISA' },
     evaluar: { h1: 'Avalie seu nível PISA', h2: null },
     contribuir: { h1: 'Contribuir', h2: 'Como funciona' },

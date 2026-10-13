@@ -6,7 +6,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
   site: 'https://pisa.swal.network',
   output: 'server',
-  adapter: cloudflare(),
+  adapter: cloudflare({ prerenderEnvironment: 'node' }),
   // Escucha explicita en IPv4: por defecto `astro dev` se ata solo a [::1] y cualquier sonda que
   // use http://127.0.0.1 (monitores, `hermes verify`, contenedores, curl desde un host) recibe
   // "connection refused" aunque el servidor este perfectamente vivo.

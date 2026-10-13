@@ -123,6 +123,7 @@ export default defineConfig({
     // Con el build fuera, este comando solo levanta el servidor: si falla, el
     // fallo es de verdad del servidor y el mensaje lo dice.
     command: `pnpm exec astro preview --ignore-lock --port ${PORT} --host ${HOST}`,
+    env: { ...process.env, ASTRO_PREVIEW_BACKGROUND: 'false' },
     url: `${BASE_URL}/es/explorar`,
     // Reutilizar solo si responde de verdad: si hay un preview zombie escuchando
     // en el puerto que no sirve el build actual, arrancar otro encima falla con
