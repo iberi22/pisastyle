@@ -80,6 +80,9 @@ export default {
     }
 
     try {
+      if (!env?.AI || typeof env.AI.run !== 'function') {
+        throw new Error('Workers AI binding unavailable');
+      }
       // Modelo por defecto: @cf/meta/llama-3-8b-instruct (Workers AI)
       const aiRes: any = await env.AI.run('@cf/meta/llama-3-8b-instruct', { prompt });
       text = aiRes?.response ?? aiRes?.result ?? '';
