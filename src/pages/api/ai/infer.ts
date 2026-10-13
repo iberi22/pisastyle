@@ -1,10 +1,10 @@
 import type { APIRoute } from 'astro';
 import worker from '../../../../workers/ai';
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   // Reusa el Worker real (env bindings vienen de Cloudflare runtime, no de Astro)
   // En dev, env puede no tener bindings — el Worker hace fallback a 402/200 con mocks
-  const env: any = (globalThis as any).__env ?? (request as any).cf ?? {};
+  const env: any = (locals as any)?.runtime?.env ?? (globalThis as any).__env ?? (request as any).cf ?? {};
   // Intenta obtener env de Cloudflare via `locals` (Astro 7) — fallback a mock
   const mockEnv = {
     AI: { run: async () => ({ response: 'mock' }) },

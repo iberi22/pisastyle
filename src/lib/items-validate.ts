@@ -213,7 +213,7 @@ const ALL_NONE_OF_ABOVE =
 // Las cadenas colapsadas (`lorem ipsum`, `???`) si son insensibles a mayusculas,
 // asi que llevan su propio grupo `(?i:...)` en vez del flag global.
 const PLACEHOLDER =
-  /\bTODO\b|\bFIXME\b|\bTBD\b|\bXXX+\b|\bPLACEHOLDER\b|(?i:lorem\s+ipsum|\?{3,})/;
+  /\b(?:TODO|FIXME|TBD|XXX+|PLACEHOLDER)\b|[lL][oO][rR][eE][mM]\s+[iI][pP][sS][uU][mM]|\?{3,}/;
 
 const GLUED_TOKEN = /[A-Za-z]{3,}-[A-Za-z]{3,}/;
 
