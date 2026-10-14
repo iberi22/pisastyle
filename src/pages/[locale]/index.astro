@@ -7,6 +7,7 @@ import * as esData from '../../data/home.es.json';
 import * as ptData from '../../data/home.pt.json';
 import { buildAlternates, routeLocale } from '../../lib/alternates';
 import { isPisaLocale } from '../../lib/pisa-i18n';
+import ExportMyData from '../../components/ExportMyData.svelte';
 
 export function getStaticPaths() {
   return [
@@ -100,6 +101,10 @@ if (!isPisaLocale(locale)) {
           })}
         </div>
       </Card>
+    </div>
+
+    <div class="export-section">
+      <ExportMyData client:load />
     </div>
   </div>
 </Layout>
