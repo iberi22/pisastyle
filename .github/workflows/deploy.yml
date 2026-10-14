@@ -142,11 +142,9 @@ jobs:
       # estado actual de esta rama los tres no estan, y `run:` sobre un fichero
       # inexistente aborta el job antes de llegar al deploy.
       - name: Normalize Wrangler Config
-        if: hashFiles('scripts/normalize-wrangler-config.mjs') != ''
-        run: node scripts/normalize-wrangler-config.mjs --target "${{ needs.resolve-target.outputs.target }}"
+        run: pnpm run build
       - name: Pre-deploy Check
-        if: hashFiles('scripts/pre-deploy-check.js') != ''
-        run: node scripts/pre-deploy-check.js
+        run: pnpm run check
       - name: Deploy Worker to Cloudflare
         uses: cloudflare/wrangler-action@v4
         with:
@@ -171,8 +169,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Smoke
-        if: hashFiles('scripts/deploy-smoke.sh') != ''
-        run: bash scripts/deploy-smoke.sh
+        run: pnpm run test
         env:
           APP_URL: ${{ needs.resolve-target.outputs.app_url }}
           DEPLOY_TARGET: ${{ needs.resolve-target.outputs.target }}
