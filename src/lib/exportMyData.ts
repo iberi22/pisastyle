@@ -1,4 +1,4 @@
-import { getStorageAdapter, getMemoryAdapter, type StorageAdapter, type DomainRecord } from './domain';
+import { getStorageAdapter, isApprovedLocalAdapter, type StorageAdapter, type DomainRecord } from './domain';
 import { domainConfig } from './domain.config';
 
 
@@ -10,8 +10,7 @@ export type ExportData = {
 
 // 2. Data collection
 export async function collectAllUserData(adapter: StorageAdapter = getStorageAdapter()): Promise<ExportData> {
-  const LocalClass = getMemoryAdapter().constructor;
-  if (!(adapter instanceof LocalClass)) {
+  if (!isApprovedLocalAdapter(adapter)) {
     throw new Error('Export blocked: adapter is not the allowed local StorageAdapter.');
   }
 

