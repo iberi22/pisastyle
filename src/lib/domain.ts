@@ -67,8 +67,17 @@ class MemoryAdapter implements StorageAdapter {
   }
 }
 
+// Module-private WeakSet of approved local adapter instances
+const approvedAdapters = new WeakSet<object>();
+
+export function isApprovedLocalAdapter(a: unknown): boolean {
+  if (typeof a !== 'object' || a === null) return false;
+  return approvedAdapters.has(a);
+}
+
 // Singleton memory — cada instancia de app tiene su propio adapter en memoria (aislado por instance_id de todos modos)
 const memory = new MemoryAdapter();
+approvedAdapters.add(memory);
 
 // Selector: en prod PWA intentara IndexedDB, si hay env EDGE_HIVE_URL usara Surreal (ver surreal.ts)
 // Por ahora template usa memory para build verde; en browser se puede swap a indexedDB adapter sin cambiar API.
