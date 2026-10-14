@@ -7,6 +7,7 @@ import * as esData from '../../data/home.es.json';
 import * as ptData from '../../data/home.pt.json';
 import { buildAlternates, routeLocale } from '../../lib/alternates';
 import { isPisaLocale } from '../../lib/pisa-i18n';
+import ExportMyData from '../../components/ExportMyData.svelte';
 
 export function getStaticPaths() {
   return [
@@ -101,10 +102,17 @@ if (!isPisaLocale(locale)) {
         </div>
       </Card>
     </div>
+
+    <div class="export-section">
+      <ExportMyData client:only="svelte" />
+    </div>
   </div>
 </Layout>
 
 <style>
+  .export-section {
+    margin-top: 2rem;
+  }
   .wrap { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem; display: grid; gap: 2rem; }
   .hero { text-align: center; padding: 3rem 0; }
   .title { font-size: 2.5rem; font-weight: 800; color: var(--swal-text); letter-spacing: -0.02em; margin-bottom: 1rem; }
