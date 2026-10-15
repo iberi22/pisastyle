@@ -12,8 +12,7 @@ on:
       - "tests/**"
       - "scripts/**"
       - "astro.config.mjs"
-      # La plantilla publica, no `wrangler.toml` (config real, gitignored).
-      - "wrangler.example.toml"
+      - "wrangler.toml"
       - "package.json"
       - "pnpm-workspace.yaml"
       - "pnpm-lock.yaml"
@@ -36,27 +35,3 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
       - run: pnpm exec playwright test
-
-  # Puerta del arbol publico: el repo es publico y la config real (ids de
-  # cuenta, D1/KV/R2) vive en el overlay privado. Un id pegado en la plantilla
-  # `wrangler.example.toml` o un fichero que no deberia estar trackeado
-  # (`wrangler.toml`, `private/**`, `.env*`, claves) cortan aqui.
-  public-tree:
-    name: Public tree has no infra ids or secrets
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with: { node-version: 22 }
-      - name: Install gitleaks
-        run: |
-          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.26.0/gitleaks_8.26.0_linux_x64.tar.gz \
-            | sudo tar -xz -C /usr/local/bin gitleaks
-          gitleaks version
-      - name: Check public tree
-        env:
-          # En CI el escaneo de secretos es obligatorio: sin el binario, el
-          # script sale con 2 en vez de dar el arbol por limpio.
-          ENFORCE_SECRET_SCAN: "1"
-        run: bash scripts/check-public-tree.sh

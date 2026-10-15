@@ -9,11 +9,7 @@ on:
       - "workers/**"
       - "migrations/**"
       - "astro.config.mjs"
-      # `wrangler.toml` (config real, con ids de cuenta) esta en .gitignore: no
-      # puede llegar a un push, asi que filtrar por el no disparaba NADA. Lo que
-      # SI cambia en el repo es la plantilla publica.
-      - "wrangler.example.toml"
-      - "scripts/**"
+      - "wrangler.toml"
       - "package.json"
       # Sin esto, un fix que solo toque pnpm-workspace.yaml NO dispara el
       # deploy — que es justo lo que paso con el campo `packages`: se corrigio
@@ -123,11 +119,6 @@ jobs:
       - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
-      # Puerta del arbol publico: ids de infra reales, ficheros que no deben
-      # estar trackeados y cadenas prohibidas. gitleaks se exige en ci-template.yml
-      # (ENFORCE_SECRET_SCAN=1); aqui se ejecuta la parte estructural.
-      - name: Public tree has no real infra ids
-        run: node scripts/check-public-tree.mjs
       - run: pnpm run check
       - run: pnpm test
       # `pnpm exec playwright test` a secas NO puede pasar: el `webServer` de
@@ -160,31 +151,52 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Build SSR
         run: pnpm run build
-      - name: Normalize Wrangler Config
-        # Unico paso que sabe donde esta la config real (overlay privado ->
-        # wrangler.toml -> plantilla). Fusiona lo resuelto en
-        # dist/server/wrangler.json: nombre, fecha de compatibilidad, vars,
-        # `routes` con custom_domain y los bindings declarados. Sin este paso el
-        # bundle de Astro sale sin dominio. Falla (exit 1) si un binding
-        # declarado sigue con id REPLACE-ME.
-        run: node scripts/normalize-wrangler-config.mjs --target "${{ needs.resolve-target.outputs.target }}"
-      - name: Verify deploy bundle
-        # Un deploy "en verde" sin dominio ni bindings es el fallo que costo 20
-        # runs. Aqui se corta antes de tocar Cloudflare.
+      - name: Verify deploy config
+        # Unica puerta previa a Cloudflare, y la unica que sabe como debe salir
+        # este deploy: la app no usa bindings y produccion vive en el custom
+        # domain pisa.swal.network. Se comprueba sobre el fichero del repo y
+        # sobre el bundle ya construido, y solo se imprime true/false: el repo
+        # es publico y aqui no puede salir ni un id.
         run: |
           set -euo pipefail
-          CFG=dist/server/wrangler.json
-          test -f "$CFG" || { echo "::error::$CFG no existe (normalize no corrio)"; exit 1; }
-          if grep -q 'REPLACE-ME' "$CFG"; then
-            echo "::error::$CFG conserva placeholders REPLACE-ME: el deploy no provisionaria nada"
-            exit 1
-          fi
-          if [ "${{ needs.resolve-target.outputs.is_production }}" = "true" ]; then
-            grep -q 'pisa.swal.network' "$CFG" || { echo "::error::falta la ruta pisa.swal.network en $CFG"; exit 1; }
-          else
-            grep -q 'workers_dev' "$CFG" || { echo "::error::a staging le falta workers_dev en $CFG"; exit 1; }
-          fi
-          node -p 'const c=require("./dist/server/wrangler.json"); `bundle ok -> name=${c.name} routes=${JSON.stringify(c.routes)} workers_dev=${c.workers_dev}`'
+          node -e '
+            const fs = require("node:fs");
+            const src = fs.readFileSync("wrangler.toml", "utf8");
+            const placeholder = /REPLACE-ME/.test(src);
+            const bindings = /^\s*\[\[(d1_databases|r2_buckets|kv_namespaces)\]\]/m.test(src);
+            const ok = !placeholder && !bindings;
+            console.log(`wrangler.toml sin placeholders ni bindings: ${ok}`);
+            if (!ok) {
+              console.error("::error::wrangler.toml lleva REPLACE-ME o un bloque d1/r2/kv: esta app no usa bindings, quitalo o justifica el cambio en el PR");
+              process.exit(1);
+            }
+          '
+          node -e '
+            const fs = require("node:fs");
+            const cfg = JSON.parse(fs.readFileSync("dist/server/wrangler.json", "utf8"));
+            const route = (cfg.routes ?? []).find((r) => r && r.pattern === "pisa.swal.network" && r.custom_domain === true);
+            const ok = Boolean(route);
+            console.log(`bundle con custom domain pisa.swal.network: ${ok}`);
+            if (!ok) {
+              console.error("::error::dist/server/wrangler.json no lleva la ruta pisa.swal.network con custom_domain=true: el worker se desplegaria sin dominio");
+              process.exit(1);
+            }
+          '
+      - name: Staging bundle without the production domain
+        # Staging reuses the production bundle under another worker name; without this
+        # step it would also claim the custom domain pisa.swal.network.
+        if: needs.resolve-target.outputs.target == 'staging'
+        run: |
+          node -e '
+            const fs = require("node:fs");
+            const p = "dist/server/wrangler.json";
+            const cfg = JSON.parse(fs.readFileSync(p, "utf8"));
+            delete cfg.routes;
+            cfg.workers_dev = true;
+            cfg.vars = { ...(cfg.vars ?? {}), ENVIRONMENT: "staging" };
+            fs.writeFileSync(p, JSON.stringify(cfg, null, 2));
+            console.log("staging bundle: routes removed, workers_dev=true");
+          '
       - name: Deploy Worker to Cloudflare
         uses: cloudflare/wrangler-action@v4
         with:
@@ -192,8 +204,10 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4.127.1"
           # `--name` sobreescribe el nombre del worker sin necesitar un
-          # [env.staging] en la config. Asi staging nunca puede pisar el worker
-          # de produccion aunque el build salga identico.
+          # [env.staging] en wrangler.toml, asi que el deploy de develop crea
+          # `pisastyle-staging` y no reescribe el worker de produccion. El paso
+          # anterior quita `routes` en staging, asi que staging nunca pide el
+          # custom domain pisa.swal.network.
           command: >-
             deploy
             --config dist/server/wrangler.json

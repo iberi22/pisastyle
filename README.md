@@ -21,7 +21,6 @@ pnpm run dev        # http://127.0.0.1:4321
 | `pnpm test` | Vitest — 472 tests (6 skipped) |
 | `pnpm run type-check` | `tsc --noEmit` |
 | `pnpm run test:tokens` | Contraste WCAG de los tokens en ambos temas |
-| `pnpm run check:public` | Puerta del repo público: sin ids de infra reales ni secretos |
 | `pnpm run build` | Build de producción (salida en `dist/`) |
 | `pnpm run preview` | Sirve el build |
 
@@ -98,7 +97,6 @@ Disponible en `src/lib/`, sin uso en las rutas públicas por ahora:
 pnpm run check   # 0 errores, 0 warnings
 pnpm test        # 472 tests (6 skipped)
 pnpm run test:tokens
-pnpm run check:public
 pnpm run build
 ```
 
@@ -107,11 +105,20 @@ Cloudflare listo para desplegar. El historial está en `CHANGELOG.md`.
 
 ## Despliegue
 
-Producción: **https://pisa.swal.network**. El repositorio es público, así que la
-config real de Cloudflare (`wrangler.toml`, con los ids) **no** se commitea: se
-lee del overlay privado y `scripts/normalize-wrangler-config.mjs` la fusiona en
-el bundle que despliega `wrangler`. Comandos, bindings y puertas de control en
-[`docs/DEPLOY.md`](docs/DEPLOY.md).
+Producción: **https://pisa.swal.network**. El Worker no usa ningún binding
+(R2/D1/KV/AI): `wrangler.toml` —público y sin ids— solo lo pone nombre, fecha de
+compatibilidad y dominio, y la cuenta la resuelve `wrangler` (login local o
+`CLOUDFLARE_ACCOUNT_ID` en CI):
+
+```bash
+pnpm install --frozen-lockfile
+pnpm run build
+npx wrangler deploy --config dist/server/wrangler.json
+```
+
+El primer deploy crea el Worker y la ruta de `pisa.swal.network` como **custom
+domain** de la zona `swal.network` (DNS y certificado los crea `wrangler`, sin
+paso manual). Detalle en [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ## Licencia
 

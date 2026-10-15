@@ -1,0 +1,32 @@
+# Config publica del Worker `pisastyle`. Este fichero SI se commitea y por eso no
+# lleva ni un id: la app no usa bindings (R2/D1/KV/AI) —ver docs/DEPLOY.md— y la
+# cuenta la resuelve wrangler (login local o CLOUDFLARE_ACCOUNT_ID en CI), asi que
+# no hay `account_id` aqui.
+#
+# Orden obligatorio en TOML: las claves de nivel superior van ANTES de cualquier
+# tabla (`[vars]`), o wrangler las interpreta como parte de la tabla.
+
+name = "pisastyle"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# workers.dev habilitado: da a staging (`--name pisastyle-staging`) y a los smoke
+# tests una URL propia bajo *.workers.dev, sin tocar el dominio de produccion.
+workers_dev = true
+
+# Dominio publico: https://pisa.swal.network
+#
+# `custom_domain = true` (y no `zone_name` + `/*`) es lo que hace que wrangler
+# cree el registro DNS y el certificado dentro de la zona swal.network, que ya
+# esta en la cuenta: no hay paso manual de DNS. El patron de un custom domain es
+# un hostname sin path.
+routes = [
+  { pattern = "pisa.swal.network", custom_domain = true }
+]
+
+[vars]
+# Diagnostico: aparecen en `wrangler tail` y en `wrangler deployments`. Ningun
+# fichero del bundle las lee en runtime (verificado con rg), asi que borrarlas no
+# cambiaria el comportamiento del Worker.
+ENVIRONMENT = "production"
+DOMAIN = "pisa.swal.network"

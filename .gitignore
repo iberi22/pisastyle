@@ -32,13 +32,7 @@ src/data/sample-*.json
 # entorno tambien (wrangler.dev.toml lleva IDs reales de una cuenta dev).
 wrangler.secrets.toml
 wrangler.*.toml
-# La plantilla publica SI se commitea. El config real (`wrangler.toml`) lleva el
-# id de cuenta y los ids de D1/KV/R2, y NUNCA se commitea: vive en el overlay
-# privado (repo iberi22/swal-infra, copiado en `/private`) y se copia a
-# `wrangler.toml` antes de construir/desplegar. Ver docs/DEPLOY.md.
-!wrangler.example.toml
-/wrangler.toml
-/private/
+!wrangler.toml
 .npmrc
 .credentials.json
 credentials.json

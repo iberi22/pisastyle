@@ -14,10 +14,7 @@ import {
   assertCloudSharesSafe,
 } from '@swal/vault/sealedPack.js';
 
-// Tipos Cloudflare bindings (compat con la plantilla wrangler.example.toml)
-// OJO: hoy NINGUNA pagina importa este modulo; solo sus tests. Los bindings
-// SWAL_R2/SWAL_D1/SWAL_KV no estan declarados en el bundle desplegado (ver
-// docs/DEPLOY.md, seccion 3). Sin bindings, este adapter degrada a memoria.
+// Tipos Cloudflare bindings (compat con wrangler.toml template)
 export type CloudflareEnv = {
   SWAL_R2?: { put(key: string, val: string, opts?: any): Promise<any>; get(key: string): Promise<any>; delete(key: string): Promise<any>; list(opts?: any): Promise<any> };
   SWAL_D1?: { prepare(sql: string): { bind(...a: any[]): { first(): Promise<any>; run(): Promise<any>; all(): Promise<any> } } };
