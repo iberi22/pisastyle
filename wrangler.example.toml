@@ -1,0 +1,82 @@
+# wrangler.example.toml — PLANTILLA PUBLICA. No lleva ni un id real, nunca.
+#
+# Este repo es PUBLICO (iberi22/pisastyle). El fichero que lee el deploy es
+# `wrangler.toml`, que esta en .gitignore: se copia desde el overlay privado
+# (`private/infra/wrangler.toml` del repo iberi22/swal-infra) o se rellena a
+# mano a partir de esta plantilla. Mismo patron que GARA-G y Fize.
+#
+#   cp wrangler.example.toml wrangler.toml       # rellenar los REPLACE-ME
+#   pnpm run build
+#   node scripts/normalize-wrangler-config.mjs --target production
+#   npx wrangler deploy --config dist/server/wrangler.json --name pisastyle
+#
+# Sin `wrangler.toml` el build y los tests funcionan igual (el adapter usa sus
+# defaults), pero el bundle sale sin vars ni fecha de compatibilidad:
+# scripts/normalize-wrangler-config.mjs las inyecta desde este fichero antes del
+# deploy, asi que el deploy de CI tambien es correcto.
+#
+# Detalles en docs/DEPLOY.md.
+name = "pisastyle"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Dominio publico del producto: https://pisa.swal.network
+#
+# `custom_domain = true` (no `zone_name` + `/*`) es lo que crea el registro DNS y
+# el certificado dentro de la zona swal.network, que ya vive en la cuenta. Con el
+# patron `host/*` habria que crear el registro DNS a mano primero. El patron de un
+# custom domain es un hostname sin path.
+routes = [
+  { pattern = "pisa.swal.network", custom_domain = true }
+]
+
+[vars]
+# Estas vars no las lee hoy ningun fichero del bundle (son informativas y de
+# diagnostico: aparecen en `wrangler tail`). `XAVIER_URL` documenta el endpoint
+# de memoria; el codigo que la usa (src/lib/xavier.ts) la lee en BUILD con
+# import.meta.env.PUBLIC_XAVIER_URL, no del runtime del Worker.
+ENVIRONMENT = "production"
+APP_ID = "pisastyle"
+DOMAIN = "pisa.swal.network"
+XAVIER_URL = "https://xavier.swal.network"
+
+# Necesario para que el Worker emita logs y se pueda diagnosticar sin redeploy.
+[observability]
+enabled = true
+
+# ---------------------------------------------------------------------------
+# BINDINGS OPCIONALES — hoy NINGUN codigo del bundle los usa. Comentados a
+# proposito: crear recursos que nadie lee gasta la cuota free de TODA la cuenta
+# SWAL (KV: 1.000 escrituras/dia; R2 y D1: bytes y filas compartidas).
+#
+# Medido el 2026-10-15 con `rg -n "env\.[A-Z_]+" src workers functions`:
+#  - `env.SWAL_R2` / `env.SWAL_D1` / `env.SWAL_KV` solo aparecen en
+#    src/lib/cloudflareVaultAdapter.ts, y ninguna pagina ni endpoint lo importa
+#    (unicamente sus tests). El adapter degrada solo a memoria si no hay bindings.
+#  - `env.AI` no aparece en ningun sitio: 9d8b05c borro workers/ai.ts y
+#    src/pages/api/ai/infer.ts.
+#
+# Para activar el vault cifrado mas adelante: crear el recurso, poner el id real
+# SOLO en `wrangler.toml` (gitignored) o en el overlay privado, y descomentar la
+# seccion aqui (el fichero publico se queda con los REPLACE-ME):
+#
+#   npx wrangler r2 bucket create swal-pisastyle-vault
+#   npx wrangler d1 create swal-pisastyle
+#   npx wrangler kv namespace create SWAL_KV
+#
+# [[r2_buckets]]
+# binding = "SWAL_R2"
+# bucket_name = "REPLACE-ME-pisastyle-vault"
+#
+# [[d1_databases]]
+# binding = "SWAL_D1"
+# database_name = "swal-pisastyle"
+# database_id = "REPLACE-ME-d1"
+# migrations_dir = "migrations"
+#
+# [[kv_namespaces]]
+# binding = "SWAL_KV"
+# id = "REPLACE-ME-kv"
+#
+# [ai]
+# binding = "AI"

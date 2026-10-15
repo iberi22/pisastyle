@@ -14,7 +14,7 @@ cd apps/mi-tienda && pnpm install && pnpm run build
 # preview: pnpm run dev
 ```
 
-El script genera `src/lib/domain.config.ts` con `appId` y `entities[]`, `wrangler.toml` name, `public/manifest.json`.
+El script genera `src/lib/domain.config.ts` con `appId` y `entities[]`, `wrangler.example.toml` name, `public/manifest.json`.
 
 Unico cambio obligatorio: `src/lib/domain.config.ts`
 
@@ -76,6 +76,6 @@ src/components/AuiRenderer.svelte
 src/lib/domain.config.ts  <- unico obligatorio
 src/lib/aui.ts/ xavier.ts / mesh.ts / llm.ts
 public/manifest.json (192/512 maskable)
-wrangler.toml (cloudflare pages)
+wrangler.example.toml (plantilla publica; el wrangler.toml real va gitignored)
 ```
 

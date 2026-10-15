@@ -9,7 +9,11 @@ on:
       - "workers/**"
       - "migrations/**"
       - "astro.config.mjs"
-      - "wrangler.toml"
+      # `wrangler.toml` (config real, con ids de cuenta) esta en .gitignore: no
+      # puede llegar a un push, asi que filtrar por el no disparaba NADA. Lo que
+      # SI cambia en el repo es la plantilla publica.
+      - "wrangler.example.toml"
+      - "scripts/**"
       - "package.json"
       # Sin esto, un fix que solo toque pnpm-workspace.yaml NO dispara el
       # deploy — que es justo lo que paso con el campo `packages`: se corrigio
@@ -108,7 +112,10 @@ jobs:
     name: "🛡️ Preflight Audit"
     needs: resolve-target
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # 15 min: ademas de check + tests + E2E, ahora el propio preflight construye
+    # (el `webServer` de Playwright solo arranca `astro preview`, que necesita
+    # `dist/`). Con 10 el job se cancelaba por tiempo en runners cargados.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -116,11 +123,26 @@ jobs:
       - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
+      # Puerta del arbol publico: ids de infra reales, ficheros que no deben
+      # estar trackeados y cadenas prohibidas. gitleaks se exige en ci-template.yml
+      # (ENFORCE_SECRET_SCAN=1); aqui se ejecuta la parte estructural.
+      - name: Public tree has no real infra ids
+        run: node scripts/check-public-tree.mjs
       - run: pnpm run check
       - run: pnpm test
+      # `pnpm exec playwright test` a secas NO puede pasar: el `webServer` de
+      # playwright.config.ts solo arranca `astro preview`, y sin `dist/` el
+      # preview no sirve nada y Playwright mata el job con exit 1. El build va
+      # aqui, explicito. No se usa `pnpm run test:e2e` porque ese script envuelve
+      # Playwright con el Chromium de NixOS (scripts/with-nix-browser.sh), que no
+      # existe en el runner de GitHub; aqui vale el Chromium que instala
+      # Playwright unas lineas mas abajo.
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm exec playwright test
+      - name: Build for E2E (astro preview sirve este dist)
+        run: pnpm run build
+      - name: E2E (chromium, desktop + mobile)
+        run: pnpm exec playwright test
 
   # Fase 3: Deploy SSR Worker (Pages vs Workers: SSR >26MB → wrangler deploy, no pages-action)
   deploy-worker:
@@ -138,15 +160,31 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Build SSR
         run: pnpm run build
-      # Los pasos siguientes solo aplican si el script existe en el repo. En el
-      # estado actual de esta rama los tres no estan, y `run:` sobre un fichero
-      # inexistente aborta el job antes de llegar al deploy.
       - name: Normalize Wrangler Config
-        if: hashFiles('scripts/normalize-wrangler-config.mjs') != ''
+        # Unico paso que sabe donde esta la config real (overlay privado ->
+        # wrangler.toml -> plantilla). Fusiona lo resuelto en
+        # dist/server/wrangler.json: nombre, fecha de compatibilidad, vars,
+        # `routes` con custom_domain y los bindings declarados. Sin este paso el
+        # bundle de Astro sale sin dominio. Falla (exit 1) si un binding
+        # declarado sigue con id REPLACE-ME.
         run: node scripts/normalize-wrangler-config.mjs --target "${{ needs.resolve-target.outputs.target }}"
-      - name: Pre-deploy Check
-        if: hashFiles('scripts/pre-deploy-check.js') != ''
-        run: node scripts/pre-deploy-check.js
+      - name: Verify deploy bundle
+        # Un deploy "en verde" sin dominio ni bindings es el fallo que costo 20
+        # runs. Aqui se corta antes de tocar Cloudflare.
+        run: |
+          set -euo pipefail
+          CFG=dist/server/wrangler.json
+          test -f "$CFG" || { echo "::error::$CFG no existe (normalize no corrio)"; exit 1; }
+          if grep -q 'REPLACE-ME' "$CFG"; then
+            echo "::error::$CFG conserva placeholders REPLACE-ME: el deploy no provisionaria nada"
+            exit 1
+          fi
+          if [ "${{ needs.resolve-target.outputs.is_production }}" = "true" ]; then
+            grep -q 'pisa.swal.network' "$CFG" || { echo "::error::falta la ruta pisa.swal.network en $CFG"; exit 1; }
+          else
+            grep -q 'workers_dev' "$CFG" || { echo "::error::a staging le falta workers_dev en $CFG"; exit 1; }
+          fi
+          node -p 'const c=require("./dist/server/wrangler.json"); `bundle ok -> name=${c.name} routes=${JSON.stringify(c.routes)} workers_dev=${c.workers_dev}`'
       - name: Deploy Worker to Cloudflare
         uses: cloudflare/wrangler-action@v4
         with:
@@ -154,9 +192,8 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4.127.1"
           # `--name` sobreescribe el nombre del worker sin necesitar un
-          # [env.staging] en wrangler.toml (que ademas esta lleno de
-          # placeholders REPLACE-ME y no debe tocarse). Asi staging nunca puede
-          # pisar el worker de produccion aunque el build salga identico.
+          # [env.staging] en la config. Asi staging nunca puede pisar el worker
+          # de produccion aunque el build salga identico.
           command: >-
             deploy
             --config dist/server/wrangler.json

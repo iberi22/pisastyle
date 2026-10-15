@@ -27,7 +27,7 @@ cd apps/mi-flota && pnpm install && pnpm run build
 # edita src/lib/domain.config.ts: cambia appName, entities fields
 ```
 
-El script reescribe package.json name, domain.config appId/entities, wrangler.toml name, manifest.json. Todo lo demas (vault/mesh/UI) se reusa sin copiar.
+El script reescribe package.json name, domain.config appId/entities, wrangler.example.toml name, manifest.json. Todo lo demas (vault/mesh/UI) se reusa sin copiar.
 
 ## Activar vault cifrado en tu app (onMount)
 

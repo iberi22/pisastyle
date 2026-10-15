@@ -18,9 +18,10 @@ pnpm run dev        # http://127.0.0.1:4321
 |---|---|
 | `pnpm run dev` | Servidor de desarrollo (Astro) |
 | `pnpm run check` | `astro check` |
-| `pnpm test` | Vitest — 125 tests |
+| `pnpm test` | Vitest — 472 tests (6 skipped) |
 | `pnpm run type-check` | `tsc --noEmit` |
 | `pnpm run test:tokens` | Contraste WCAG de los tokens en ambos temas |
+| `pnpm run check:public` | Puerta del repo público: sin ids de infra reales ni secretos |
 | `pnpm run build` | Build de producción (salida en `dist/`) |
 | `pnpm run preview` | Sirve el build |
 
@@ -95,13 +96,22 @@ Disponible en `src/lib/`, sin uso en las rutas públicas por ahora:
 
 ```bash
 pnpm run check   # 0 errores, 0 warnings
-pnpm test        # 125 tests
+pnpm test        # 472 tests (6 skipped)
 pnpm run test:tokens
+pnpm run check:public
 pnpm run build
 ```
 
 Los tres locales responden 200 y el build deja el sitio con el worker de
 Cloudflare listo para desplegar. El historial está en `CHANGELOG.md`.
+
+## Despliegue
+
+Producción: **https://pisa.swal.network**. El repositorio es público, así que la
+config real de Cloudflare (`wrangler.toml`, con los ids) **no** se commitea: se
+lee del overlay privado y `scripts/normalize-wrangler-config.mjs` la fusiona en
+el bundle que despliega `wrangler`. Comandos, bindings y puertas de control en
+[`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ## Licencia
 
