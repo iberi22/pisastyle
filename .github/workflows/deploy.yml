@@ -198,20 +198,16 @@ jobs:
             console.log("staging bundle: routes removed, workers_dev=true");
           '
       - name: Deploy Worker to Cloudflare
-        uses: cloudflare/wrangler-action@v4
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          wranglerVersion: "4.127.1"
-          # `--name` sobreescribe el nombre del worker sin necesitar un
-          # [env.staging] en wrangler.toml, asi que el deploy de develop crea
-          # `pisastyle-staging` y no reescribe el worker de produccion. El paso
-          # anterior quita `routes` en staging, asi que staging nunca pide el
-          # custom domain pisa.swal.network.
-          command: >-
-            deploy
-            --config dist/server/wrangler.json
-            --name ${{ needs.resolve-target.outputs.worker_name }}
+        # wrangler-action tries `pnpm add wrangler` at the workspace root, which pnpm
+        # refuses (ERR_PNPM_ADDING_TO_ROOT). Run the pinned wrangler with pnpm dlx.
+        # `--name` gives staging its own worker; the step above strips its routes.
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: >-
+          pnpm dlx wrangler@4.127.1 deploy
+          --config dist/server/wrangler.json
+          --name ${{ needs.resolve-target.outputs.worker_name }}
 
   # Fase 4+5: Smoke + Version Tag
   smoke-test:
