@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "SWAL App Template — Astro + Svelte 5 + @swal/ui + vite-pwa + edge-mesh + Xavier + LLM (scaffold canonico, copiar para crear apps)",
+  "description": "PISA-style exam practice and study units in Spanish, English and Portuguese (SWAL).",
   "scripts": {
     "dev": "astro dev",
     "build": "astro check && astro build",

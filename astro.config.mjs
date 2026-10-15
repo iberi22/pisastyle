@@ -6,7 +6,18 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
   site: 'https://pisa.swal.network',
   output: 'server',
-  adapter: cloudflare({ prerenderEnvironment: 'node', remoteBindings: false }),
+  // Sin sesiones de Astro: 0 usos de `Astro.session` en src/. Con el driver KV del
+  // adapter activo, el bundle pide un namespace KV SESSION y `wrangler deploy` lo
+  // auto-provisiona: son escrituras que salen de la cuota free de TODA la cuenta
+  // SWAL (1.000/dia) para algo que nadie lee.
+  session: false,
+  adapter: cloudflare({
+    prerenderEnvironment: 'node',
+    remoteBindings: false,
+    // 0 usos de `astro:assets` / `<Image>` en src/: passthrough, sin binding
+    // IMAGES (Cloudflare Images se factura por transformacion) y sin sharp.
+    imageService: 'passthrough',
+  }),
   // Escucha explicita en IPv4: por defecto `astro dev` se ata solo a [::1] y cualquier sonda que
   // use http://127.0.0.1 (monitores, `hermes verify`, contenedores, curl desde un host) recibe
   // "connection refused" aunque el servidor este perfectamente vivo.

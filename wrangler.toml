@@ -1,36 +1,32 @@
+# Config publica del Worker `pisastyle`. Este fichero SI se commitea y por eso no
+# lleva ni un id: la app no usa bindings (R2/D1/KV/AI) —ver docs/DEPLOY.md— y la
+# cuenta la resuelve wrangler (login local o CLOUDFLARE_ACCOUNT_ID en CI), asi que
+# no hay `account_id` aqui.
+#
+# Orden obligatorio en TOML: las claves de nivel superior van ANTES de cualquier
+# tabla (`[vars]`), o wrangler las interpreta como parte de la tabla.
+
 name = "pisastyle"
 compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
 
-# --- Cloudflare Vault 100% cifrado + Pay-per-use 5% + mesh-only gratis ---
-# Modelo: 1 camion = 100 camiones mismo precio (no fee por vehiculo, solo consumo R2/D1/AI).
-# Si no usas backend (mesh-only), costo 0 y datos viven replicados en otros nodos gara-g via Yjs P2P.
-# Si usas backend: precio pay-per-use (ver docs privados). Overages se cobran, no bloquean.
-# Ver cores/swal-vault + src/lib/cloudflareVaultAdapter.ts + src/lib/billing.ts (SWAL_HANDLING 0.05)
-# Provisionar:
-# wrangler r2 bucket create swal-app-template-vault
-# wrangler d1 create swal-billing
-# wrangler d1 create swal-app-template-domain
-# wrangler kv namespace create SWAL_KV
-# wrangler d1 execute swal-billing --file=./migrations/001_billing.sql
+# workers.dev habilitado: da a staging (`--name pisastyle-staging`) y a los smoke
+# tests una URL propia bajo *.workers.dev, sin tocar el dominio de produccion.
+workers_dev = true
 
-[[r2_buckets]]
-binding = "SWAL_R2"
-bucket_name = "swal-pisastyle-vault"
-
-[[d1_databases]]
-binding = "SWAL_D1"
-database_name = "swal-billing"
-database_id = "REPLACE-ME-billing"
-
-[[kv_namespaces]]
-binding = "SWAL_KV"
-id = "REPLACE-ME-swal-kv"
-
-[ai]
-binding = "AI"
+# Dominio publico: https://pisa.swal.network
+#
+# `custom_domain = true` (y no `zone_name` + `/*`) es lo que hace que wrangler
+# cree el registro DNS y el certificado dentro de la zona swal.network, que ya
+# esta en la cuenta: no hay paso manual de DNS. El patron de un custom domain es
+# un hostname sin path.
+routes = [
+  { pattern = "pisa.swal.network", custom_domain = true }
+]
 
 [vars]
-NODE_VERSION = "20"
-# Para fork: cambia bucket_name a swal-{appId}-vault y database_name a swal-{appId}-domain
-# via scripts/create-app.mjs (reescribe wrangler.toml automaticamente)
+# Diagnostico: aparecen en `wrangler tail` y en `wrangler deployments`. Ningun
+# fichero del bundle las lee en runtime (verificado con rg), asi que borrarlas no
+# cambiaria el comportamiento del Worker.
+ENVIRONMENT = "production"
+DOMAIN = "pisa.swal.network"

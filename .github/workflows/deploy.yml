@@ -108,7 +108,10 @@ jobs:
     name: "🛡️ Preflight Audit"
     needs: resolve-target
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # 15 min: ademas de check + tests + E2E, ahora el propio preflight construye
+    # (el `webServer` de Playwright solo arranca `astro preview`, que necesita
+    # `dist/`). Con 10 el job se cancelaba por tiempo en runners cargados.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -118,9 +121,19 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check
       - run: pnpm test
+      # `pnpm exec playwright test` a secas NO puede pasar: el `webServer` de
+      # playwright.config.ts solo arranca `astro preview`, y sin `dist/` el
+      # preview no sirve nada y Playwright mata el job con exit 1. El build va
+      # aqui, explicito. No se usa `pnpm run test:e2e` porque ese script envuelve
+      # Playwright con el Chromium de NixOS (scripts/with-nix-browser.sh), que no
+      # existe en el runner de GitHub; aqui vale el Chromium que instala
+      # Playwright unas lineas mas abajo.
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm exec playwright test
+      - name: Build for E2E (astro preview sirve este dist)
+        run: pnpm run build
+      - name: E2E (chromium, desktop + mobile)
+        run: pnpm exec playwright test
 
   # Fase 3: Deploy SSR Worker (Pages vs Workers: SSR >26MB → wrangler deploy, no pages-action)
   deploy-worker:
@@ -138,15 +151,52 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Build SSR
         run: pnpm run build
-      # Los pasos siguientes solo aplican si el script existe en el repo. En el
-      # estado actual de esta rama los tres no estan, y `run:` sobre un fichero
-      # inexistente aborta el job antes de llegar al deploy.
-      - name: Normalize Wrangler Config
-        if: hashFiles('scripts/normalize-wrangler-config.mjs') != ''
-        run: node scripts/normalize-wrangler-config.mjs --target "${{ needs.resolve-target.outputs.target }}"
-      - name: Pre-deploy Check
-        if: hashFiles('scripts/pre-deploy-check.js') != ''
-        run: node scripts/pre-deploy-check.js
+      - name: Verify deploy config
+        # Unica puerta previa a Cloudflare, y la unica que sabe como debe salir
+        # este deploy: la app no usa bindings y produccion vive en el custom
+        # domain pisa.swal.network. Se comprueba sobre el fichero del repo y
+        # sobre el bundle ya construido, y solo se imprime true/false: el repo
+        # es publico y aqui no puede salir ni un id.
+        run: |
+          set -euo pipefail
+          node -e '
+            const fs = require("node:fs");
+            const src = fs.readFileSync("wrangler.toml", "utf8");
+            const placeholder = /REPLACE-ME/.test(src);
+            const bindings = /^\s*\[\[(d1_databases|r2_buckets|kv_namespaces)\]\]/m.test(src);
+            const ok = !placeholder && !bindings;
+            console.log(`wrangler.toml sin placeholders ni bindings: ${ok}`);
+            if (!ok) {
+              console.error("::error::wrangler.toml lleva REPLACE-ME o un bloque d1/r2/kv: esta app no usa bindings, quitalo o justifica el cambio en el PR");
+              process.exit(1);
+            }
+          '
+          node -e '
+            const fs = require("node:fs");
+            const cfg = JSON.parse(fs.readFileSync("dist/server/wrangler.json", "utf8"));
+            const route = (cfg.routes ?? []).find((r) => r && r.pattern === "pisa.swal.network" && r.custom_domain === true);
+            const ok = Boolean(route);
+            console.log(`bundle con custom domain pisa.swal.network: ${ok}`);
+            if (!ok) {
+              console.error("::error::dist/server/wrangler.json no lleva la ruta pisa.swal.network con custom_domain=true: el worker se desplegaria sin dominio");
+              process.exit(1);
+            }
+          '
+      - name: Staging bundle without the production domain
+        # Staging reuses the production bundle under another worker name; without this
+        # step it would also claim the custom domain pisa.swal.network.
+        if: needs.resolve-target.outputs.target == 'staging'
+        run: |
+          node -e '
+            const fs = require("node:fs");
+            const p = "dist/server/wrangler.json";
+            const cfg = JSON.parse(fs.readFileSync(p, "utf8"));
+            delete cfg.routes;
+            cfg.workers_dev = true;
+            cfg.vars = { ...(cfg.vars ?? {}), ENVIRONMENT: "staging" };
+            fs.writeFileSync(p, JSON.stringify(cfg, null, 2));
+            console.log("staging bundle: routes removed, workers_dev=true");
+          '
       - name: Deploy Worker to Cloudflare
         uses: cloudflare/wrangler-action@v4
         with:
@@ -154,9 +204,10 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4.127.1"
           # `--name` sobreescribe el nombre del worker sin necesitar un
-          # [env.staging] en wrangler.toml (que ademas esta lleno de
-          # placeholders REPLACE-ME y no debe tocarse). Asi staging nunca puede
-          # pisar el worker de produccion aunque el build salga identico.
+          # [env.staging] en wrangler.toml, asi que el deploy de develop crea
+          # `pisastyle-staging` y no reescribe el worker de produccion. El paso
+          # anterior quita `routes` en staging, asi que staging nunca pide el
+          # custom domain pisa.swal.network.
           command: >-
             deploy
             --config dist/server/wrangler.json
