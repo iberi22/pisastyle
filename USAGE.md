@@ -1,6 +1,6 @@
 # @swal/app-template — Uso
 
-Template canonico SWAL (Astro 7 + Svelte 5 + @swal/ui + vite-pwa + Cloudflare + Xavier + mesh + LLM + AUI + Socio 20%).
+Template canonico SWAL (Astro 7 + Svelte 5 + @swal/ui + vite-pwa + Cloudflare + Xavier + mesh + LLM + AUI).
 
 ## Crear una app
 
@@ -25,7 +25,6 @@ export const domainConfig = {
   instanceId: 'default',
   entities: [{ name:'product', label:'Producto', fields:['name','price'], xavierKind:'product' }],
   aui: { enabled:true, allowAgentTheme:true },
-  billing: { tier:'socio', mode:'swal-managed' },
 } as const;
 ```
 
@@ -37,7 +36,7 @@ export const domainConfig = {
 import { generateAui } from '../lib/aui';
 import AuiRenderer from '../components/AuiRenderer.svelte';
 
-// si hay LLM + credito socio, el agente genera JSON whitelisteado
+// si hay LLM, el agente genera JSON whitelisteado
 const spec = await generateAui("muestra productos con stock bajo", true);
 ```
 
@@ -49,39 +48,13 @@ Whitelist: `Card, Button, Badge, Input, Table, Tabs, Modal, StatusBadge, Skeleto
 
 Fallback: si no hay LLM, usa UI estatica.
 
-### Billing — Socio + Cloudflare 20%
-
-```ts
-import { calculatePrice, canAffordInference, formatPriceBreakdown } from '../lib/billing';
-
-// infra Cloudflare + AI con margen + handling (ver docs privados)
-const { total, handling } = calculatePrice(infraCost, aiCostBase);
-console.log(formatPriceBreakdown(0.5, 0.3)); // Infra $0.50 + AI $0.33 ... total $1.00
-
-// credito
-canAffordInference(tokens, used, 'socio'); // true/false (402 si agotado)
-// inferencia via Worker
-import { cfAiInfer } from '../lib/billing';
-const res = await cfAiInfer(prompt, { tierId:'socio', mode:'swal-managed' });
-```
-
-Wrangler bindings (descomentar en `wrangler.toml` al provisionar):
-
-```toml
-[[r2_buckets]] binding="SWAL_R2" bucket_name="swal-mi-tienda-r2"
-[[d1_databases]] binding="SWAL_D1" database_name="swal-billing"
-[[kv_namespaces]] binding="SWAL_KV" id="..."
-[ai] binding="AI"
-```
-
-Ver `src/lib/billing.ts` y `src/lib/worker-ai.example.ts`.
 
 ### Xavier + Mesh + LLM
 
 ```ts
 import { xavierSearch, xavierAdd } from '../lib/xavier'; // ns app/{appId}/instance/{id}
 import { meshPublish } from '../lib/mesh'; // room swal/{appId}/{id}
-import { llmComplete } from '../lib/llm'; // Router local->opencode->openrouter->gemini + cfAiInfer si socio
+import { llmComplete } from '../lib/llm'; // Router local->opencode->openrouter->gemini
 ```
 
 ## Comandos
@@ -101,13 +74,8 @@ src/layouts/Layout.astro  (@swal/ui/tokens + Toaster)
 src/pages/index.astro     (demo AUI + stats + instrucciones)
 src/components/AuiRenderer.svelte
 src/lib/domain.config.ts  <- unico obligatorio
-src/lib/aui.ts / billing.ts / xavier.ts / mesh.ts / llm.ts / worker-ai.example.ts
+src/lib/aui.ts/ xavier.ts / mesh.ts / llm.ts
 public/manifest.json (192/512 maskable)
 wrangler.toml (cloudflare pages)
 ```
 
-## Tipos de tier
-
-- `free`: 0 credito, 1GB R2, 0$
-- `member`: cuota base + consumo (ver docs privados)
-- `managed`: cuota ampliada, SWAL gestiona infra (ver docs privados)
