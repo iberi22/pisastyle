@@ -2,14 +2,12 @@
 import Layout from '../layouts/Layout.astro';
 import { Button, Card, Badge, StatusBadge } from '@swal/ui';
 import AuiRenderer from '../components/AuiRenderer.svelte';
-import ProBadge from '../components/ProBadge.svelte';
-import CreditMeter from '../components/CreditMeter.svelte';
 import type { AuiSpec } from '../lib/aui';
 
-// Demo AUI spec (en prod viene de generateAui(prompt) si hay LLM + tier socio con credito)
+// Demo AUI spec (en prod viene de generateAui(prompt) si hay LLM)
 const demoAui: AuiSpec = {
   version: 1,
-  copy: { title: 'Demo AUI — agente genera UI', subtitle: 'Si hay LLM + credito socio, el agente genera este JSON. Sino, cae a UI estatica.' },
+  copy: { title: 'Demo AUI — agente genera UI', subtitle: 'Si hay LLM, el agente genera este JSON. Sino, cae a UI estatica.' },
   components: [
     { id: 'c1', type: 'Card', props: { variant: 'surface', padding: 'md', title: 'AUI Card 1', content: 'Generada por agente — whitelisteada @swal/ui' } },
     { id: 'b1', type: 'Button', props: { variant: 'primary', label: 'Acción AUI' } },
@@ -51,18 +49,14 @@ const stats = [
       <span class="lab">Capas:</span>
       <StatusBadge status="healthy" /> <span>xavier app/my-app/instance/*</span>
       <StatusBadge status="healthy" /> <span>mesh swal/my-app/*</span>
-      <StatusBadge status="warning" /> <span>llm (credito socio -> Cloudflare AI)</span>
-      <StatusBadge status="healthy" /> <span>billing 20% handling</span>
-      <ProBadge tier="socio" mode="swal-managed" client:load />
     </div>
 
-    <CreditMeter used={12500} tier="socio" infra={0.5} aiBase={0.3} client:load />
 
     <Card variant="elevated" padding="lg">
       <h2>AUI — UI generada por agente (nuevo)</h2>
-      <p class="hint">Si hay LLM presente (local xavier-gpud u on-cloud via Workers AI con credito socio), el agente llama <code>generateAui(prompt)</code> y este renderer pinta el JSON whitelisteado. Sin LLM, se muestra UI estatica fallback.</p>
+      <p class="hint">Si hay LLM presente (local xavier-gpud u on-cloud via Workers AI), el agente llama <code>generateAui(prompt)</code> y este renderer pinta el JSON whitelisteado. Sin LLM, se muestra UI estatica fallback.</p>
       <AuiRenderer spec={demoAui} client:load />
-      <p class="hint">Whitelist: Card/Button/Badge/Input/Table/Tabs/Modal/StatusBadge/Skeleton — lockedKeys bloqueados. Costo AI: base Cloudflare + 10% min + 20% handling SWAL (ver <code>src/lib/billing.ts</code>).</p>
+      <p class="hint">Whitelist: Card/Button/Badge/Input/Table/Tabs/Modal/StatusBadge/Skeleton — lockedKeys bloqueados. </p>
     </Card>
 
     <Card variant="elevated" padding="lg">

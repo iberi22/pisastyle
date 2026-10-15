@@ -77,12 +77,5 @@ export const domainConfig = {
     enabled: true,
     allowAgentTheme: true,
   },
-  // pay-per-use 5% + mesh-only gratis: 1 camion = 100 camiones mismo precio (solo consumo R2/D1/AI)
-  // mesh-only: 0$ (datos P2P Yjs replicados en otros nodos gara-g sin Cloudflare)
-  // payg: infra + AI con margen + handling (ver docs privados), sin fee por entidad
-  billing: {
-    tier: 'payg' as const, // 'free' | 'mesh-only' | 'payg' | 'payg-managed'
-    mode: 'swal-managed' as const, // 'mesh-only' | 'self-managed' | 'swal-managed'
-  },
 } as const;
 export type DomainConfig = typeof domainConfig;

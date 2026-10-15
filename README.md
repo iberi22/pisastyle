@@ -87,7 +87,6 @@ Disponible en `src/lib/`, sin uso en las rutas públicas por ahora:
   Yjs/y-webrtc.
 - **LLM:** `llmComplete({prompt, system, useMemory})` → `ProviderRouter`.
 - **AUI:** `AuiRenderer.svelte` + `src/lib/aui.ts` (whitelist de componentes).
-- **Billing:** `src/lib/billing.ts`, tiers socio/managed con 20 % de handling.
 
 `src/lib/domain.config.ts` es el archivo que conecta el modelo de negocio
 (appId + entities) con esa capa.
