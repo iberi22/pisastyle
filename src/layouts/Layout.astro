@@ -1,5 +1,6 @@
 ---
 import { Toaster } from '@swal/ui';
+import ConsentBanner from '../components/ConsentBanner.svelte';
 import { PISASTYLE_DEFAULT_LOCALE, type PisaLocale } from '../lib/pisa-i18n';
 import SiteNav from '../components/SiteNav.astro';
 import {
@@ -99,6 +100,14 @@ const ogImage = ogImageUrl(seoLocale, origin);
 
 const pageUrl = canonical ?? new URL(`/${seoLocale}`, origin).href;
 
+
+const consentCopy = {
+  es: { title: 'Privacidad', desc: 'Comparto telemetría anonimizada a cambio de tokens SWAL', ok: 'Aceptar', no: 'Rechazar' },
+  en: { title: 'Privacy', desc: 'I share anonymized telemetry in exchange for SWAL tokens', ok: 'Accept', no: 'Reject' },
+  pt: { title: 'Privacidade', desc: 'Compartilho telemetria anonimizada em troca de tokens SWAL', ok: 'Aceitar', no: 'Rejeitar' },
+};
+const bannerText = consentCopy[seoLocale] || consentCopy.en;
+
 const jsonLd = serializeJsonLd(
   buildJsonLd({
     locale: seoLocale,
@@ -175,6 +184,14 @@ const jsonLd = serializeJsonLd(
     )}
     <slot />
     <Toaster client:load />
+    <ConsentBanner
+      client:only="svelte"
+      title={bannerText.title}
+      description={bannerText.desc}
+      acceptText={bannerText.ok}
+      rejectText={bannerText.no}
+    />
+
 
     {/* CSS de los componentes de @swal/ui.
         Antes esto no se podia hacer y la app llevaba parches propios: el core
