@@ -1,11 +1,27 @@
-export interface TelemetryEvent {
-  id: string;
-  name: string;
-  timestamp: number;
-  data?: Record<string, unknown>;
-}
+export const allowlist = [
+  'event_type',
+  'unit_id',
+  'domain',
+  'process',
+  'content',
+  'context',
+  'level',
+  'correct',
+  'duration_ms',
+  'locale',
+  'country_hint',
+  'device_class',
+  'app_version',
+  'instance_ref',
+  'consent_version'
+] as const;
 
-export const allowlist: string[] = [];
+export type TelemetryEvent = Partial<Record<typeof allowlist[number], unknown>> & { event_type: string };
+
+interface BufferedEvent {
+  timestamp: number;
+  payload: TelemetryEvent;
+}
 
 const MAX_BUFFER_SIZE = 200;
 const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -47,15 +63,36 @@ export function getOptIn(): boolean {
   return isOptedIn;
 }
 
+export function roundDurationMs(ms: number): number {
+  return Math.round(ms / 5000) * 5000;
+}
+
+export async function instanceRef(instanceId: string, dateIso: string): Promise<string> {
+  const input = instanceId + dateIso;
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
+  const hashBuffer = await globalThis.crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex.slice(0, 16);
+}
+
 export function buildEvent(name: string, data?: Record<string, unknown>): TelemetryEvent {
-  return {
-    id: typeof crypto !== 'undefined' && crypto.randomUUID
-      ? crypto.randomUUID()
-      : Math.random().toString(36).slice(2),
-    name,
-    timestamp: Date.now(),
-    data
-  };
+  const event: TelemetryEvent = { event_type: name };
+
+  if (data) {
+    for (const key of Object.keys(data)) {
+      if (key !== 'event_type' && (allowlist as readonly string[]).includes(key)) {
+        if (key === 'duration_ms' && typeof data[key] === 'number') {
+          event.duration_ms = roundDurationMs(data[key] as number);
+        } else {
+          (event as any)[key] = data[key];
+        }
+      }
+    }
+  }
+
+  return event;
 }
 
 export function trackEvent(name: string, data?: Record<string, unknown>): void {
@@ -69,7 +106,7 @@ function saveToBuffer(event: TelemetryEvent): void {
   if (typeof window === 'undefined' || !window.localStorage) return;
 
   try {
-    let buffer: TelemetryEvent[] = [];
+    let buffer: BufferedEvent[] = [];
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       buffer = JSON.parse(stored);
@@ -77,10 +114,10 @@ function saveToBuffer(event: TelemetryEvent): void {
 
     // TTL cleanup
     const now = Date.now();
-    buffer = buffer.filter(e => now - e.timestamp <= TTL_MS);
+    buffer = buffer.filter(b => now - b.timestamp <= TTL_MS);
 
     // Add new event
-    buffer.push(event);
+    buffer.push({ timestamp: now, payload: event });
 
     // Enforce size <= 200
     if (buffer.length > MAX_BUFFER_SIZE) {
@@ -100,13 +137,13 @@ export function getTelemetryBuffer(): TelemetryEvent[] {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return [];
 
-    let buffer: TelemetryEvent[] = JSON.parse(stored);
+    let buffer: BufferedEvent[] = JSON.parse(stored);
 
     // TTL cleanup on read
     const now = Date.now();
-    buffer = buffer.filter(e => now - e.timestamp <= TTL_MS);
+    buffer = buffer.filter(b => now - b.timestamp <= TTL_MS);
 
-    return buffer;
+    return buffer.map(b => b.payload);
   } catch {
     return [];
   }
