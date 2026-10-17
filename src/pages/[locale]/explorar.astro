@@ -6,6 +6,7 @@ import RankingBars from '../../components/RankingBars.astro';
 import { landingCtas, LANDING_TAGLINE } from '../../lib/landing';
 import { loadUnit } from '../../lib/units';
 import { isPisaLocale } from '../../lib/pisa-i18n';
+import { ONBOARDING_STEPS } from '../../lib/onboarding';
 
 export function getStaticPaths() {
   return [
@@ -43,6 +44,12 @@ const { data: unitData, origin: unitOrigin } = loadUnit(routeLocale(locale));
 const faqData = faqModules[`../../data/faq.${locale}.json`]
   ? (faqModules[`../../data/faq.${locale}.json`] as any).default
   : [];
+
+const ONBOARDING_TITLE = {
+  es: 'Cómo funciona',
+  en: 'How it works',
+  pt: 'Como funciona'
+};
 
 const t = {
   es: {
@@ -110,6 +117,18 @@ const t = {
           ))}
         </nav>
       </div>
+
+    <section id="onboarding" class="faq-section">
+      <h2>{ONBOARDING_TITLE[locale as 'es' | 'en' | 'pt']}</h2>
+      <div class="faq-grid">
+        {ONBOARDING_STEPS[locale as 'es' | 'en' | 'pt'].map((step) => (
+          <Card variant="surface" padding="md">
+            <h4>{step.title}</h4>
+            <p>{step.body}</p>
+          </Card>
+        ))}
+      </div>
+    </section>
 
     {unitData && unitOrigin === 'vault' && <p class="origin-note">{t.vault_notice}</p>}
 
