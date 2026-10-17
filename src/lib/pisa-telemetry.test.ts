@@ -63,6 +63,23 @@ describe('pisa-telemetry', () => {
     expect(hash1).not.toBe(hash3);
   });
 
+  it('instanceRef without crypto => undefined', async () => {
+    const pisaTelemetry = await import('./pisa-telemetry');
+    const originalSeam = pisaTelemetry.testing.digestSeam;
+
+    // Simulate no crypto
+    pisaTelemetry.testing.digestSeam = undefined;
+    const globalCrypto = globalThis.crypto;
+    Object.defineProperty(globalThis, 'crypto', { value: undefined, configurable: true });
+
+    const result = await instanceRef('student-0001', '2026-10-16');
+    expect(result).toBeUndefined();
+
+    // Restore
+    Object.defineProperty(globalThis, 'crypto', { value: globalCrypto, configurable: true });
+    pisaTelemetry.testing.digestSeam = originalSeam;
+  });
+
   it('buildEvent creates valid event and drops forbidden keys', () => {
     const event = buildEvent('unit_started', {
       correct: 1,
@@ -71,42 +88,98 @@ describe('pisa-telemetry', () => {
       ip: '127.0.0.1'
     });
 
-    expect(event.event_type).toBe('unit_started');
-    expect(event.correct).toBe(1);
-    expect(event.duration_ms).toBe(45000); // Should be rounded
-    expect((event as any).email).toBeUndefined(); // Forbidden
-    expect((event as any).ip).toBeUndefined(); // Forbidden
+    expect(event?.event_type).toBe('unit_started');
+    expect(event?.correct).toBe(1);
+    expect(event?.duration_ms).toBe(45000); // Should be rounded
+    expect((event as any)?.email).toBeUndefined(); // Forbidden
+    expect((event as any)?.ip).toBeUndefined(); // Forbidden
   });
 
   it('buildEvent drops nested PII', () => {
     const event = buildEvent('unit_started', {
       content: { nested: 'pii' }
     });
-    expect((event as any).content).toBeUndefined();
+    expect((event as any)?.content).toBeUndefined();
   });
 
   it('buildEvent rejects raw id for instance_ref', () => {
     const event = buildEvent('unit_started', {
       instance_ref: 'student-0001'
     });
-    expect(event.instance_ref).toBeUndefined();
+    expect(event?.instance_ref).toBeUndefined();
 
     const validEvent = buildEvent('unit_started', {
       instance_ref: '0123456789abcdef'
     });
-    expect(validEvent.instance_ref).toBe('0123456789abcdef');
+    expect(validEvent?.instance_ref).toBe('0123456789abcdef');
   });
 
   it('buildEvent rejects string duration', () => {
     const event = buildEvent('unit_started', {
       duration_ms: '45000'
     });
-    expect(event.duration_ms).toBeUndefined();
+    expect(event?.duration_ms).toBeUndefined();
   });
 
   it('buildEvent rejects invalid event_type', () => {
     const event = buildEvent('invalid_event');
-    expect(event.event_type).toBeUndefined();
+    expect(event).toBeNull();
+  });
+
+  it('buildEvent rejects country_hint if invalid', () => {
+    let event = buildEvent('unit_started', { country_hint: 'COL' });
+    expect(event?.country_hint).toBeUndefined();
+
+    event = buildEvent('unit_started', { country_hint: 'c1' });
+    expect(event?.country_hint).toBeUndefined();
+
+    event = buildEvent('unit_started', { country_hint: 'CO' });
+    expect(event?.country_hint).toBe('CO');
+  });
+
+  it('buildEvent rejects locale if not in PISASTYLE_LOCALES', () => {
+    let event = buildEvent('unit_started', { locale: 'fr' });
+    expect(event?.locale).toBeUndefined();
+
+    event = buildEvent('unit_started', { locale: 'es' });
+    expect(event?.locale).toBe('es');
+  });
+
+  it('buildEvent rejects token fields if they have spaces or are too long', () => {
+    let event = buildEvent('unit_started', { unit_id: 'literal string with spaces' });
+    expect(event?.unit_id).toBeUndefined();
+
+    const longString = 'a'.repeat(65);
+    event = buildEvent('unit_started', { unit_id: longString });
+    expect(event?.unit_id).toBeUndefined();
+
+    event = buildEvent('unit_started', { unit_id: 'valid-token.1_2' });
+    expect(event?.unit_id).toBe('valid-token.1_2');
+  });
+
+  it('buildEvent rejects correct outside 0, 0.5, 1', () => {
+    let event = buildEvent('unit_started', { correct: 0.8 });
+    expect(event?.correct).toBeUndefined();
+
+    event = buildEvent('unit_started', { correct: 2 });
+    expect(event?.correct).toBeUndefined();
+
+    event = buildEvent('unit_started', { correct: 0.5 });
+    expect(event?.correct).toBe(0.5);
+  });
+
+  it('buildEvent rejects device_class outside enum', () => {
+    let event = buildEvent('unit_started', { device_class: 'tablet' });
+    expect(event?.device_class).toBeUndefined();
+
+    event = buildEvent('unit_started', { device_class: 'mobile' });
+    expect(event?.device_class).toBe('mobile');
+  });
+
+  it('trackEvent writes nothing when event_type is invalid', () => {
+    setOptIn(true);
+    trackEvent('invalid_event_type', { duration_ms: 1000 });
+    expect(getTelemetryBuffer().length).toBe(0);
   });
 
   it('getTelemetryBuffer returns [] for old buffer shape', () => {
@@ -136,14 +209,14 @@ describe('pisa-telemetry', () => {
     setOptIn(true);
     // Add 250 events
     for (let i = 0; i < 250; i++) {
-      trackEvent('unit_started', { duration_ms: i });
+      trackEvent('unit_started', { duration_ms: i * 5000 });
     }
 
     const buffer = getTelemetryBuffer();
     expect(buffer.length).toBe(200);
     // The oldest 50 should be dropped
-    expect(buffer[0].duration_ms).toBe(0);
-    expect(buffer[199].duration_ms).toBe(0);
+    expect(buffer[0].duration_ms).toBe(250000);
+    expect(buffer[199].duration_ms).toBe(1245000);
   });
 
   it('localStorage buffer respects TTL (24 hours)', () => {

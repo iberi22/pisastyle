@@ -1,3 +1,5 @@
+import { PISASTYLE_LOCALES } from './pisa-i18n';
+
 export const allowlist = [
   'event_type',
   'unit_id',
@@ -97,13 +99,15 @@ export async function instanceRef(instanceId: string, dateIso: string): Promise<
   }
 }
 
-export function buildEvent(name: string, data?: Record<string, unknown>): TelemetryEvent {
+export function buildEvent(name: string, data?: Record<string, unknown>): TelemetryEvent | null {
   const event: Partial<TelemetryEvent> = {};
 
   // Validate event_type
   const validEventTypes = ['unit_started', 'item_answered', 'unit_finished', 'infographic_view'];
   if (validEventTypes.includes(name)) {
     event.event_type = name;
+  } else {
+    return null;
   }
 
   if (data) {
@@ -116,11 +120,6 @@ export function buildEvent(name: string, data?: Record<string, unknown>): Teleme
 
       // Primitives only
       if (typeof value === 'object' || typeof value === 'function' || typeof value === 'symbol') {
-        continue;
-      }
-
-      // Strings must be bounded
-      if (typeof value === 'string' && value.length > 255) {
         continue;
       }
 
@@ -140,8 +139,20 @@ export function buildEvent(name: string, data?: Record<string, unknown>): Teleme
         if (typeof value === 'string' && /^[0-9a-f]{16}$/.test(value)) {
           event.instance_ref = value;
         }
-      } else {
-        (event as any)[key] = value;
+      } else if (key === 'locale') {
+        if (typeof value === 'string' && (PISASTYLE_LOCALES as readonly string[]).includes(value)) {
+          event.locale = value;
+        }
+      } else if (key === 'country_hint') {
+        if (typeof value === 'string' && /^[A-Z]{2}$/.test(value)) {
+          event.country_hint = value;
+        }
+      } else if (['unit_id', 'domain', 'process', 'content', 'context', 'level', 'app_version', 'consent_version'].includes(key)) {
+        if (typeof value === 'string' && /^[A-Za-z0-9._-]{1,64}$/.test(value)) {
+          (event as any)[key] = value;
+        } else if (typeof value === 'number' && /^[A-Za-z0-9._-]{1,64}$/.test(String(value))) {
+          (event as any)[key] = String(value);
+        }
       }
     }
   }
@@ -153,7 +164,9 @@ export function trackEvent(name: string, data?: Record<string, unknown>): void {
   if (!isOptedIn) return;
 
   const event = buildEvent(name, data);
-  saveToBuffer(event);
+  if (event) {
+    saveToBuffer(event);
+  }
 }
 
 function saveToBuffer(event: TelemetryEvent): void {
