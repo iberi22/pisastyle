@@ -54,6 +54,7 @@ describe('onboarding integration', () => {
     const filePath = join(process.cwd(), 'src/pages/[locale]/explorar.astro');
     const content = readFileSync(filePath, 'utf-8');
     expect(content).toContain('ONBOARDING_STEPS');
-    expect(content).toContain('.map(');
+    expect(content).toContain('id="onboarding"');
+    expect(content).toMatch(/ONBOARDING_STEPS\[.*\]\.map\(/);
   });
 });

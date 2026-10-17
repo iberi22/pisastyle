@@ -21,12 +21,12 @@ export const ONBOARDING_STEPS: Record<PisaLocale, OnboardingStep[]> = {
     {
       id: 'local-ai',
       title: 'Asistente IA integrado',
-      body: 'El modelo de IA corre en tu navegador cuando está soportado, sin límites de nube ni necesidad de enviar tus preguntas a servidores externos.'
+      body: 'El modelo de IA corre en tu navegador cuando está soportado, sin límites de nube, complementando tu estudio de manera eficiente.'
     },
     {
       id: 'device-lock',
       title: 'Protege tu avance',
-      body: 'Opcionalmente, puedes proteger tu sesión de estudio usando el PIN o biometría de tu dispositivo.'
+      body: 'Próximamente podrás proteger tu sesión de estudio usando el PIN o biometría de tu dispositivo.'
     },
     {
       id: 'own-your-data',
@@ -48,12 +48,12 @@ export const ONBOARDING_STEPS: Record<PisaLocale, OnboardingStep[]> = {
     {
       id: 'local-ai',
       title: 'Built-in AI Assistant',
-      body: 'The AI model runs in your browser when supported, with no cloud limits and no need to send queries to external servers.'
+      body: 'The AI model runs in your browser when supported, with no cloud limits, complementing your study efficiently.'
     },
     {
       id: 'device-lock',
       title: 'Protect your progress',
-      body: 'Optionally, protect your study session using your device PIN or biometric authentication.'
+      body: 'Coming soon, you will be able to protect your study session using your device PIN or biometric authentication.'
     },
     {
       id: 'own-your-data',
@@ -75,12 +75,12 @@ export const ONBOARDING_STEPS: Record<PisaLocale, OnboardingStep[]> = {
     {
       id: 'local-ai',
       title: 'Assistente de IA integrado',
-      body: 'O modelo de IA roda no seu navegador quando suportado, sem limites de nuvem e sem necessidade de enviar suas perguntas para servidores externos.'
+      body: 'O modelo de IA roda no seu navegador quando suportado, sem limites de nuvem, complementando seu estudo eficientemente.'
     },
     {
       id: 'device-lock',
       title: 'Proteja seu avanço',
-      body: 'Opcionalmente, você pode proteger sua sessão de estudo usando o PIN ou biometria do seu dispositivo.'
+      body: 'Em breve, você poderá proteger sua sessão de estudo usando o PIN ou biometria do seu dispositivo.'
     },
     {
       id: 'own-your-data',
