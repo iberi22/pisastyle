@@ -28,17 +28,32 @@ export async function llmComplete(req: LLMRequest): Promise<LLMResponse> {
   try {
     const factory = getLanguageModelFactory();
     if (factory) {
-      // Chrome's API can be capabilities().available or availability()
-      const isAvailable = typeof factory.capabilities === 'function'
-        ? (await factory.capabilities()).available !== 'no'
-        : (typeof factory.availability === 'function' ? (await factory.availability()) !== 'no' : true);
+      // Determine availability. We only proceed if strictly "available" or "readily"
+      let availabilityState = '';
+      if (typeof factory.availability === 'function') {
+        availabilityState = await factory.availability();
+      } else if (typeof factory.capabilities === 'function') {
+        const caps = await factory.capabilities();
+        availabilityState = caps.available;
+      }
 
-      if (isAvailable) {
-        const session = await factory.create();
-        const text = await session.prompt(fullPrompt);
+      if (availabilityState === 'available' || availabilityState === 'readily') {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        console.log('[llm] complete', { model: 'browser-prompt-api', via: 'local', promptChars: req.prompt.length });
-        return { text, model: 'browser-prompt-api', via: 'local' };
+        let session;
+        try {
+          session = await factory.create({ signal: controller.signal });
+          const text = await session.prompt(fullPrompt, { signal: controller.signal });
+
+          console.log('[llm] complete', { model: 'browser-prompt-api', via: 'local', promptChars: req.prompt.length });
+          return { text, model: 'browser-prompt-api', via: 'local' };
+        } finally {
+          clearTimeout(timeoutId);
+          if (session && typeof session.destroy === 'function') {
+            session.destroy();
+          }
+        }
       }
     }
   } catch (error) {
