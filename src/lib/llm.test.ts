@@ -78,6 +78,21 @@ describe('llmComplete browser built-in AI', () => {
     expect(mockFactory.create).not.toHaveBeenCalled();
   });
 
+  it('falls back to stub when factory is present but availability is "unavailable"', async () => {
+    const mockFactory = {
+      capabilities: vi.fn().mockResolvedValue({ available: 'unavailable' }),
+      create: vi.fn(),
+    };
+    vi.stubGlobal('LanguageModel', mockFactory);
+
+    const res = await llmComplete({ prompt: 'hola' });
+
+    expect(res.via).toBe('local');
+    expect(res.model).toBe('stub');
+    expect(res.text).toContain('LLM local stub (sin CF)');
+    expect(mockFactory.create).not.toHaveBeenCalled();
+  });
+
   it('falls back to stub when factory is present but availability is "downloadable"', async () => {
     const mockFactory = {
       capabilities: vi.fn().mockResolvedValue({ available: 'downloadable' }),
@@ -107,22 +122,36 @@ describe('llmComplete browser built-in AI', () => {
   });
 
   it('falls back to stub when create() or prompt() times out (AbortError)', async () => {
-    const mockSession = {
-      prompt: vi.fn().mockRejectedValue(new DOMException('The operation was aborted', 'AbortError')),
-      destroy: vi.fn(),
-    };
-    const mockFactory = {
-      capabilities: vi.fn().mockResolvedValue({ available: 'available' }),
-      create: vi.fn().mockResolvedValue(mockSession),
-    };
-    vi.stubGlobal('LanguageModel', mockFactory);
+    vi.useFakeTimers();
+    try {
+      const mockSession = {
+        prompt: vi.fn().mockImplementation((promptStr, options) => {
+          return new Promise((resolve, reject) => {
+            options.signal.addEventListener('abort', () => {
+              reject(new DOMException('The operation was aborted', 'AbortError'));
+            });
+          });
+        }),
+        destroy: vi.fn(),
+      };
+      const mockFactory = {
+        capabilities: vi.fn().mockResolvedValue({ available: 'available' }),
+        create: vi.fn().mockResolvedValue(mockSession),
+      };
+      vi.stubGlobal('LanguageModel', mockFactory);
 
-    const res = await llmComplete({ prompt: 'hola' });
+      const promise = llmComplete({ prompt: 'hola' });
+      await vi.advanceTimersByTimeAsync(15001);
 
-    expect(res.via).toBe('local');
-    expect(res.model).toBe('stub');
-    expect(res.text).toContain('LLM local stub (sin CF)');
-    expect(mockSession.destroy).toHaveBeenCalled();
+      const res = await promise;
+
+      expect(res.via).toBe('local');
+      expect(res.model).toBe('stub');
+      expect(res.text).toContain('LLM local stub (sin CF)');
+      expect(mockSession.destroy).toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('never logs the prompt text to any console method', async () => {
