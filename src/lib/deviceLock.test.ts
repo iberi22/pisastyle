@@ -228,4 +228,119 @@ describe('deviceLock', () => {
     const getCallArgs = credentialsStub.get.mock.calls[0][0];
     expect(getCallArgs.publicKey.userVerification).toBe('required');
   });
+
+  it('registerDeviceLock ignores hostile extensions, excludeCredentials, hints, and attestationFormats', async () => {
+    vi.stubGlobal('PublicKeyCredential', {
+      isUserVerifyingPlatformAuthenticatorAvailable: () => Promise.resolve(true)
+    });
+    vi.stubGlobal('crypto', { getRandomValues: (arr: Uint8Array) => arr });
+
+    const credentialsStub = {
+      create: vi.fn().mockResolvedValue({ id: 'fake-cred' }),
+      get: vi.fn()
+    };
+    vi.stubGlobal('navigator', { credentials: credentialsStub });
+
+    const hostileOptions = {
+      extensions: { prf: {}, credProps: true },
+      excludeCredentials: [{ id: 1 }],
+      hints: ['hybrid'],
+      attestationFormats: ['packed']
+    };
+
+    await registerDeviceLock(hostileOptions);
+
+    const createCallArgs = credentialsStub.create.mock.calls[0][0];
+    expect('extensions' in createCallArgs.publicKey).toBe(false);
+    expect('excludeCredentials' in createCallArgs.publicKey).toBe(false);
+    expect('hints' in createCallArgs.publicKey).toBe(false);
+    expect('attestationFormats' in createCallArgs.publicKey).toBe(false);
+  });
+
+  it('registerDeviceLock blocks hostile authenticatorSelection.requireResidentKey: false', async () => {
+    vi.stubGlobal('PublicKeyCredential', {
+      isUserVerifyingPlatformAuthenticatorAvailable: () => Promise.resolve(true)
+    });
+    vi.stubGlobal('crypto', { getRandomValues: (arr: Uint8Array) => arr });
+
+    const credentialsStub = {
+      create: vi.fn().mockResolvedValue({ id: 'fake-cred' }),
+      get: vi.fn()
+    };
+    vi.stubGlobal('navigator', { credentials: credentialsStub });
+
+    const hostileOptions = {
+      authenticatorSelection: {
+        requireResidentKey: false
+      }
+    };
+
+    await registerDeviceLock(hostileOptions);
+
+    const createCallArgs = credentialsStub.create.mock.calls[0][0];
+    const selection = createCallArgs.publicKey.authenticatorSelection;
+    expect(selection).toEqual({
+      authenticatorAttachment: 'platform',
+      userVerification: 'required',
+      residentKey: 'preferred'
+    });
+    expect('requireResidentKey' in selection).toBe(false);
+  });
+
+  it('registerDeviceLock honours legitimate knobs like rp.name and timeout', async () => {
+    vi.stubGlobal('PublicKeyCredential', {
+      isUserVerifyingPlatformAuthenticatorAvailable: () => Promise.resolve(true)
+    });
+    vi.stubGlobal('crypto', { getRandomValues: (arr: Uint8Array) => arr });
+
+    const credentialsStub = {
+      create: vi.fn().mockResolvedValue({ id: 'fake-cred' }),
+      get: vi.fn()
+    };
+    vi.stubGlobal('navigator', { credentials: credentialsStub });
+
+    const legitimateOptions = {
+      rp: { name: 'Mi app' },
+      timeout: 30000
+    };
+
+    await registerDeviceLock(legitimateOptions);
+
+    const createCallArgs = credentialsStub.create.mock.calls[0][0];
+    expect(createCallArgs.publicKey.rp.name).toBe('Mi app');
+    expect(createCallArgs.publicKey.timeout).toBe(30000);
+  });
+
+  it('registerDeviceLock falls back to defaults for out-of-range or wrong-type values', async () => {
+    vi.stubGlobal('PublicKeyCredential', {
+      isUserVerifyingPlatformAuthenticatorAvailable: () => Promise.resolve(true)
+    });
+    vi.stubGlobal('crypto', { getRandomValues: (arr: Uint8Array) => arr });
+
+    const credentialsStub = {
+      create: vi.fn().mockResolvedValue({ id: 'fake-cred' }),
+      get: vi.fn()
+    };
+    vi.stubGlobal('navigator', { credentials: credentialsStub });
+
+    // case 1: timeout too low
+    await registerDeviceLock({ timeout: 1 });
+    expect(credentialsStub.create.mock.calls[0][0].publicKey.timeout).toBe(60000);
+
+    // case 2: timeout NaN
+    await registerDeviceLock({ timeout: NaN });
+    expect(credentialsStub.create.mock.calls[1][0].publicKey.timeout).toBe(60000);
+
+    // case 3: timeout is a string
+    await registerDeviceLock({ timeout: '5' });
+    expect(credentialsStub.create.mock.calls[2][0].publicKey.timeout).toBe(60000);
+
+    // case 4: rp.name is empty string
+    await registerDeviceLock({ rp: { name: '' } });
+    expect(credentialsStub.create.mock.calls[3][0].publicKey.rp.name).toBe("PisaStyle Device Protection");
+
+    // case 5: rp.name is too long (65 chars)
+    await registerDeviceLock({ rp: { name: 'A'.repeat(65) } });
+    expect(credentialsStub.create.mock.calls[4][0].publicKey.rp.name).toBe("PisaStyle Device Protection");
+  });
 });

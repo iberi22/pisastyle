@@ -49,13 +49,21 @@ export async function registerDeviceLock(options?: any): Promise<{ id: string } 
     const challenge = new Uint8Array(32);
     crypto.getRandomValues(challenge);
 
+    let rpName = "PisaStyle Device Protection";
+    if (options && options.rp && typeof options.rp.name === "string" && options.rp.name.trim() !== "" && options.rp.name.length <= 64) {
+      rpName = options.rp.name;
+    }
+
+    let timeout = 60000;
+    if (options && typeof options.timeout === "number" && Number.isFinite(options.timeout) && options.timeout >= 10000 && options.timeout <= 120000) {
+      timeout = options.timeout;
+    }
+
     const cred = await navigator.credentials.create({
       publicKey: {
-        ...(options || {}),
         challenge,
         rp: {
-          ...(options?.rp || {}),
-          name: options?.rp?.name || "PisaStyle Device Protection",
+          name: rpName,
           id: globalThis.location?.hostname || "localhost"
         },
         user: {
@@ -67,10 +75,9 @@ export async function registerDeviceLock(options?: any): Promise<{ id: string } 
           { type: "public-key", alg: -7 }, // ES256
           { type: "public-key", alg: -257 } // RS256
         ],
-        timeout: options?.timeout || 60000,
+        timeout,
         attestation: "none",
         authenticatorSelection: {
-          ...(options?.authenticatorSelection || {}),
           authenticatorAttachment: "platform",
           userVerification: "required",
           residentKey: "preferred"
