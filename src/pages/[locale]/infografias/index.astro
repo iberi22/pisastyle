@@ -1,0 +1,149 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { isPisaLocale, PISASTYLE_LOCALES } from '../../../lib/pisa-i18n';
+import { routeLocale, buildAlternates } from '../../../lib/alternates';
+import { MODELLING_CYCLE_NODES } from '../../../lib/modelling-cycle';
+
+export function getStaticPaths() {
+  return PISASTYLE_LOCALES.map((locale) => ({
+    params: { locale }
+  }));
+}
+
+const { locale } = Astro.params;
+
+if (!isPisaLocale(locale)) {
+  return Astro.redirect('/404');
+}
+
+const nodes = MODELLING_CYCLE_NODES[locale];
+
+const T = {
+  es: {
+    title: 'Ciclo de Modelación Matemática PISA 2022',
+    desc: 'Diagrama del ciclo de modelación matemática de PISA: Formular, Emplear e Interpretar. Representa el proceso iterativo para resolver problemas del mundo real.',
+    source: 'Fuente: OECD PISA 2022 Mathematics Framework.',
+    dataTitle: 'Ver los datos en tabla',
+    nodeHeader: 'Nodo',
+    descHeader: 'Descripción'
+  },
+  en: {
+    title: 'PISA 2022 Mathematical Modelling Cycle',
+    desc: 'Diagram of the PISA mathematical modelling cycle: Formulate, Employ, and Interpret. Represents the iterative process for solving real-world problems.',
+    source: 'Source: OECD PISA 2022 Mathematics Framework.',
+    dataTitle: 'View the data as a table',
+    nodeHeader: 'Node',
+    descHeader: 'Description'
+  },
+  pt: {
+    title: 'Ciclo de Modelação Matemática PISA 2022',
+    desc: 'Diagrama do ciclo de modelação matemática do PISA: Formular, Empregar e Interpretar. Representa o processo iterativo para resolver problemas do mundo real.',
+    source: 'Fonte: OECD PISA 2022 Mathematics Framework.',
+    dataTitle: 'Ver os dados em tabela',
+    nodeHeader: 'Nó',
+    descHeader: 'Descrição'
+  }
+}[locale];
+
+const alternates = buildAlternates({ path: 'infografias/', locale, site: Astro.site });
+---
+
+<Layout title={T.title} locale={routeLocale(locale)} current="infografias" alternates={alternates}>
+  <div class="wrap">
+    <h1>{T.title}</h1>
+
+    <figure class="cycle">
+      <svg
+        viewBox="0 0 600 500"
+        role="img"
+        aria-labelledby="cycle-title cycle-desc"
+        class="cycle-svg"
+      >
+        <title id="cycle-title">{T.title}</title>
+        <desc id="cycle-desc">{T.desc}</desc>
+
+        {/* Connection arrows */}
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--swal-border)" />
+          </marker>
+        </defs>
+
+        {/* Formulate -> Employ */}
+        <path d="M 300 130 C 420 130, 450 200, 450 270" fill="none" stroke="var(--swal-border)" stroke-width="3" marker-end="url(#arrow)" />
+        {/* Employ -> Interpret */}
+        <path d="M 450 330 C 450 400, 350 400, 300 400 C 250 400, 150 400, 150 330" fill="none" stroke="var(--swal-border)" stroke-width="3" marker-end="url(#arrow)" />
+        {/* Interpret -> Formulate */}
+        <path d="M 150 270 C 150 200, 180 130, 300 130" fill="none" stroke="var(--swal-border)" stroke-width="3" marker-end="url(#arrow)" />
+
+        {/* Formulate Node */}
+        <g transform="translate(300, 100)">
+          <rect x="-80" y="-30" width="160" height="60" rx="30" class="node node-formulate" />
+          <text x="0" y="5" class="node-label" text-anchor="middle">{nodes[0].label}</text>
+        </g>
+
+        {/* Employ Node */}
+        <g transform="translate(450, 300)">
+          <rect x="-80" y="-30" width="160" height="60" rx="30" class="node node-employ" />
+          <text x="0" y="5" class="node-label" text-anchor="middle">{nodes[1].label}</text>
+        </g>
+
+        {/* Interpret Node */}
+        <g transform="translate(150, 300)">
+          <rect x="-80" y="-30" width="160" height="60" rx="30" class="node node-interpret" />
+          <text x="0" y="5" class="node-label" text-anchor="middle">{nodes[2].label}</text>
+        </g>
+
+      </svg>
+
+      <figcaption class="source">{T.source}</figcaption>
+
+      <details class="data-table">
+        <summary>{T.dataTitle}</summary>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">{T.nodeHeader}</th>
+              <th scope="col">{T.descHeader}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {nodes.map(node => (
+              <tr>
+                <th scope="row">{node.label}</th>
+                <td>{node.description}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </details>
+    </figure>
+  </div>
+</Layout>
+
+<style>
+  .wrap { max-width: 800px; margin: 0 auto; padding: 2rem 1rem; display: grid; gap: 2rem; }
+  h1 { font-size: 1.8rem; font-weight: 800; color: var(--swal-text); text-align: center; }
+  .cycle { margin: 0; display: grid; gap: 1rem; }
+  .cycle-svg { width: 100%; height: auto; display: block; max-width: 600px; margin: 0 auto; }
+
+  .node { stroke: var(--swal-border); stroke-width: 2; }
+  .node-formulate { fill: var(--swal-accent); }
+  .node-employ { fill: var(--swal-success, #2e7d32); }
+  .node-interpret { fill: var(--swal-warning, #ed6c02); }
+
+  .node-label { fill: var(--swal-accent-contrast, var(--swal-bg)); font-size: 18px; font-weight: 600; }
+
+  .source { font-size: 0.85rem; color: var(--swal-text-muted); text-align: center; }
+
+  .data-table { font-size: 0.9rem; }
+  .data-table summary { cursor: pointer; color: var(--swal-text-secondary); min-height: 2.25rem; display: inline-flex; align-items: center; }
+  .data-table table { border-collapse: collapse; margin-top: 0.5rem; width: 100%; }
+  .data-table th, .data-table td { border: 1px solid var(--swal-border); padding: 0.5rem 0.75rem; text-align: left; vertical-align: top; }
+  .data-table th[scope='row'] { font-weight: 600; color: var(--swal-text); white-space: nowrap; }
+
+  @media print {
+    .data-table { display: block; }
+    .data-table th, .data-table td { border-color: var(--swal-text); }
+  }
+</style>
