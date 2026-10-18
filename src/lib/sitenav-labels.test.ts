@@ -40,6 +40,21 @@ describe('rotulos del nav', () => {
     expect(claves).toEqual(expect.arrayContaining(['home', 'explorar', 'metodo', 'novedades', 'evaluar', 'contribuir']));
   });
 
+  it('las claves incluyen infografias', () => {
+    expect(claves).toEqual(expect.arrayContaining(['infografias']));
+  });
+
+  it('SiteNav tiene la ruta hardcodeada para infografias', () => {
+    expect(fuente).toMatch(/\/\$\{l\}\/infografias/);
+  });
+
+  it('la pagina de infografias usa el current path correcto', () => {
+    const pagina = readFileSync(join(process.cwd(), 'src/pages/[locale]/infografias/index.astro'), 'utf-8');
+    expect(pagina).toContain('current="infografias"');
+    const entry = [...fuente.matchAll(/path:\s*'([^']+)'/g)].map(m => m[1]);
+    expect(entry).toContain('infografias');
+  });
+
   for (const locale of locales) {
     it(`${locale}: tiene un rotulo para CADA clave del nav`, () => {
       const linea = bloqueLabels.match(new RegExp('(?:^|[\\s{])' + locale + ':\\s*\\{([^}]*)\\}'));
