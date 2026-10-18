@@ -51,9 +51,11 @@ export async function registerDeviceLock(options?: any): Promise<{ id: string } 
 
     const cred = await navigator.credentials.create({
       publicKey: {
+        ...(options || {}),
         challenge,
         rp: {
-          name: "PisaStyle Device Protection",
+          ...(options?.rp || {}),
+          name: options?.rp?.name || "PisaStyle Device Protection",
           id: globalThis.location?.hostname || "localhost"
         },
         user: {
@@ -65,9 +67,8 @@ export async function registerDeviceLock(options?: any): Promise<{ id: string } 
           { type: "public-key", alg: -7 }, // ES256
           { type: "public-key", alg: -257 } // RS256
         ],
-        timeout: 60000,
+        timeout: options?.timeout || 60000,
         attestation: "none",
-        ...options,
         authenticatorSelection: {
           ...(options?.authenticatorSelection || {}),
           authenticatorAttachment: "platform",
@@ -88,16 +89,17 @@ export async function registerDeviceLock(options?: any): Promise<{ id: string } 
 
 export async function verifyDeviceLock(credentialId: string): Promise<boolean> {
   try {
+    if (!credentialId) {
+      return false;
+    }
+
     const challenge = new Uint8Array(32);
     crypto.getRandomValues(challenge);
 
-    let allowCredentials = undefined;
-    if (credentialId) {
-      allowCredentials = [{
-        type: 'public-key',
-        id: base64urlToUint8Array(credentialId)
-      }];
-    }
+    const allowCredentials = [{
+      type: 'public-key',
+      id: base64urlToUint8Array(credentialId)
+    }];
 
     const cred = await navigator.credentials.get({
       publicKey: {
@@ -109,7 +111,7 @@ export async function verifyDeviceLock(credentialId: string): Promise<boolean> {
     }) as any;
 
     if (cred && cred.id) {
-      if (credentialId && cred.id !== credentialId) {
+      if (cred.id !== credentialId) {
         return false;
       }
       return true;

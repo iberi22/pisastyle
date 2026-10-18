@@ -151,6 +151,37 @@ describe('deviceLock', () => {
     expect(result).toBe(false);
   });
 
+  it('verifyDeviceLock returns false when credentialId is empty and does not call get', async () => {
+    const credentialsStub = {
+      create: vi.fn(),
+      get: vi.fn()
+    };
+    vi.stubGlobal('navigator', { credentials: credentialsStub });
+
+    const result = await verifyDeviceLock('');
+    expect(result).toBe(false);
+    expect(credentialsStub.get).not.toHaveBeenCalled();
+  });
+
+  it('verifyDeviceLock calls get with decoded credential bytes in allowCredentials', async () => {
+    const credentialsStub = {
+      create: vi.fn(),
+      get: vi.fn().mockResolvedValue({ id: 'fake-cred' })
+    };
+    vi.stubGlobal('navigator', { credentials: credentialsStub });
+
+    // We expect base64urlToUint8Array to map "fake-cred" into a Uint8Array.
+    // We mock atob to return a string for "fake-cred" appropriately
+    vi.stubGlobal('atob', (s: string) => s);
+
+    await verifyDeviceLock('fake-cred');
+    const getCallArgs = credentialsStub.get.mock.calls[0][0];
+
+    expect(getCallArgs.publicKey.allowCredentials).toBeDefined();
+    expect(getCallArgs.publicKey.allowCredentials[0].type).toBe('public-key');
+    expect(getCallArgs.publicKey.allowCredentials[0].id).toBeInstanceOf(Uint8Array);
+  });
+
   it('registerDeviceLock blocks hostile options from lowering verification requirements', async () => {
     vi.stubGlobal('PublicKeyCredential', {
       isUserVerifyingPlatformAuthenticatorAvailable: () => Promise.resolve(true)
@@ -164,6 +195,8 @@ describe('deviceLock', () => {
     vi.stubGlobal('navigator', { credentials: credentialsStub });
 
     const hostileOptions = {
+      user: { name: 'ana@x.com' },
+      attestation: 'direct',
       authenticatorSelection: {
         authenticatorAttachment: 'cross-platform',
         userVerification: 'discouraged',
@@ -178,6 +211,8 @@ describe('deviceLock', () => {
     expect(createCallArgs.publicKey.authenticatorSelection.authenticatorAttachment).toBe('platform');
     expect(createCallArgs.publicKey.authenticatorSelection.userVerification).toBe('required');
     expect(createCallArgs.publicKey.authenticatorSelection.residentKey).toBe('preferred');
+    expect(createCallArgs.publicKey.user.name).toBe('local-user');
+    expect(createCallArgs.publicKey.attestation).toBe('none');
   });
 
   it('verifyDeviceLock always enforces userVerification required', async () => {
