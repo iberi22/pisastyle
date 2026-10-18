@@ -22,6 +22,19 @@ export async function isDeviceLockAvailable(): Promise<boolean> {
   }
 }
 
+function base64urlToUint8Array(base64url: string): Uint8Array {
+  const padding = '='.repeat((4 - base64url.length % 4) % 4);
+  const base64 = (base64url + padding).replace(/-/g, '+').replace(/_/g, '/');
+
+  const rawData = typeof globalThis.atob === 'function' ? globalThis.atob(base64) : '';
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 export async function registerDeviceLock(options?: any): Promise<{ id: string } | null> {
   try {
     const isAvailable = await isDeviceLockAvailable();
@@ -52,14 +65,15 @@ export async function registerDeviceLock(options?: any): Promise<{ id: string } 
           { type: "public-key", alg: -7 }, // ES256
           { type: "public-key", alg: -257 } // RS256
         ],
+        timeout: 60000,
+        attestation: "none",
+        ...options,
         authenticatorSelection: {
+          ...(options?.authenticatorSelection || {}),
           authenticatorAttachment: "platform",
           userVerification: "required",
           residentKey: "preferred"
-        },
-        timeout: 60000,
-        attestation: "none",
-        ...options
+        }
       } as any
     }) as any;
 
@@ -77,19 +91,27 @@ export async function verifyDeviceLock(credentialId: string): Promise<boolean> {
     const challenge = new Uint8Array(32);
     crypto.getRandomValues(challenge);
 
+    let allowCredentials = undefined;
+    if (credentialId) {
+      allowCredentials = [{
+        type: 'public-key',
+        id: base64urlToUint8Array(credentialId)
+      }];
+    }
+
     const cred = await navigator.credentials.get({
       publicKey: {
         challenge,
         timeout: 60000,
-        userVerification: "required",
-        // we allow any credential returned by the platform, but this forces the
-        // prompt if passkeys are available
+        allowCredentials,
+        userVerification: "required"
       } as any
     }) as any;
 
     if (cred && cred.id) {
-      // In a real app we might verify the challenge and credentialId
-      // Here we just care that the user passed the platform verification
+      if (credentialId && cred.id !== credentialId) {
+        return false;
+      }
       return true;
     }
 

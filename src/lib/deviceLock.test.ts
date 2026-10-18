@@ -42,6 +42,15 @@ describe('deviceLock', () => {
     expect(available).toBe(true);
   });
 
+  it('isDeviceLockAvailable returns false when isUserVerifyingPlatformAuthenticatorAvailable resolves false', async () => {
+    vi.stubGlobal('PublicKeyCredential', {
+      isUserVerifyingPlatformAuthenticatorAvailable: () => Promise.resolve(false)
+    });
+
+    const available = await isDeviceLockAvailable();
+    expect(available).toBe(false);
+  });
+
   it('registerDeviceLock returns null if unavailable', async () => {
     vi.stubGlobal('PublicKeyCredential', undefined);
 
@@ -97,6 +106,7 @@ describe('deviceLock', () => {
       get: vi.fn().mockResolvedValue({ id: 'fake-cred' })
     };
     vi.stubGlobal('navigator', { credentials: credentialsStub });
+    vi.stubGlobal('atob', (s: string) => s);
 
     const result = await verifyDeviceLock('fake-cred');
     expect(result).toBe(true);
@@ -110,7 +120,77 @@ describe('deviceLock', () => {
     };
     vi.stubGlobal('navigator', { credentials: credentialsStub });
 
+    // stub atob so it doesn't fail on base64 decoding
+    vi.stubGlobal('atob', (s: string) => s);
+
     const result = await verifyDeviceLock('fake-cred');
     expect(result).toBe(false);
+  });
+
+  it('verifyDeviceLock returns false when get resolves to null', async () => {
+    const credentialsStub = {
+      create: vi.fn(),
+      get: vi.fn().mockResolvedValue(null)
+    };
+    vi.stubGlobal('navigator', { credentials: credentialsStub });
+    vi.stubGlobal('atob', (s: string) => s);
+
+    const result = await verifyDeviceLock('fake-cred');
+    expect(result).toBe(false);
+  });
+
+  it('verifyDeviceLock returns false when get returns another id', async () => {
+    const credentialsStub = {
+      create: vi.fn(),
+      get: vi.fn().mockResolvedValue({ id: 'wrong-cred' })
+    };
+    vi.stubGlobal('navigator', { credentials: credentialsStub });
+    vi.stubGlobal('atob', (s: string) => s);
+
+    const result = await verifyDeviceLock('fake-cred');
+    expect(result).toBe(false);
+  });
+
+  it('registerDeviceLock blocks hostile options from lowering verification requirements', async () => {
+    vi.stubGlobal('PublicKeyCredential', {
+      isUserVerifyingPlatformAuthenticatorAvailable: () => Promise.resolve(true)
+    });
+    vi.stubGlobal('crypto', { getRandomValues: (arr: Uint8Array) => arr });
+
+    const credentialsStub = {
+      create: vi.fn().mockResolvedValue({ id: 'fake-cred' }),
+      get: vi.fn()
+    };
+    vi.stubGlobal('navigator', { credentials: credentialsStub });
+
+    const hostileOptions = {
+      authenticatorSelection: {
+        authenticatorAttachment: 'cross-platform',
+        userVerification: 'discouraged',
+        residentKey: 'discouraged'
+      }
+    };
+
+    const result = await registerDeviceLock(hostileOptions);
+    expect(result).toEqual({ id: 'fake-cred' });
+
+    const createCallArgs = credentialsStub.create.mock.calls[0][0];
+    expect(createCallArgs.publicKey.authenticatorSelection.authenticatorAttachment).toBe('platform');
+    expect(createCallArgs.publicKey.authenticatorSelection.userVerification).toBe('required');
+    expect(createCallArgs.publicKey.authenticatorSelection.residentKey).toBe('preferred');
+  });
+
+  it('verifyDeviceLock always enforces userVerification required', async () => {
+    const credentialsStub = {
+      create: vi.fn(),
+      get: vi.fn().mockResolvedValue({ id: 'fake-cred' })
+    };
+    vi.stubGlobal('navigator', { credentials: credentialsStub });
+    vi.stubGlobal('atob', (s: string) => s);
+
+    await verifyDeviceLock('fake-cred');
+
+    const getCallArgs = credentialsStub.get.mock.calls[0][0];
+    expect(getCallArgs.publicKey.userVerification).toBe('required');
   });
 });
