@@ -128,9 +128,13 @@ export async function expectTitle(page: Page, route: Route, locale: Locale): Pro
  * `fullPage: true` por defecto: en `contribuir` y `evaluar` el formulario esta
  * bajo el fold y una captura de viewport no deja ver nada. El buffer se lee una
  * sola vez y se usa para el fichero y para el adjunto del reporte de CI.
+ *
+ * Por que `scale: 'css'`: el DPR 3 de mobile hacia que `es/explorar` midiera 16641 px de alto
+ * y CI fallara con `Unable to capture screenshot` (run 39140628523). Las capturas son documentacion,
+ * no aserciones, asi que `scale: 'css'` las mantiene bajo el limite de textura de Chromium (16384 px).
  */
 export async function shot(page: Page, info: TestInfo, name: string, fullPage = true): Promise<void> {
-  const buffer = await page.screenshot({ fullPage });
+  const buffer = await page.screenshot({ fullPage, scale: 'css' });
   const dir = `shots/e2e/${info.project.name}`;
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(`${dir}/${name}.png`, buffer);
