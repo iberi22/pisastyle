@@ -150,7 +150,7 @@ export function buildEvent(name: string, data?: Record<string, unknown>): Teleme
       } else if (['unit_id', 'domain', 'process', 'content', 'context', 'level', 'app_version', 'consent_version'].includes(key)) {
         if (typeof value === 'string' && /^[A-Za-z0-9._-]{1,64}$/.test(value)) {
           (event as any)[key] = value;
-        } else if (typeof value === 'number' && /^[A-Za-z0-9._-]{1,64}$/.test(String(value))) {
+        } else if (typeof value === 'number' && Number.isFinite(value) && /^[A-Za-z0-9._-]{1,64}$/.test(String(value))) {
           (event as any)[key] = String(value);
         }
       }

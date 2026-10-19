@@ -176,6 +176,50 @@ describe('pisa-telemetry', () => {
     expect(event?.device_class).toBe('mobile');
   });
 
+  it('buildEvent drops NaN, Infinity, -Infinity for unit_id', () => {
+    const invalidValues = [NaN, Infinity, -Infinity];
+    for (const val of invalidValues) {
+      const event = buildEvent('unit_started', { unit_id: val });
+      expect(event).not.toBeNull();
+      if (event) {
+        expect('unit_id' in event).toBe(false);
+      }
+    }
+  });
+
+  it('buildEvent drops non-finite numbers for other string fields', () => {
+    const invalidValues = [NaN, Infinity, -Infinity];
+    const stringFields = ['domain', 'level'];
+
+    for (const field of stringFields) {
+      for (const val of invalidValues) {
+        const event = buildEvent('unit_started', { [field]: val });
+        expect(event).not.toBeNull();
+        if (event) {
+          expect(field in event).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('buildEvent accepts finite numbers for string fields', () => {
+    const event = buildEvent('unit_started', { unit_id: 12, level: 1.5 });
+    expect(event?.unit_id).toBe('12');
+    expect((event as any)?.level).toBe('1.5');
+  });
+
+  it('trackEvent with NaN does not store NaN in buffer', () => {
+    setOptIn(true);
+    localStorage.clear();
+
+    trackEvent('unit_started', { unit_id: NaN });
+    const buffer = getTelemetryBuffer();
+    expect(buffer.length).toBe(1);
+
+    const storedString = JSON.stringify(buffer);
+    expect(storedString).not.toContain('NaN');
+  });
+
   it('trackEvent writes nothing when event_type is invalid', () => {
     setOptIn(true);
     trackEvent('invalid_event_type', { duration_ms: 1000 });
