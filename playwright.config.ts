@@ -24,6 +24,13 @@
  * - Fallo HONESTO: sin retries, sin `catch` que se trague errores y con
  *   `trace: 'retain-on-failure'` para poder ver que miraba el selector. Si un
  *   selector no existe, el test falla con el diff de Playwright.
+ *
+ * - Capturas estables: `reducedMotion: 'reduce'` + `scale: 'css'` en `shot()`.
+ *   Sin lo primero una captura puede caer a mitad de un fade-in y parecer un
+ *   fallo de la pagina; sin lo segundo `es/explorar` en mobile (DPR 3) media
+ *   16641 px y Chromium rechazaba la captura por el limite de textura de
+ *   16384 px (run 39140628523). `src/lib/e2e-shot.test.ts` es el guardia que
+ *   impide que se pierda cualquiera de los dos ajustes.
  */
 import { defineConfig, devices } from '@playwright/test';
 
@@ -82,6 +89,11 @@ export default defineConfig({
     // Medido 2026-10-04: 15 de 37 tests en rojo por esto.
     // El idioma de cada test viaja en la cabecera que se pasa a `goto()`.
     timezoneId: 'UTC',
+    // Las capturas son documentacion del recorrido: se toman con la pagina en
+    // su estado final, no a mitad de una animacion de entrada. `motion.css`
+    // ya anula duraciones bajo `prefers-reduced-motion: reduce`, asi que esto
+    // no cambia ninguna asercion, solo elimina una fuente de ruido visual.
+    reducedMotion: 'reduce',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     ...(exe ? { launchOptions } : {}),

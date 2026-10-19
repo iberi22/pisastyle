@@ -6,71 +6,168 @@ import { join } from 'node:path';
  * Guardia contra regresiones de capturas E2E (swal-1018.pisa-03).
  *
  * — POR QUE ESTE TEST EXISTE —
- * Chromium tiene un limite de tamano de textura de 16384px. En mobile
- * (deviceScaleFactor: 3), `es/explorar` media 16641px de alto y la captura
- * fallaba en CI con "Unable to capture screenshot". Usar `scale: 'css'`
- * reduce el tamano de la captura y la mantiene dentro de los limites
- * permitidos para documentacion (en vez de hacer que la asercion sea
- * inestable o forzar un retry).
+ * Chromium tiene un limite de tamano de textura de 16384 px. En mobile
+ * (`deviceScaleFactor: 3`) `es/explorar` media 16641 px de alto y la captura
+ * fallaba en CI con `Unable to capture screenshot`. Dos ajustes lo evitan:
+ *
+ *   1. `scale: 'css'` en la captura: reduce la imagen a pixeles CSS, asi que
+ *      queda bajo el limite de textura.
+ *   2. `reducedMotion: 'reduce'` en `playwright.config.ts`: la pagina se captura
+ *      en su estado final, no a mitad de una animacion de entrada.
+ *
+ * Las capturas son documentacion, no aserciones: la politica sigue siendo
+ * "fallo honesto" (`retries: 0`, sin `catch`), asi que la unica defensa contra
+ * el fallo intermitente es que nadie pueda quitar estos ajustes sin que un test
+ * se ponga rojo. Ese test es este.
+ *
+ * — POR QUE ES ESTATICO —
+ * No lanza un navegador: lee los fuentes y comprueba la regla. Un guardia que
+ * necesita Chromium no corre en `pnpm test` (vitest) y por tanto no protegeria
+ * nada en el commit que rompe la captura.
  */
 
 const E2E_DIR = join(process.cwd(), 'tests/e2e');
 const HELPERS_FILE = join(E2E_DIR, 'helpers.ts');
 const CONFIG_FILE = join(process.cwd(), 'playwright.config.ts');
 
-describe('Capturas de pantalla E2E', () => {
-  it('helpers.ts llama a screenshot con scale: "css"', () => {
-    const fuente = readFileSync(HELPERS_FILE, 'utf-8');
-    // Regex that catches any .screenshot( call, taking the string inside up to the closing paren
-    const matches = [...fuente.matchAll(/\.screenshot\(([^)]*)\)/g)];
-    expect(matches.length, 'Debe existir al menos una llamada a screenshot en helpers.ts').toBeGreaterThan(0);
+/** La regla: `scale` explicito y en `'css'`. */
+const CSS_SCALE = /scale\s*:\s*['"]css['"]/;
 
-    for (const match of matches) {
-        const args = match[1];
-        expect(args, 'La llamada a screenshot debe incluir scale: \'css\'').toContain("scale: 'css'");
+/**
+ * Quita los comentarios antes de examinar un fuente.
+ *
+ * Sin esto el guardia se engana solo: `helpers.ts` explica en su JSDoc que usa
+ * `scale: 'css'`, asi que bastaba con borrar el ajuste del codigo y dejar el
+ * comentario para que la comprobacion siguiera pasando. Un ajuste que solo
+ * vive en prosa no protege nada.
+ */
+function stripComments(source: string): string {
+  const withoutBlocks = source.replace(/\/\*[\s\S]*?\*\//g, '');
+  // `//` dentro de una cadena (`http://`) no es comentario: solo se corta la
+  // linea cuando el `//` no va precedido de `:` ni de una comilla.
+  return withoutBlocks.replace(/(^|[^:'"`])\/\/.*$/gm, '$1');
+}
+
+/**
+ * Devuelve cada llamada a `.screenshot(...)` del fuente con su numero de linea.
+ *
+ * El escaneo cuenta parentesis en vez de cortar en el primer `)`: una ruta con
+ * `join(dir, name)` dentro de las opciones no debe partirse la llamada por la
+ * mitad y dejar el ajuste fuera del texto examinado.
+ */
+function screenshotCalls(source: string): { args: string; line: number }[] {
+  const calls: { args: string; line: number }[] = [];
+  const pattern = /\.screenshot\s*\(/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(source)) !== null) {
+    const open = match.index + match[0].length;
+    let depth = 1;
+    let end = open;
+    for (; end < source.length && depth > 0; end++) {
+      if (source[end] === '(') depth++;
+      else if (source[end] === ')') depth--;
     }
+    calls.push({
+      args: source.slice(open, Math.max(open, end - 1)),
+      line: source.slice(0, match.index).split('\n').length,
+    });
+  }
+  return calls;
+}
+
+/** Llamadas a `screenshot` del fuente que NO fijan `scale: 'css'`. */
+function callsMissingCssScale(source: string): string[] {
+  return screenshotCalls(source)
+    .filter(({ args }) => !CSS_SCALE.test(args))
+    .map(({ line }) => `linea ${line}`);
+}
+
+/** Fuente sin comentarios, listo para comprobar la configuracion. */
+function codeOf(file: string): string {
+  return stripComments(readFileSync(file, 'utf-8'));
+}
+
+describe('Capturas de pantalla E2E', () => {
+  it('helpers.ts captura con scale: "css"', () => {
+    const source = codeOf(HELPERS_FILE);
+    const calls = screenshotCalls(source);
+
+    expect(calls.length, 'helpers.ts deberia capturar pantallas').toBeGreaterThan(0);
+    expect(
+      callsMissingCssScale(source),
+      `helpers.ts captura sin scale: 'css' (${callsMissingCssScale(source).join(', ')}). ` +
+        'Es el ajuste que mantiene la captura bajo el limite de textura de 16384 px de Chromium.',
+    ).toEqual([]);
   });
 
-  it('todos los archivos en tests/e2e/ usan scale: "css" al capturar pantallas', () => {
-    const files = readdirSync(E2E_DIR).filter(f => f.endsWith('.ts'));
+  it('ningun archivo de tests/e2e captura sin scale: "css"', () => {
+    const files = readdirSync(E2E_DIR).filter((f) => f.endsWith('.ts'));
     expect(files.length).toBeGreaterThan(0);
 
+    const offenders: string[] = [];
     for (const file of files) {
-      const content = readFileSync(join(E2E_DIR, file), 'utf-8');
-      const matches = [...content.matchAll(/\.screenshot\(([^)]*)\)/g)];
-      for (const match of matches) {
-          const args = match[1];
-          expect(args, `${file} llama a screenshot sin scale: 'css'`).toContain("scale: 'css'");
-      }
+      const source = codeOf(join(E2E_DIR, file));
+      offenders.push(...callsMissingCssScale(source).map((where) => `${file} (${where})`));
     }
+
+    expect(
+      offenders,
+      `Capturas sin scale: 'css': ${offenders.join(', ')}. Si la captura es a proposito en pixeles de dispositivo, documenta aqui por que no rompe el limite de 16384 px.`,
+    ).toEqual([]);
   });
 
-  it('mutaciones especificas fallan si no tienen scale: "css"', () => {
-    // Simulamos contenidos de archivo que el test anterior deberia capturar
-    const casosMalo = [
-      'await page.screenshot()',
-      'const b = await p.screenshot({ fullPage: true })',
-      'await page.locator("body").screenshot({ fullPage: true })'
+  it('playwright.config.ts fija la politica de captura estable', () => {
+    const config = codeOf(CONFIG_FILE);
+
+    // Fallo honesto: la inestabilidad no se esconde con retries.
+    expect(config, 'retries debe seguir en 0').toContain('retries: 0');
+
+    // La causa raiz: mobile sigue midiendose con DPR 3.
+    expect(config, 'el proyecto mobile debe mantener deviceScaleFactor: 3').toMatch(/deviceScaleFactor:\s*3/);
+    expect(config, 'el proyecto mobile debe seguir declarado').toContain("name: 'mobile'");
+
+    // Ajuste de animaciones: sin el, una captura puede caer a mitad de fade-in.
+    expect(
+      config,
+      "playwright.config.ts debe fijar reducedMotion: 'reduce' para capturar la pagina en su estado final",
+    ).toMatch(/reducedMotion:\s*['"]reduce['"]/);
+  });
+
+  it('la guardia detecta las mutaciones reales sobre helpers.ts (no es vacua)', () => {
+    const real = codeOf(HELPERS_FILE);
+
+    // La llamada real del CODIGO. Si se muta el comentario el guardia no se
+    // entera y la prueba seria mentira, asi que se parte del fuente sin
+    // comentarios y se exige que la llamada exista tal cual.
+    const CALL = "page.screenshot({ fullPage, scale: 'css' })";
+    expect(real, `helpers.ts deberia contener la llamada ${CALL}`).toContain(CALL);
+
+    const mutations: [string, string][] = [
+      ['quitar la opcion scale', real.replace(CALL, 'page.screenshot({ fullPage })')],
+      ['escalar a device', real.replace(CALL, "page.screenshot({ fullPage, scale: 'device' })")],
+      ['capturar sin opciones', real.replace(CALL, 'page.screenshot()')],
+      ['anadir una segunda captura sin scale', `${real}\nconst otra = await page.screenshot({ fullPage: true });`],
     ];
 
-    for (const caso of casosMalo) {
-      const matches = [...caso.matchAll(/\.screenshot\(([^)]*)\)/g)];
-      expect(matches.length).toBe(1);
-      const args = matches[0][1];
-      expect(args).not.toContain("scale: 'css'");
+    for (const [name, mutated] of mutations) {
+      // Sanidad: la mutacion tiene que haber cambiado algo. Si no, su patron
+      // esta roto y el test pasaria sin comprobar nada.
+      expect(mutated, `la mutacion "${name}" no modifico el fuente; revisa su patron`).not.toBe(real);
+      expect(
+        callsMissingCssScale(mutated),
+        `la mutacion "${name}" deberia ser detectada por el guardia`,
+      ).not.toEqual([]);
     }
   });
 
-  it('playwright.config.ts respeta la politica de zero-retry y documenta el dpr mobile', () => {
-    const config = readFileSync(CONFIG_FILE, 'utf-8');
+  it('la guardia detecta si se quita reducedMotion de la config', () => {
+    const real = codeOf(CONFIG_FILE);
+    expect(real).toMatch(/reducedMotion:\s*['"]reduce['"]/);
 
-    // Fallo honesto: no esconder la inestabilidad.
-    expect(config).toContain('retries: 0');
-
-    // Documenta la causa del error.
-    expect(config).toMatch(/deviceScaleFactor:\s*3/);
-
-    // mobile project declaration.
-    expect(config).toContain("name: 'mobile'");
+    // Misma comprobacion que el test de la config, sobre la fuente mutado.
+    const mutated = real.replace(/reducedMotion:\s*['"]reduce['"],?/, '');
+    expect(mutated, 'la mutacion no modifico playwright.config.ts').not.toBe(real);
+    expect(mutated).not.toMatch(/reducedMotion:\s*['"]reduce['"]/);
   });
 });
