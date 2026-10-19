@@ -19,13 +19,15 @@ const HELPERS_FILE = join(E2E_DIR, 'helpers.ts');
 const CONFIG_FILE = join(process.cwd(), 'playwright.config.ts');
 
 describe('Capturas de pantalla E2E', () => {
-  it('helpers.ts llama a page.screenshot con scale: "css"', () => {
+  it('helpers.ts llama a screenshot con scale: "css"', () => {
     const fuente = readFileSync(HELPERS_FILE, 'utf-8');
-    const screenshotCall = fuente.match(/page\.screenshot\([^)]+\)/g);
-    expect(screenshotCall, 'Debe existir una llamada a page.screenshot en helpers.ts').toBeTruthy();
+    // Regex that catches any .screenshot( call, taking the string inside up to the closing paren
+    const matches = [...fuente.matchAll(/\.screenshot\(([^)]*)\)/g)];
+    expect(matches.length, 'Debe existir al menos una llamada a screenshot en helpers.ts').toBeGreaterThan(0);
 
-    for (const match of screenshotCall!) {
-        expect(match, 'page.screenshot debe incluir scale: \'css\'').toContain("scale: 'css'");
+    for (const match of matches) {
+        const args = match[1];
+        expect(args, 'La llamada a screenshot debe incluir scale: \'css\'').toContain("scale: 'css'");
     }
   });
 
@@ -35,12 +37,27 @@ describe('Capturas de pantalla E2E', () => {
 
     for (const file of files) {
       const content = readFileSync(join(E2E_DIR, file), 'utf-8');
-      const matches = content.match(/page\.screenshot\([^)]+\)/g);
-      if (matches) {
-        for (const match of matches) {
-           expect(match, `${file} llama a page.screenshot sin scale: 'css'`).toContain("scale: 'css'");
-        }
+      const matches = [...content.matchAll(/\.screenshot\(([^)]*)\)/g)];
+      for (const match of matches) {
+          const args = match[1];
+          expect(args, `${file} llama a screenshot sin scale: 'css'`).toContain("scale: 'css'");
       }
+    }
+  });
+
+  it('mutaciones especificas fallan si no tienen scale: "css"', () => {
+    // Simulamos contenidos de archivo que el test anterior deberia capturar
+    const casosMalo = [
+      'await page.screenshot()',
+      'const b = await p.screenshot({ fullPage: true })',
+      'await page.locator("body").screenshot({ fullPage: true })'
+    ];
+
+    for (const caso of casosMalo) {
+      const matches = [...caso.matchAll(/\.screenshot\(([^)]*)\)/g)];
+      expect(matches.length).toBe(1);
+      const args = matches[0][1];
+      expect(args).not.toContain("scale: 'css'");
     }
   });
 
