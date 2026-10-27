@@ -1,22 +1,9 @@
-name: ci-template
+name: CI
 
 on:
   push:
     branches: [main, develop]
   pull_request:
-    paths:
-      - "src/**"
-      - "public/**"
-      - "workers/**"
-      - "migrations/**"
-      - "tests/**"
-      - "scripts/**"
-      - "astro.config.mjs"
-      - "wrangler.toml"
-      - "package.json"
-      - "pnpm-workspace.yaml"
-      - "pnpm-lock.yaml"
-      - ".github/workflows/**"
   workflow_dispatch:
 
 jobs:
