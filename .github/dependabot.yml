@@ -1,23 +1,26 @@
-# Grouped monthly Dependabot configuration (SWAL wave pi-1, S7).
-# One pull request per ecosystem per month instead of one PR per bump.
+# Grouped weekly Dependabot configuration (SWAL wave pi-1, S7).
+# Grouped pull requests per ecosystem.
 version: 2
 updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "monthly"
-    # One grouped PR per ecosystem instead of one per bump.
-    open-pull-requests-limit: 2
+      interval: "weekly"
+    # Grouped PRs per ecosystem limit.
+    open-pull-requests-limit: 5
     labels:
       - "dependencies"
     groups:
-      # Version updates: everything into a single PR.
-      all-dependencies:
+      # Minor and patch updates: grouped into a single PR.
+      minor-patch:
         applies-to: version-updates
         patterns:
           - "*"
+        update-types:
+          - "minor"
+          - "patch"
       # Security updates keep their own single PR so an
-      # advisory patch is never buried in a monthly batch.
+      # advisory patch is never buried in a batch.
       security-dependencies:
         applies-to: security-updates
         patterns:
@@ -25,19 +28,22 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "monthly"
-    # One grouped PR per ecosystem instead of one per bump.
-    open-pull-requests-limit: 2
+      interval: "weekly"
+    # Grouped PRs per ecosystem limit.
+    open-pull-requests-limit: 5
     labels:
       - "dependencies"
     groups:
-      # Version updates: everything into a single PR.
-      all-dependencies:
+      # Minor and patch updates: grouped into a single PR.
+      minor-patch:
         applies-to: version-updates
         patterns:
           - "*"
+        update-types:
+          - "minor"
+          - "patch"
       # Security updates keep their own single PR so an
-      # advisory patch is never buried in a monthly batch.
+      # advisory patch is never buried in a batch.
       security-dependencies:
         applies-to: security-updates
         patterns:

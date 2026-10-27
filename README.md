@@ -1,5 +1,7 @@
 # PISAStyle
 
+[![CI](https://github.com/iberi22/pisastyle/actions/workflows/ci.yml/badge.svg)](https://github.com/iberi22/pisastyle/actions/workflows/ci.yml)
+
 Preparación PISA en español, inglés y portugués: evaluación de nivel, unidades
 de estudio con estímulo e ítems, e infografías de resultados.
 
@@ -119,6 +121,10 @@ npx wrangler deploy --config dist/server/wrangler.json
 El primer deploy crea el Worker y la ruta de `pisa.swal.network` como **custom
 domain** de la zona `swal.network` (DNS y certificado los crea `wrangler`, sin
 paso manual). Detalle en [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+## Security
+
+Please refer to the [Security Policy](SECURITY.md) for information about supported versions and how to report vulnerabilities.
 
 ## Licencia
 
