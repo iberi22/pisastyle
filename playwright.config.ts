@@ -56,7 +56,9 @@ const isCI = !!process.env.CI;
 // el script. Si la variable no esta (p.ej. en CI, donde el Chromium de
 // Playwright si funciona), se usa el de Playwright sin tocar nada.
 const exe = process.env.PISASYLE_BROWSER_PATH;
-const launchOptions = exe ? { executablePath: exe, args: ['--no-sandbox'] } : {};
+const launchOptions = exe
+  ? { executablePath: exe, args: ['--no-sandbox'] }
+  : { args: ['--disable-gpu', '--disable-dev-shm-usage', '--no-sandbox'] };
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -96,7 +98,7 @@ export default defineConfig({
     reducedMotion: 'reduce',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    ...(exe ? { launchOptions } : {}),
+    launchOptions,
   },
 
   projects: [
