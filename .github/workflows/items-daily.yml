@@ -91,13 +91,15 @@ jobs:
         env:
           # Settable from the UI when replaying a specific day.
           ITEMS_DATE: ${{ inputs.date }}
+          ITEMS_DOMAIN: ${{ inputs.domain || 'math' }}
+          ITEMS_LANG: ${{ inputs.lang || 'es' }}
         run: |
           set -euo pipefail
           export ITEMS_DATE="${ITEMS_DATE:-$(date -u +%F)}"
           echo "ITEMS_DATE=$ITEMS_DATE"
           node scripts/items-generate.mjs \
-            --domain "${{ inputs.domain || 'math' }}" \
-            --lang "${{ inputs.lang || 'es' }}" || { echo "::error::failed to generate item for date $ITEMS_DATE"; exit 1; }
+            --domain "${ITEMS_DOMAIN}" \
+            --lang "${ITEMS_LANG}" || { echo "::error::failed to generate item for date $ITEMS_DATE"; exit 1; }
 
       # The generator only ever writes a valid item, or nothing at all. An empty
       # diff therefore means "nothing to do today", which is a SUCCESS — not a
